@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dying Skies · Centered</title>
+    <link rel="stylesheet" href="../sparse.css" />
+    <link rel="stylesheet" href="../dyingskies.css" />
+  </head>
+  <body>
+    <div class="sky"><!-- falling stars render here later --></div>
+
+    <button class="btn immersion-toggle">fullscreen</button>
+
+    <div class="ui">
+      <header class="header">
+        <h1 class="title font-large">DYING SKIES</h1>
+      </header>
+      <footer class="footer">
+        <p class="tagline text-center">
+          So far, man has saved 1,204 skies, destroyed 318 skies, and allowed
+          9,462,015 skies to die.
+        </p>
+        <a class="link" href="#">analytics</a>
+      </footer>
+    </div>
+
+    <script>
+      document
+        .querySelector(".immersion-toggle")
+        .addEventListener("click", function () {
+          document.body.classList.toggle("immersive");
+        });
+    </script>
+  </body>
+</html>

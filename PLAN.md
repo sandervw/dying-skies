@@ -64,6 +64,7 @@ Scheme: **HMAC-issuance.** No dead-star storage needed.
   - Fall angle / trajectory profile.
 - **Dynamic elements (fresh per session):**
   - Falling stars: issued by server each time the sky is opened. Each star has a unique, static arrangement of pixels, with each pixel's color drawn from the sky's palette. Colors do not cycle/change — the star is a fixed multicolored cluster that falls as a unit.
+  - Home sky has a greyscale, austere, pale color palette.
   - **Star shape:** "diamond with a tail" or "thicker dash" — wide enough for reliable click targeting. ~3-4px wide, 8-14px long, angled with fall trajectory.
 - Same seed reopened = same constellation and theme, but new falling stars. A sky is a *place*, not a frozen image.
 

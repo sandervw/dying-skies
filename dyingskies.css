@@ -1,0 +1,61 @@
+/* site theme, loads after sparse.css */
+
+.sky {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--percent-100);
+  height: var(--percent-100);
+  z-index: var(--z-base);
+  background-color: var(--color-bg-primary);
+}
+
+.ui {
+  display: contents;
+}
+
+.header {
+  position: fixed;
+  top: var(--xlarge);
+  left: 0;
+  width: var(--percent-100);
+  z-index: var(--z-overlay);
+  display: flex;
+  justify-content: center;
+}
+
+.footer {
+  position: fixed;
+  bottom: var(--xlarge);
+  left: 0;
+  width: var(--percent-100);
+  z-index: var(--z-overlay);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--small);
+}
+
+.title {
+  letter-spacing: var(--xsmall);
+}
+
+.tagline {
+  max-width: var(--breakpoint-tablet);
+  color: var(--color-gray);
+  line-height: var(--line-height-normal);
+}
+
+.immersion-toggle {
+  position: fixed;
+  bottom: var(--medium);
+  right: var(--medium);
+  z-index: var(--z-nav);
+}
+
+.immersive .ui {
+  display: none;
+}
+.immersive .immersion-toggle {
+  opacity: var(--percent-25);
+}
