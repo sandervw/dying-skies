@@ -2,9 +2,9 @@
 
 ## Current Status
 - **Phase:** Frontend/visual only. Backend + API contract are out of scope for now.
-- **Now:** Home layout LOCKED: "centered", in `mockups/centered.html` (only mockup left). No inline styles, only `sparse.css` + `dyingskies.css` classes, max 2 classes/element: fully Sparse-law compliant. Custom count colors (bronze/red) REMOVED; tagline counts are now plain grey (inherit `.tagline`). `dyingskies.css` is now all-neutral (no color-law break). Bottom-right "fullscreen" toggle adds `.immersive`, hides `.ui`, fades toggle. Sky still empty black. React `App.jsx` still returns `null`.
-- **Next (PAUSED 2026-08-11, resume here):** 1) Build the centered layout into the React app as components. 2) Then build the falling-star canvas.
-- **Design notes:** Load order = sparse.css, then dyingskies.css. `dyingskies.css` holds site components: `.sky`, `.ui` (immersive-hide wrapper), `.header`, `.footer`, `.title`, `.tagline`, `.fs-toggle`, `.immersive`. `Sparse.css.md` manifesto still names 'copper' (now unused; flagged).
+- **Now:** Centered layout is BUILT in React + TypeScript (strict). `mockups/centered.html` is the design reference. Config: `tsconfig.{json,app,node}`, `vite.config.ts`, `.tsx` entry. Code follows `docs/sparse.React.md` + `docs/Sparse.ts.md`. Structure: `src/components/{Sky,ImmersionToggle,Header,Footer}.tsx`, `src/hooks/{useImmersion,useSkyStats}.ts`, `src/services/skyStats.ts`, `src/types/skyStats.ts`, `src/App.tsx`. Immersive mode = `.immersive` toggled on a wrapper `<div>` from React state. Tagline stats come from `useSkyStats`, which returns `MOCK_SKY_STATS` (TanStack fetch belongs in this hook once the backend exists); `formatCount` adds commas. `npm run build` runs `tsc -b && vite build` and passes clean. Sky is empty black.
+- **Next:** Build the falling-star canvas (Canvas 2D) inside `Sky.tsx` via a hook + pure generator services.
+- **Design notes:** Load order = sparse.css, then dyingskies.css. `dyingskies.css` holds site components: `.sky`, `.ui` (immersive-hide wrapper), `.header`, `.footer`, `.title`, `.tagline`, `.immersion-toggle`, `.immersive`. The React entry does not yet import either CSS file; wire this before running `dev`. `Sparse.css.md` manifesto names 'copper' (unused).
 - **Last updated:** 2026-08-11
 
 > Keep this section current as we go. It's the first thing to read each request.
