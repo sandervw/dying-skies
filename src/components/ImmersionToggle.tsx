@@ -1,4 +1,5 @@
 import type { ReactElement } from "react";
+import { Icon } from "./Icon";
 
 interface ImmersionToggleProps {
   readonly onToggle: () => void;
@@ -6,8 +7,12 @@ interface ImmersionToggleProps {
 
 const ImmersionToggle = ({ onToggle }: ImmersionToggleProps): ReactElement => {
   return (
-    <button className="btn immersion-toggle" onClick={onToggle}>
-      fullscreen
+    <button
+      className="btn immersion-toggle"
+      onClick={onToggle}
+      aria-label="Toggle immersive mode"
+    >
+      <Icon name="fullscreen" />
     </button>
   );
 };

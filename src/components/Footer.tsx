@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import type { SkyStats } from "../types/skyStats";
 import { formatCount } from "../services/skyStats";
+import { Icon } from "./Icon";
 
 interface FooterProps {
   readonly stats: SkyStats;
@@ -14,8 +15,8 @@ const Footer = ({ stats }: FooterProps): ReactElement => {
         {formatCount(stats.destroyed)} skies, and allowed{" "}
         {formatCount(stats.died)} skies to die.
       </p>
-      <a className="link" href="#">
-        analytics
+      <a className="link" href="#" aria-label="Analytics">
+        <Icon name="analytics" />
       </a>
     </footer>
   );
