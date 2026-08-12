@@ -59,3 +59,11 @@
 .immersive .immersion-toggle {
   opacity: var(--percent-25);
 }
+
+/* temporary dev seed control */
+.seed-control {
+  position: fixed;
+  top: var(--medium);
+  left: var(--medium);
+  z-index: var(--z-hoverable);
+}
