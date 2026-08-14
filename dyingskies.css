@@ -60,6 +60,16 @@
   opacity: var(--percent-25);
 }
 
+.star-field {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--percent-100);
+  height: var(--percent-100);
+  z-index: var(--z-base);
+  pointer-events: none;
+}
+
 /* temporary dev seed control */
 .seed-control {
   position: fixed;

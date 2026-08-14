@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { ChangeEvent, ReactElement } from "react";
 import { Sky } from "./components/Sky";
+import { StarField } from "./components/StarField";
 import { ImmersionToggle } from "./components/ImmersionToggle";
 import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
@@ -19,6 +20,7 @@ const App = (): ReactElement => {
   return (
     <div className={immersive ? "immersive" : undefined}>
       <Sky seed={seed} />
+      <StarField seed={seed} />
       {/* temporary dev seed control */}
       <input
         className="seed-control"
