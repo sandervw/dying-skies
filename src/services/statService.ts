@@ -1,6 +1,6 @@
-import type { SkyStats } from "../types/skyStats";
+import type { Stats } from "../types/stats";
 
-const MOCK_SKY_STATS: SkyStats = {
+const MOCK_STATS: Stats = {
   saved: 1204,
   destroyed: 318,
   died: 9462015,
@@ -8,4 +8,4 @@ const MOCK_SKY_STATS: SkyStats = {
 
 const formatCount = (value: number): string => value.toLocaleString("en-US");
 
-export { MOCK_SKY_STATS, formatCount };
+export { MOCK_STATS, formatCount };

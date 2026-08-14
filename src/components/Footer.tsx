@@ -1,10 +1,10 @@
 import type { ReactElement } from "react";
-import type { SkyStats } from "../types/skyStats";
-import { formatCount } from "../services/skyStats";
+import type { Stats } from "../types/stats";
+import { formatCount } from "../services/statService";
 import { Icon } from "./Icon";
 
 interface FooterProps {
-  readonly stats: SkyStats;
+  readonly stats: Stats;
 }
 
 const Footer = ({ stats }: FooterProps): ReactElement => {

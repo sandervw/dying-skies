@@ -5,11 +5,11 @@ import { ImmersionToggle } from "./components/ImmersionToggle";
 import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { useImmersion } from "./hooks/useImmersion";
-import { useSkyStats } from "./hooks/useSkyStats";
+import { useStats } from "./hooks/useStats";
 
 const App = (): ReactElement => {
   const { immersive, toggleImmersion } = useImmersion();
-  const stats = useSkyStats();
+  const stats = useStats();
   const [seed, setSeed] = useState(12345);
 
   const handleSeedChange = (event: ChangeEvent<HTMLInputElement>): void => {

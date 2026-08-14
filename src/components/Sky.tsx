@@ -1,12 +1,12 @@
 import type { ReactElement } from "react";
-import { useSkyCanvas } from "../hooks/useSkyCanvas";
+import { useSky } from "../hooks/useSky";
 
 interface SkyProps {
   readonly seed: number;
 }
 
 const Sky = ({ seed }: SkyProps): ReactElement => {
-  const { canvasRef } = useSkyCanvas(seed);
+  const { canvasRef } = useSky(seed);
   return <canvas ref={canvasRef} className="sky" />;
 };
 

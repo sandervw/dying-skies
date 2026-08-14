@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import { getIcon } from "../services/icons";
+import { getIcon } from "../services/iconService";
 
 interface IconProps {
   readonly name: string;

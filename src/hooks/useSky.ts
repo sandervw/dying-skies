@@ -1,15 +1,13 @@
 import { useEffect, useRef } from "react";
 import type { RefObject } from "react";
-import { createSeededRandom } from "../services/seededRandom";
-import { generateDots } from "../services/skyGeneration";
-import { drawDots } from "../services/skyRenderer";
+import { generateSky, renderSky } from "../services/skyService";
 
-interface SkyCanvasHandle {
+interface SkyHandle {
   readonly canvasRef: RefObject<HTMLCanvasElement | null>;
 }
 
 // wire a seed to the canvas; redraw when seed changes.
-const useSkyCanvas = (seed: number): SkyCanvasHandle => {
+const useSky = (seed: number): SkyHandle => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // canvas is an external system, so drive it via effect.
@@ -20,9 +18,9 @@ const useSkyCanvas = (seed: number): SkyCanvasHandle => {
       return (): void => {};
     }
 
-    const dots = generateDots(createSeededRandom(seed));
+    const sky = generateSky(seed);
 
-    // size canvas to device pixels, then paint the dots.
+    // size canvas to device pixels, then paint the sky.
     const render = (): void => {
       const ratio = window.devicePixelRatio;
       const width = window.innerWidth;
@@ -30,7 +28,7 @@ const useSkyCanvas = (seed: number): SkyCanvasHandle => {
       canvas.width = Math.floor(width * ratio);
       canvas.height = Math.floor(height * ratio);
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
-      drawDots(context, dots, width, height);
+      renderSky(context, sky, width, height);
     };
 
     // draw once, then repaint on every window resize.
@@ -44,4 +42,4 @@ const useSkyCanvas = (seed: number): SkyCanvasHandle => {
   return { canvasRef };
 };
 
-export { useSkyCanvas };
+export { useSky };
