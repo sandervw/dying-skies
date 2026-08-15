@@ -17,8 +17,8 @@ An infinite, procedurally-generated universe of unique skies. Each sky is born f
 
 ## Seeds & Uniqueness
 - Each star = a 256-bit seed; each seed deterministically generates a unique sky.
-- **Collision math:** at 500K stars/sec for 1,000 years (~1.58×10¹⁶ total), 128-bit random seeds give P(collision) ≈ 3.7×10⁻⁷ (~1 in 2.7 million). At 256 bits, P ≈ 1.1×10⁻⁴⁵ — astronomically impossible.
-- **Bit allocation (provisional):** lower 128 bits for visual generation; upper 128 bits reserved for future MIDI audio generation. Audio is phase 2.
+- **Collision math:** at 500K stars/sec for 1,000 years (~1.58×10¹⁶ total), 256 bits, P collision ≈ 1.1×10⁻⁴⁵ — astronomically impossible.
+- **Bit allocation (provisional):** 256 bits for both visual generation and future MIDI audio generation. Audio is phase 2.
 
 ## Seed Authentication (anti-bot)
 Goal: users can only save stars they actually clicked. Bots can't POST random seeds to the API.
@@ -34,17 +34,15 @@ Scheme: **HMAC-issuance.** No dead-star storage needed.
 - Only saved stars are persisted. 1,000 saves/sec (extreme) = ~1.4 GB/year. Real usage: negligible.
 - Dead counter = `total_issued - total_saved` (derived, not individually witnessed).
 
-**Why it works:** without the server's secret key, forging a valid HMAC is computationally infeasible. A bot could macro-click real stars rapidly, but it cannot invent valid seeds.
-
 ---
 
 ## Root Sky
-- Fixed, hardcoded seed (chosen by Sander). The unchanging origin of the universe.
+- Fixed, hardcoded seed (to-be chosen by Sander). The unchanging origin of the universe.
 - Anonymous visitors: **completely non-interactive** — a screensaver. Stars fall, nothing is clickable.
 - Logged-in users: fully interactive — click stars to traverse and save.
 
 ## Design Philosophy
-- Screensaver aesthetic. Very minimal UI. The sky is the interface.
+- Screensaver aesthetic. Very minimal UI.
 
 ## URL Structure
 - `/` — Root sky (homepage). Global counter tagline displayed.
@@ -59,22 +57,18 @@ Scheme: **HMAC-issuance.** No dead-star storage needed.
 - Pitch-black background.
 - **Static elements (deterministic from seed):**
   - A few scattered white static dots (count, positions).
-  - One constellation (shape, position, star count) — random connect-the-dots: N points placed by seed-derived PRNG, subset connected by thin white/grey lines. Classic constellation look.
-  - Color theme for falling stars — randomly-generated palette (not from a predefined list), deterministically derived from seed.
-  - Fall angle / trajectory profile.
+  - One constellation (shape, position, star count) — random connect-the-dots.
+  - Color theme for falling stars — randomly-generated palette, deterministically derived from seed.
 - **Dynamic elements (fresh per session):**
-  - Falling stars: issued by server each time the sky is opened. Each star has a unique, static arrangement of pixels, with each pixel's color drawn from the sky's palette. Colors do not cycle/change — the star is a fixed multicolored cluster that falls as a unit.
-  - Home sky has a greyscale, austere, pale color palette.
-  - **Star shape:** "diamond with a tail" or "thicker dash" — wide enough for reliable click targeting. ~3-4px wide, 8-14px long, angled with fall trajectory.
-- Same seed reopened = same constellation and theme, but new falling stars. A sky is a *place*, not a frozen image.
+  - Falling stars: Each star has a unique, static arrangement of pixels, with each pixel's color drawn from the sky's palette.
+- Same seed reopened = same constellation and theme, but new falling stars.
 
 ---
 
 ## Development Workflow
-- Sander builds the Python backend (API + database + analytics).
-- Nous builds the React/Canvas frontend.
+- Nous builds the Code.
 - Iterative: Sander directs, Nous implements small chunks, Sander reviews.
-- API contract to be spec'd collaboratively before implementation begins.
+- API contract to be spec'd collaboratively before implementation.
 
 ## Phases
 
@@ -82,50 +76,39 @@ Scheme: **HMAC-issuance.** No dead-star storage needed.
 - React SPA with falling stars, sky traversal, seed-based generation.
 - **Frontend stack:** Vite + React (no Next.js).
 - Rendering: Canvas 2D (primary). WebGL/Three.js as fallback/upgrade if effects need it.
+- Falling stars animation, tail wagging, hit detection, hover freeze, and click traversal (done).
 - HMAC seed issuance and save verification.
 - Global counters: saved, destroyed, dead.
 - Anonymous view-only root sky.
 - No auth yet — saving is session-local or disabled until Phase 2.
 
-### Phase 2 — Custom Auth
+### Phase 2 - Backend and storage
+- Postgres, VPS or Cloud service, fastAPI
+
+### Phase 3 — Custom Auth
 - Artsy/custom login experience (TBD).
 - User accounts, persistent saved-sky collections.
 - **Destroy saved skies:** button on sky page. Permanently deletes the seed from the universe — stored in a `destroyed_seeds` blacklist. No one can ever visit or save that sky again. If multiple users saved the same sky, it vanishes from all their collections.
 
-### Phase 3 — MIDI Audio
-- Upper 128 bits of seed drive unique MIDI tune per sky.
+### Phase 4 - Analytics
+- Dagster + dbt, evidence.dev (or alternative custom)
+
+### Phase 54 — MIDI Audio
+- Seeds drive unique MIDI tune per sky.
 - Web Audio API synthesis in-browser.
 
 ---
 
 ## TBD During Implementation
 
-### Seed → Constellation Algorithm
-- How many points per constellation? Range (e.g. 4–12)?
-- How are points distributed across the canvas? Gaussian around center? Uniform?
-- Which pairs get connected? Nearest-neighbor? Minimum spanning tree? Random subset?
-- Line style: thin white, slight opacity? Glow effect?
-
-### Seed → Palette Generation
-- How many colors per palette? (e.g. 4–8)
-- Color space: HSL with constrained ranges to avoid ugly combinations? Or full RGB freedom?
-- How to ensure palettes are visually distinct between skies?
-
-### Star Animation
-- Fall speed range (pixels per frame at 60fps)?
-- Angle variance — how much does trajectory deviate per star?
-- Star spawn rate — stars per second? Constant or variable?
-- Star lifetime — how long from spawn to offscreen?
-- Z-depths / parallax — do some stars fall faster (closer) and some slower (farther)?
-
 ### Analytics Page (`/analytics`)
 - Beyond the three counters, what else?
 - Historical trends chart (saves/destroys/deaths over time)?
 - Live feed / recent activity log?
-- Per-user stats (Phase 2)?
+- Per-user stats?
 - Heatmap of most-traversed seeds?
 
-### Saved Skies Gallery (Phase 2)
+### Saved Skies Gallery
 - How do users browse saved skies? Thumbnail grid of mini constellation renders? Text list of seeds?
 - Sort/filter? By date saved, color theme, etc.?
 

@@ -18,9 +18,12 @@ const SIZE_MAXIMUM = 50;
 const SHAPE_ASPECT = 3.2;
 const PIXEL_SIZE = 2;
 
+// extra hit-target padding in pixels around the star silhouette.
+const HIT_PADDING = 6;
+
 // fall speed in pixels per second; the spread gives free parallax depth.
-const SPEED_MINIMUM = 110;
-const SPEED_MAXIMUM = 170;
+const SPEED_MINIMUM = 70;
+const SPEED_MAXIMUM = 130;
 const AVERAGE_SPEED = (SPEED_MINIMUM + SPEED_MAXIMUM) / 2;
 
 // how many stars we aim to keep alive on screen at once.
@@ -203,11 +206,20 @@ const populateStarField = (
 ////////////////////////////////////////////////////////////
 
 // slide one star along its velocity by the elapsed time.
-const advanceStar = (star: FallingStar, deltaSeconds: number): FallingStar => ({
-  ...star,
-  positionX: star.positionX + star.velocityX * deltaSeconds,
-  positionY: star.positionY + star.velocityY * deltaSeconds,
-});
+const advanceStar = (
+  star: FallingStar,
+  deltaSeconds: number,
+  isFrozen: boolean,
+): FallingStar => {
+  if (isFrozen) {
+    return star;
+  }
+  return {
+    ...star,
+    positionX: star.positionX + star.velocityX * deltaSeconds,
+    positionY: star.positionY + star.velocityY * deltaSeconds,
+  };
+};
 
 // stars only fall, so cull once past the bottom or either side.
 const isOnscreen = (star: FallingStar, width: number, height: number): boolean =>
@@ -223,10 +235,11 @@ const stepStarField = (
   width: number,
   height: number,
   deltaSeconds: number,
+  frozenStarId?: number | null,
 ): StarFieldState => {
   const step = Math.min(deltaSeconds, MAXIMUM_DELTA_SECONDS);
   const survivors = state.stars
-    .map((star) => advanceStar(star, step))
+    .map((star) => advanceStar(star, step, star.id === frozenStarId))
     .filter((star) => isOnscreen(star, width, height));
 
   let spawnAccumulator =
@@ -296,9 +309,52 @@ const renderStarField = (
   }
 };
 
+// test if a point (px, py) intersects a falling star with orientation.
+const isPointInsideStar = (
+  star: FallingStar,
+  fallAngle: number,
+  pointX: number,
+  pointY: number,
+): boolean => {
+  const deltaX = pointX - star.positionX;
+  const deltaY = pointY - star.positionY;
+  const cosine = Math.cos(-fallAngle);
+  const sine = Math.sin(-fallAngle);
+  const localX = deltaX * cosine - deltaY * sine;
+  const localY = deltaX * sine + deltaY * cosine;
+  const halfLength = star.halfLength + HIT_PADDING;
+  const radius = star.halfLength / SHAPE_ASPECT + HIT_PADDING;
+  const headX = star.halfLength - star.halfLength / SHAPE_ASPECT;
+  const insideHead = (localX - headX) ** 2 + localY ** 2 <= radius ** 2;
+  const taperHalf =
+    (radius * (localX + halfLength)) / (2 * star.halfLength - star.halfLength / SHAPE_ASPECT);
+  const insideTail =
+    localX >= -halfLength &&
+    localX <= headX &&
+    Math.abs(localY) <= Math.max(taperHalf, HIT_PADDING);
+  return insideHead || insideTail;
+};
+
+// find the topmost falling star under given coordinates.
+const findStarAtCoordinates = (
+  stars: readonly FallingStar[],
+  fallAngle: number,
+  pointX: number,
+  pointY: number,
+): FallingStar | null => {
+  for (let index = stars.length - 1; index >= 0; index -= 1) {
+    const star = stars[index];
+    if (isPointInsideStar(star, fallAngle, pointX, pointY)) {
+      return star;
+    }
+  }
+  return null;
+};
+
 export {
   generateSkyProfile,
   populateStarField,
   stepStarField,
   renderStarField,
+  findStarAtCoordinates,
 };

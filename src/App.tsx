@@ -20,10 +20,14 @@ const App = (): ReactElement => {
     setSeed(Math.floor(Math.random() * SEED_RANGE));
   };
 
+  const handleSelectStar = (starSeed: number): void => {
+    setSeed(starSeed);
+  };
+
   return (
     <div className={immersive ? "immersive" : undefined}>
       <Sky seed={seed} />
-      <StarField seed={seed} />
+      <StarField seed={seed} onSelectStar={handleSelectStar} />
       <RandomSeedButton onRandomize={randomizeSeed} />
       <ImmersionToggle onToggle={toggleImmersion} />
       <div className="ui">

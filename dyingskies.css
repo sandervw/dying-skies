@@ -67,7 +67,6 @@
   width: var(--percent-100);
   height: var(--percent-100);
   z-index: var(--z-base);
-  pointer-events: none;
 }
 
 .random-seed {
