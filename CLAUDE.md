@@ -2,8 +2,8 @@
 
 ## Current Status
 - **Phase:** Frontend/visual only. Backend + API contract are out of scope for now.
-- **Done:** Canvas 2D falling stars (rAF loop, wagging pixel tails, hit testing, hover freeze + pointer cursor, click-to-transition seed).
-- **Next:** URL-driven seed routing / browser history and session-local saved/dead star counters.
+- **Done:** Canvas 2D falling stars (rAF loop, wagging pixel tails, hit testing, hover freeze + pointer cursor, click-to-transition seed). URL-driven seed routing: `/` root sky, `/sky/<base64url>` per-sky, browser back/forward via History API (`routeService` + `useSeedRoute`).
+- **Next:** Session-local saved/dead star counters (persistence across reloads).
 
 > Keep this section current as we go. It's the first thing to read each request.
 

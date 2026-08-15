@@ -1,4 +1,3 @@
-import { useState } from "react";
 import type { ReactElement } from "react";
 import { Sky } from "./components/Sky";
 import { StarField } from "./components/StarField";
@@ -7,28 +6,19 @@ import { RandomSeedButton } from "./components/RandomSeedButton";
 import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { useImmersion } from "./hooks/useImmersion";
+import { useSeedRoute } from "./hooks/useSeedRoute";
 import { useStats } from "./hooks/useStats";
-
-const SEED_RANGE = 0x100000000;
 
 const App = (): ReactElement => {
   const { immersive, toggleImmersion } = useImmersion();
+  const { seed, navigateToSeed, navigateToRandomSeed } = useSeedRoute();
   const stats = useStats();
-  const [seed, setSeed] = useState(12345);
-
-  const randomizeSeed = (): void => {
-    setSeed(Math.floor(Math.random() * SEED_RANGE));
-  };
-
-  const handleSelectStar = (starSeed: number): void => {
-    setSeed(starSeed);
-  };
 
   return (
     <div className={immersive ? "immersive" : undefined}>
       <Sky seed={seed} />
-      <StarField seed={seed} onSelectStar={handleSelectStar} />
-      <RandomSeedButton onRandomize={randomizeSeed} />
+      <StarField seed={seed} onSelectStar={navigateToSeed} />
+      <RandomSeedButton onRandomize={navigateToRandomSeed} />
       <ImmersionToggle onToggle={toggleImmersion} />
       <div className="ui">
         <Header />

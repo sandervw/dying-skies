@@ -14,5 +14,22 @@ const createSeededRandom = (seed: number): RandomNumberGenerator => {
   };
 };
 
+// FNV-1a hash folding a domain label into a 32-bit salt.
+const hashDomain = (domain: string): number => {
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < domain.length; index += 1) {
+    hash = Math.imul(hash ^ domain.charCodeAt(index), 0x01000193);
+  }
+  return hash >>> 0;
+};
+
+// split one seed into independent per-domain seeds, breaking shared-draw correlation.
+const deriveSeed = (seed: number, domain: string): number => {
+  let hash = (seed ^ hashDomain(domain)) >>> 0;
+  hash = Math.imul(hash ^ (hash >>> 16), 0x45d9f3b) >>> 0;
+  hash = Math.imul(hash ^ (hash >>> 16), 0x45d9f3b) >>> 0;
+  return (hash ^ (hash >>> 16)) >>> 0;
+};
+
 export type { RandomNumberGenerator };
-export { createSeededRandom };
+export { createSeededRandom, deriveSeed };

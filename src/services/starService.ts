@@ -1,4 +1,4 @@
-import { createSeededRandom } from "./randomService";
+import { createSeededRandom, deriveSeed } from "./randomService";
 import type { RandomNumberGenerator } from "./randomService";
 import { generatePalette, toCssColor } from "./paletteService";
 import type {
@@ -42,9 +42,6 @@ const TWO_PI = Math.PI * 2;
 const WAG_AMPLITUDE = 1;
 const WAG_FREQUENCY = 40;
 const WAG_WAVENUMBER = 0.1;
-
-// keep the palette independent of the star layout.
-const PALETTE_SEED_STRIDE = 100003;
 
 // full range of a 32-bit seed.
 const SEED_RANGE = 0x100000000;
@@ -105,8 +102,8 @@ const pickFallAngle = (random: RandomNumberGenerator): number =>
 
 // derive the sky's deterministic palette and fall angle from one seed.
 const generateSkyProfile = (seed: number): SkyProfile => {
-  const palette = generatePalette(seed * PALETTE_SEED_STRIDE);
-  const random = createSeededRandom(seed);
+  const palette = generatePalette(deriveSeed(seed, "palette"));
+  const random = createSeededRandom(deriveSeed(seed, "fall-angle"));
   const fallAngle = pickFallAngle(random);
   return { palette, fallAngle };
 };
@@ -127,7 +124,7 @@ const buildStar = (
   positionX: number,
   positionY: number,
 ): FallingStar => {
-  const shape = createSeededRandom(starSeed);
+  const shape = createSeededRandom(deriveSeed(starSeed, "star-shape"));
   const length = randomInRange(shape, SIZE_MINIMUM, SIZE_MAXIMUM);
   const width = length / SHAPE_ASPECT;
   const speed = randomInRange(shape, SPEED_MINIMUM, SPEED_MAXIMUM);
