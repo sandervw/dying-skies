@@ -100,7 +100,7 @@ const pickFallAngle = (random: RandomNumberGenerator): number =>
   randomInRange(random, FALL_ANGLE_MINIMUM_DEGREES, FALL_ANGLE_MAXIMUM_DEGREES) *
   DEGREES_TO_RADIANS;
 
-// derive the sky's deterministic palette and fall angle from one seed.
+/** derive the sky's deterministic palette and fall angle from one seed. */
 const generateSkyProfile = (seed: number): SkyProfile => {
   const palette = generatePalette(deriveSeed(seed, "palette"));
   const random = createSeededRandom(deriveSeed(seed, "fall-angle"));
@@ -181,7 +181,7 @@ const spawnRatePerSecond = (fallAngle: number, height: number): number => {
   return TARGET_STAR_COUNT / lifetimeSeconds;
 };
 
-// start with the field already full, scattered across the whole frame.
+/** start with the field already full, scattered across the whole frame. */
 const populateStarField = (
   profile: SkyProfile,
   sessionRandom: RandomNumberGenerator,
@@ -224,7 +224,7 @@ const isOnscreen = (star: FallingStar, width: number, height: number): boolean =
   star.positionX >= -SIZE_MAXIMUM &&
   star.positionX <= width + SIZE_MAXIMUM;
 
-// advance the field one frame: move, cull, then spawn replacements.
+/** advance the field one frame: move, cull, then spawn replacements. */
 const stepStarField = (
   state: StarFieldState,
   profile: SkyProfile,
@@ -287,7 +287,7 @@ const drawStar = (
   }
 };
 
-// clear, then paint every live star, tails wagging.
+/** clear, then paint every live star, tails wagging. */
 const renderStarField = (
   context: CanvasRenderingContext2D,
   state: StarFieldState,
@@ -332,7 +332,7 @@ const isPointInsideStar = (
   return insideHead || insideTail;
 };
 
-// find the topmost falling star under given coordinates.
+/** find the topmost falling star under given coordinates. */
 const findStarAtCoordinates = (
   stars: readonly FallingStar[],
   fallAngle: number,

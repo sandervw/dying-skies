@@ -46,7 +46,7 @@ const generateColor = (
   lightness: randomInRange(random, LIGHTNESS_MINIMUM, LIGHTNESS_MAXIMUM),
 });
 
-// generate a full palette from one seed.
+/** generate a full palette from one seed. */
 const generatePalette = (seed: number): Palette => {
   const random = createSeededRandom(seed);
   const baseHue = random() * DEGREES_IN_CIRCLE;
@@ -62,7 +62,7 @@ const generatePalette = (seed: number): Palette => {
   return { colors };
 };
 
-// format one palette colour as a CSS hsl() string.
+/** format one palette colour as a CSS hsl() string. */
 const toCssColor = (color: PaletteColor): string =>
   `hsl(${color.hue}, ${color.saturation}%, ${color.lightness}%)`;
 

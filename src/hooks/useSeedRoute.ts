@@ -7,7 +7,7 @@ interface SeedRoute {
   readonly navigateToRandomSeed: () => void;
 }
 
-// drive the active sky seed from the URL, with back/forward support.
+/** drive the active sky seed from the URL, with back/forward support. */
 const useSeedRoute = (): SeedRoute => {
   const [seed, setSeed] = useState<number>((): number =>
     seedFromPath(window.location.pathname),

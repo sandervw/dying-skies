@@ -6,7 +6,7 @@ interface SkyHandle {
   readonly canvasRef: RefObject<HTMLCanvasElement | null>;
 }
 
-// wire a seed to the canvas; redraw when seed changes.
+/** wire a seed to the canvas; redraw when seed changes. */
 const useSky = (seed: number): SkyHandle => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 

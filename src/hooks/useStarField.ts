@@ -17,7 +17,7 @@ interface StarFieldHandle {
   readonly handleMouseLeave: () => void;
 }
 
-// run the falling-star animation loop against a canvas for one sky seed.
+/** run the falling-star animation loop against a canvas for one sky seed. */
 const useStarField = (
   seed: number,
   onSelectStar?: (starSeed: number) => void,

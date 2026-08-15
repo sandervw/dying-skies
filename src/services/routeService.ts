@@ -2,10 +2,10 @@
 // SEED SPACE
 ////////////////////////////////////////////////////////////
 
-// the fixed origin sky shown at the site root; homepage seed.
+/** the fixed origin sky shown at the site root; homepage seed. */
 const ROOT_SEED = 12345;
 
-// full range of a 32-bit seed; a seed is any unsigned 32-bit integer.
+/** full range of an unsigned 32-bit seed. */
 const SEED_RANGE = 0x100000000;
 
 // bytes needed to hold one seed; base64url of 4 bytes is 6 url-safe chars.
@@ -33,14 +33,14 @@ const binaryToSeed = (binary: string): number =>
     binary.charCodeAt(3)) >>>
   0;
 
-// encode a seed as a shareable base64url token (per PLAN URL structure).
+/** encode a seed as a shareable base64url token (per PLAN URL structure). */
 const encodeSeed = (seed: number): string =>
   btoa(seedToBinary(seed))
     .replace(/\+/g, "-")
     .replace(/\//g, "_")
     .replace(/=+$/, "");
 
-// decode a base64url token back into a seed, or null when malformed.
+/** decode a base64url token back into a seed, or null when malformed. */
 const decodeSeed = (token: string): number | null => {
   const base64 = token.replace(/-/g, "+").replace(/_/g, "/");
   try {
@@ -61,11 +61,11 @@ const decodeSeed = (token: string): number | null => {
 // matches "/sky/<token>" with an optional trailing slash.
 const SKY_PATH_PATTERN = /^\/sky\/([A-Za-z0-9\-_]+)\/?$/;
 
-// build the URL path for a seed; the root sky lives at "/".
+/** build the URL path for a seed; root lives at "/". */
 const seedToPath = (seed: number): string =>
   seed >>> 0 === ROOT_SEED ? "/" : `/sky/${encodeSeed(seed)}`;
 
-// read the seed a URL path points at, falling back to the root sky.
+/** read the seed a URL path points at, else root. */
 const seedFromPath = (pathname: string): number => {
   const match = SKY_PATH_PATTERN.exec(pathname);
   if (match === null) {

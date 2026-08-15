@@ -1,7 +1,7 @@
-// repeatable 0..1 generator; same seed, same sequence.
+/** repeatable 0..1 generator; same seed, same sequence. */
 type RandomNumberGenerator = () => number;
 
-// mulberry32: one seed becomes a repeatable random stream.
+/** mulberry32: one seed becomes a repeatable random stream. */
 const createSeededRandom = (seed: number): RandomNumberGenerator => {
   let state = seed >>> 0; // shifts bits of left number rightward; >>> 0 always produces an unsigned 32-bit
   // advance internal state, return the next 0..1 value.
@@ -23,7 +23,7 @@ const hashDomain = (domain: string): number => {
   return hash >>> 0;
 };
 
-// split one seed into independent per-domain seeds, breaking shared-draw correlation.
+/** split one seed into independent per-domain seeds, breaking shared-draw correlation. */
 const deriveSeed = (seed: number, domain: string): number => {
   let hash = (seed ^ hashDomain(domain)) >>> 0;
   hash = Math.imul(hash ^ (hash >>> 16), 0x45d9f3b) >>> 0;

@@ -169,7 +169,7 @@ const generateConstellation = (
 // SKY
 ////////////////////////////////////////////////////////////
 
-// generate a full sky (dots + constellation) from one seed.
+/** generate a full sky (dots + constellation) from one seed. */
 const generateSky = (seed: number): Sky => {
   const random = createSeededRandom(deriveSeed(seed, "sky-backdrop"));
   const dots = generateDots(random);
@@ -240,7 +240,7 @@ const drawConstellation = (
   }
 };
 
-// clear the field, then layer constellation lines beneath the dots.
+/** clear the field, then layer constellation lines beneath the dots. */
 const renderSky = (
   context: CanvasRenderingContext2D,
   sky: Sky,
