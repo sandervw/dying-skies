@@ -70,10 +70,13 @@
   pointer-events: none;
 }
 
-/* temporary dev seed control */
-.seed-control {
+.random-seed {
   position: fixed;
-  top: var(--medium);
+  bottom: var(--medium);
   left: var(--medium);
-  z-index: var(--z-hoverable);
+  z-index: var(--z-nav);
+}
+
+.immersive .random-seed {
+  opacity: var(--percent-25);
 }

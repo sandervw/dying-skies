@@ -7,19 +7,31 @@ interface StarPixel {
   readonly colorIndex: number;
 }
 
-// one falling star: position, pixel size, pixel cluster.
-interface Star {
-  readonly fractionX: number;
-  readonly fractionY: number;
+// one live falling star; seed is identity, position moves.
+interface FallingStar {
+  readonly id: number;
+  readonly seed: number;
+  readonly positionX: number;
+  readonly positionY: number;
+  readonly velocityX: number;
+  readonly velocityY: number;
   readonly pixelSize: number;
+  readonly halfLength: number;
+  readonly wobblePhase: number;
   readonly pixels: readonly StarPixel[];
 }
 
-// a full field: palette, stars, and shared fall angle.
-interface StarField {
+// deterministic, sky-level parameters shared by every falling star.
+interface SkyProfile {
   readonly palette: Palette;
-  readonly stars: readonly Star[];
   readonly fallAngle: number;
 }
 
-export type { StarPixel, Star, StarField };
+// the whole simulation at one instant; each step returns the next.
+interface StarFieldState {
+  readonly stars: readonly FallingStar[];
+  readonly spawnAccumulator: number;
+  readonly nextStarId: number;
+}
+
+export type { StarPixel, FallingStar, SkyProfile, StarFieldState };
