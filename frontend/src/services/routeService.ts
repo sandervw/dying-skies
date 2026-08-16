@@ -15,7 +15,7 @@ const ROOT_SEED: Seed = [
 // SEED CODEC
 ////////////////////////////////////////////////////////////
 
-// pack a seed's bytes into a binary string, one char per byte.
+// pack a seed's bytes into a binary string.
 const seedToBinary = (seed: Seed): string => {
   let binary = "";
   for (const byte of seed) {

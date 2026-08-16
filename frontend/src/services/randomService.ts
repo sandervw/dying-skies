@@ -56,12 +56,12 @@ const generateSeed = (random: RandomNumberGenerator): Seed => {
 };
 
 /** compare two seeds byte-for-byte. */
-const seedsEqual = (a: Seed, b: Seed): boolean => {
-  if (a.length !== b.length) {
+const seedsEqual = (firstSeed: Seed, secondSeed: Seed): boolean => {
+  if (firstSeed.length !== secondSeed.length) {
     return false;
   }
-  for (let index = 0; index < a.length; index += 1) {
-    if (a[index] !== b[index]) {
+  for (let index = 0; index < firstSeed.length; index += 1) {
+    if (firstSeed[index] !== secondSeed[index]) {
       return false;
     }
   }
