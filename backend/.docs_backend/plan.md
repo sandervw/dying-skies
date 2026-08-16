@@ -1,34 +1,57 @@
 # Backend Plan
 
-FastAPI + Postgres. Concept: `../../.docs/plan.md`. Not started.
+FastAPI + Postgres. Concept: `../../.docs/plan.md`. Not started. Work breaks
+into the stages below; an agent implements exactly one stage per pass.
 
-## Seeds and uniqueness
-- Each star is a 256-bit seed generating one sky deterministically.
-- 256 bits cover visual generation now and future MIDI audio.
-- The seed space makes collisions effectively impossible at any real scale.
+## Hosting
+GCP: FastAPI container on Cloud Run, Postgres on Cloud SQL. Frontend stays on
+Cloudflare. Deploy via Docker image + `gcloud run deploy`; infra as Terraform.
 
-## Seed issuance (HMAC)
-Users can only save stars they clicked; bots cannot post arbitrary seeds.
+## Stage 1: Project and infra scaffold - TODO
+- FastAPI app skeleton with a health check route.
+- Postgres connection setup (local dev via Docker Compose or equivalent).
+- Dockerfile for the FastAPI service.
+- Terraform skeleton for Cloud Run + Cloud SQL (no live deploy yet).
+
+## Stage 2: Session identity and seed issuance - TODO
+- On first sky-open, the server sets an anonymous session cookie carrying
+  `session_id`.
 - The server holds a secret key `K`.
-- On opening a sky, the server issues a batch of seeds. Each seed is
-  `HMAC-SHA256(K, session_id || counter)` truncated to 128 bits; the counter
-  increments and nothing is stored per issue.
+- `POST /seeds/batch` issues a batch of seeds. Each seed is the full 256-bit
+  `HMAC-SHA256(K, session_id || counter)` output; the counter increments and
+  nothing is stored per issue.
+- 256 bits covers visual generation now and future MIDI audio; the seed space
+  makes collisions effectively impossible at any real scale.
 - Each falling star carries its `seed` and `tag`.
 
-## Save verification
-- The client posts `{seed, tag}` when a star is clicked.
+## Stage 3: Save verification and persistence - TODO
+- `POST /stars/save` accepts `{seed, tag}` from the client.
 - The server recomputes the HMAC, checks the tag, checks the seed is unsaved,
-  stores the 16-byte seed, and increments the saved counter.
+  stores the 32-byte seed, and increments the saved counter.
 - Offscreen stars are never reported.
-
-## Counters and storage
 - Only saved stars persist; storage stays negligible in practice.
-- Counters: saved, destroyed, dead (dead = issued minus saved).
-- Destroyed seeds go to a blacklist (Phase 3); a destroyed sky can never be
-  visited or saved again.
+- Saved and destroyed records store a timestamp of the save/destroy event
+  (cross-piece requirement from analytics: historical trends are derived from
+  row timestamps, since the counters are mutable totals).
 
-## API contract (spec before frontend build)
-- `POST /seeds/batch` issue seeds.
-- `POST /stars/save` verify and save.
-- `GET /counters` current totals.
-- `GET /sky/:seed` sky data for a seed.
+## Stage 4: Counters and sky data endpoints - TODO
+- `GET /counters` returns current totals: a single incrementing `issued`
+  total, plus `saved` and `destroyed`. `dead = issued - saved - destroyed`.
+- `GET /sky/:seed` returns sky data for a seed.
+- Destroyed-seed blacklist enforcement is Phase 3 work (root plan). This
+  stage exposes the `destroyed` counter field only.
+
+## Stage 5: API contract finalized against frontend - TODO
+- Freeze the full contract as a set: `POST /seeds/batch`, `POST /stars/save`,
+  `GET /counters`, `GET /sky/:seed`.
+- Seeds and tags travel as base64url strings in JSON.
+- Errors use a `{error, code}` envelope.
+- Confirm shapes against the frontend piece before frontend integration
+  begins; document any changes here and in `backend/CLAUDE.md`.
+
+## Stage 6: Deploy - TODO
+- Build and push the Docker image.
+- Provision Cloud SQL Postgres and Cloud Run service via Terraform.
+- `gcloud run deploy` from the built image; wire environment secrets
+  (including `K`) through Cloud Run, never committed.
+- Point the frontend's API base URL at the deployed Cloud Run service.
