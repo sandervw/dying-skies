@@ -10,6 +10,53 @@ Vite + React SPA, Canvas 2D. Concept: `../../.docs/plan.md`.
 - Routing, interaction, counter display, saved-skies browsing.
 - Consumes the backend API for seed issuance, saves, and counters.
 
+## Stage 1: Seed-derived sky generation — DONE
+`skyService.ts` builds the static dot field and constellation (MST plus a few
+loop edges). `paletteService.ts` builds an analogous HSL palette.
+`starService.ts` derives fall angle and per-star comet pixel arrangement.
+All pure, all deterministic from seed via `deriveSeed` domain-splitting in
+`randomService.ts`. Runs on today's 32-bit seed (see Stage 4).
+
+## Stage 2: Falling star render loop and interaction — DONE
+`useStarField.ts` drives a `requestAnimationFrame` loop: spawns, advances,
+and culls stars; tail wag via `tailWave`; hover detection freezes the
+hovered star (`findStarAtCoordinates`, `frozenStarId`); click calls
+`onSelectStar` to traverse into that star's seed.
+
+## Stage 3: Routing — PARTIAL
+`useSeedRoute.ts` reads/writes `/` and `/sky/<seed>` via the native History
+API (`routeService.ts`), no router library. Root and sky routes work,
+including back/forward. `/analytics` is not implemented: the Footer's
+analytics icon links to `#` with no route or view behind it.
+
+## Stage 4: 256-bit seeds — TODO
+Seeds are still 32-bit unsigned integers everywhere: `SEED_RANGE =
+0x100000000` and `>>> 0` masking in `randomService.ts`, `routeService.ts`
+(4-byte codec), `starService.ts`, and `useSeedRoute.ts`. `ROOT_SEED = 12345`
+is a plain number; it needs to become a 256-bit constant. Needed: a 32-byte
+seed type (byte array or BigInt), a base64url codec at ~43 chars, PRNG
+seeding from the full 256 bits, `deriveSeed` domain-splitting kept, and
+every seed-typed call site above converted together.
+
+## Stage 5: Counter display — PARTIAL
+Footer renders the saved/destroyed/died tagline (`Footer.tsx`,
+`statService.ts`). Data is `MOCK_STATS`, a hardcoded constant;
+`useStats.ts` does not poll or fetch anything. No `GET /counters` call
+exists yet; blocked on the backend.
+
+## Stage 6: Root sky access control — TODO
+`ROOT_SEED` exists and resolves to `/`, but the plan's split (anonymous
+visitors get a view-only screensaver; logged-in users get full traversal) is
+not implemented. `StarField` always wires `onSelectStar`, so every visitor
+can click and traverse from any sky, root included. No auth or session
+concept exists in the frontend yet; this is blocked on backend auth.
+
+## Stage 7: Saved skies gallery and backend integration — TODO
+No gallery component, no save action, no API service file, and no `fetch`
+calls anywhere in `src/`. All data is session-local per `frontend/CLAUDE.md`.
+Browsing/sorting UX is still undecided (see Scope below). Blocked on the
+backend API existing.
+
 ## Sky composition
 - Pitch-black background.
 - Static per seed: a few scattered white dots; one connect-the-dots
@@ -33,7 +80,7 @@ Screensaver aesthetic. Very minimal UI.
 
 ## Counter display
 - Homepage tagline shows saved, destroyed, and dead totals.
-- Real-time refresh transport (polling or SSE) is TBD.
+- The client polls `GET /counters` at a short interval.
 
 ## Saved skies gallery
 How users browse saved skies (thumbnail constellation renders or seed list) and
