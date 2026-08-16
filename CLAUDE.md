@@ -1,31 +1,25 @@
-# CLAUDE.md — Dying Skies (frontend)
+# CLAUDE.md — Dying Skies (monorepo root)
 
-## Current Status
-- **Phase:** Frontend/visual only. Backend + API contract are out of scope for now.
-- **Done:** Canvas 2D falling stars (rAF loop, wagging pixel tails, hit testing, hover freeze + pointer cursor, click-to-transition seed). URL-driven seed routing: `/` root sky, `/sky/<base64url>` per-sky, browser back/forward via History API (`routeService` + `useSeedRoute`).
-- **Next:** Session-local saved/dead star counters (persistence across reloads).
+Procedurally-generated "skies" as falling stars on a black field. Click a
+falling star → save it + open its sky → infinite traversal. Full concept:
+`docs/PLAN.md`. The sky is the interface; UI is near-invisible.
 
-> Keep this section current as we go. It's the first thing to read each request.
+## Repo Layout
+Three independent pieces, each with its own tooling. Read the scoped
+`CLAUDE.md` inside the piece you're working on; it overrides this file.
 
-## What This Is
-Procedurally-generated "skies" as falling stars on a black field. Click a falling star → save it + open its sky → infinite traversal. Full concept: `PLAN.md`. One-liner: the sky is the interface; UI is near-invisible.
+- **`frontend/`** — Vite + React, Canvas 2D visual layer. The active track.
+  See `frontend/CLAUDE.md`.
+- **`backend/`** — API + persistence. Not started.
+- **`analytics/`** — Data/metrics pipeline. Not started.
+- **`docs/`** — Cross-cutting docs (`PLAN.md`). Piece-specific docs live under
+  their piece.
 
-## Scope & Workflow
-- **My job:** commands + code. **Sander drives** — implement small chunks, he reviews.
-- This track is **visual/frontend ONLY**. No auth, no real backend calls yet (stub/mock data).
+## Conventions (all pieces)
+- Windows/Linux only. Use Bash, `python`, `wc -w` for word counts.
+- Soft-wrap prose. No em-dashes. Prefer non-Microsoft tooling.
+- Full descriptive names; exceptions are `id`, `url`, `api`.
 
-## Stack
-- **Vite + React** (NOT Next.js). Rendering: **Canvas 2D** primary; WebGL/Three.js only if effects demand it.
-- Everything deterministic-from-seed lives in pure generator functions (constellation, palette, trajectory).
-
-## System Conventions
-- Windows/Linux only (no Mac). Bash over PowerShell. `python` not `python3`. `wc -w` for word counts.
-- No em-dashes. Soft-wrap prose. Prefer non-Microsoft tooling.
-
-## Code Conventions
-- Use **Full descriptive names** over abbreviations or acronyms.
-  - `userAuthentication` beats `usrAuth` or `ua`.
-  - **Exception:** universally understood abbreviations (`id`, `url`, `api`).
-- When writing or editing **CSS**, always refer to `docs\Sparse.css.md`
-- When writing or editing **React**, always refer to `docs\Sparse.React.md`
-- When writing or editing **Typescript**, always refer to `docs\Sparse.ts.md`
+## Workflow
+Claude runs commands + code. Sander drives and reviews in small chunks,
+increasingly hands-off per piece.
