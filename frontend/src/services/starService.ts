@@ -1,5 +1,5 @@
-import { createSeededRandom, deriveSeed } from "./randomService";
-import type { RandomNumberGenerator } from "./randomService";
+import { createSeededRandom, deriveSeed, generateSeed } from "./randomService";
+import type { RandomNumberGenerator, Seed } from "./randomService";
 import { generatePalette, toCssColor } from "./paletteService";
 import type {
   FallingStar,
@@ -42,9 +42,6 @@ const TWO_PI = Math.PI * 2;
 const WAG_AMPLITUDE = 1;
 const WAG_FREQUENCY = 40;
 const WAG_WAVENUMBER = 0.1;
-
-// full range of a 32-bit seed.
-const SEED_RANGE = 0x100000000;
 
 ////////////////////////////////////////////////////////////
 // GENERATION
@@ -101,7 +98,7 @@ const pickFallAngle = (random: RandomNumberGenerator): number =>
   DEGREES_TO_RADIANS;
 
 /** derive the sky's deterministic palette and fall angle from one seed. */
-const generateSkyProfile = (seed: number): SkyProfile => {
+const generateSkyProfile = (seed: Seed): SkyProfile => {
   const palette = generatePalette(deriveSeed(seed, "palette"));
   const random = createSeededRandom(deriveSeed(seed, "fall-angle"));
   const fallAngle = pickFallAngle(random);
@@ -112,13 +109,13 @@ const generateSkyProfile = (seed: number): SkyProfile => {
 // SPAWNING
 ////////////////////////////////////////////////////////////
 
-// draw a fresh 32-bit star seed from the session stream.
-const drawSeed = (sessionRandom: RandomNumberGenerator): number =>
-  Math.floor(sessionRandom() * SEED_RANGE);
+// draw a fresh 256-bit star seed from the session stream.
+const drawSeed = (sessionRandom: RandomNumberGenerator): Seed =>
+  generateSeed(sessionRandom);
 
 // build one star: seed fixes appearance, position is given.
 const buildStar = (
-  starSeed: number,
+  starSeed: Seed,
   id: number,
   profile: SkyProfile,
   positionX: number,

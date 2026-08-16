@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { MouseEvent as ReactMouseEvent, RefObject } from "react";
 import { createSeededRandom } from "../services/randomService";
+import type { Seed } from "../services/randomService";
 import {
   findStarAtCoordinates,
   generateSkyProfile,
@@ -19,8 +20,8 @@ interface StarFieldHandle {
 
 /** run the falling-star animation loop against a canvas for one sky seed. */
 const useStarField = (
-  seed: number,
-  onSelectStar?: (starSeed: number) => void,
+  seed: Seed,
+  onSelectStar?: (starSeed: Seed) => void,
 ): StarFieldHandle => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const stateRef = useRef<StarFieldState | null>(null);

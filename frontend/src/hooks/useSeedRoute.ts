@@ -1,28 +1,30 @@
 import { useEffect, useState } from "react";
-import { SEED_RANGE, seedFromPath, seedToPath } from "../services/routeService";
+import type { Seed } from "../services/randomService";
+import { createSeededRandom, generateSeed, seedsEqual } from "../services/randomService";
+import { seedFromPath, seedToPath } from "../services/routeService";
 
 interface SeedRoute {
-  readonly seed: number;
-  readonly navigateToSeed: (starSeed: number) => void;
+  readonly seed: Seed;
+  readonly navigateToSeed: (starSeed: Seed) => void;
   readonly navigateToRandomSeed: () => void;
 }
 
 /** drive the active sky seed from the URL, with back/forward support. */
 const useSeedRoute = (): SeedRoute => {
-  const [seed, setSeed] = useState<number>((): number =>
+  const [seed, setSeed] = useState<Seed>((): Seed =>
     seedFromPath(window.location.pathname),
   );
 
-  const navigateToSeed = (starSeed: number): void => {
-    if (starSeed >>> 0 === seed) {
+  const navigateToSeed = (starSeed: Seed): void => {
+    if (seedsEqual(starSeed, seed)) {
       return;
     }
     window.history.pushState(null, "", seedToPath(starSeed));
-    setSeed(starSeed >>> 0);
+    setSeed(starSeed);
   };
 
   const navigateToRandomSeed = (): void => {
-    navigateToSeed(Math.floor(Math.random() * SEED_RANGE));
+    navigateToSeed(generateSeed(createSeededRandom(Date.now())));
   };
 
   // history is an external system, so sync back/forward via effect.

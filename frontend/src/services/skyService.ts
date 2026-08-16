@@ -1,5 +1,5 @@
 import { createSeededRandom, deriveSeed } from "./randomService";
-import type { RandomNumberGenerator } from "./randomService";
+import type { RandomNumberGenerator, Seed } from "./randomService";
 import type { Dot, Edge, Sky, NearnessEntry, CandidateEdge } from "../types/sky";
 
 ////////////////////////////////////////////////////////////
@@ -170,7 +170,7 @@ const generateConstellation = (
 ////////////////////////////////////////////////////////////
 
 /** generate a full sky (dots + constellation) from one seed. */
-const generateSky = (seed: number): Sky => {
+const generateSky = (seed: Seed): Sky => {
   const random = createSeededRandom(deriveSeed(seed, "sky-backdrop"));
   const dots = generateDots(random);
   const edges = generateConstellation(dots, random);

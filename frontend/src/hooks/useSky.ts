@@ -1,13 +1,14 @@
 import { useEffect, useRef } from "react";
 import type { RefObject } from "react";
 import { generateSky, renderSky } from "../services/skyService";
+import type { Seed } from "../services/randomService";
 
 interface SkyHandle {
   readonly canvasRef: RefObject<HTMLCanvasElement | null>;
 }
 
 /** wire a seed to the canvas; redraw when seed changes. */
-const useSky = (seed: number): SkyHandle => {
+const useSky = (seed: Seed): SkyHandle => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // canvas is an external system, so drive it via effect.

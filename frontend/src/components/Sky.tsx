@@ -1,8 +1,9 @@
 import type { ReactElement } from "react";
 import { useSky } from "../hooks/useSky";
+import type { Seed } from "../services/randomService";
 
 interface SkyProps {
-  readonly seed: number;
+  readonly seed: Seed;
 }
 
 const Sky = ({ seed }: SkyProps): ReactElement => {

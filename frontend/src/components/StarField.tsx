@@ -1,9 +1,10 @@
 import type { ReactElement } from "react";
 import { useStarField } from "../hooks/useStarField";
+import type { Seed } from "../services/randomService";
 
 interface StarFieldProps {
-  readonly seed: number;
-  readonly onSelectStar?: (starSeed: number) => void;
+  readonly seed: Seed;
+  readonly onSelectStar?: (starSeed: Seed) => void;
 }
 
 const StarField = ({ seed, onSelectStar }: StarFieldProps): ReactElement => {

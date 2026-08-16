@@ -29,14 +29,12 @@ API (`routeService.ts`), no router library. Root and sky routes work,
 including back/forward. `/analytics` is not implemented: the Footer's
 analytics icon links to `#` with no route or view behind it.
 
-## Stage 4: 256-bit seeds — TODO
-Seeds are still 32-bit unsigned integers everywhere: `SEED_RANGE =
-0x100000000` and `>>> 0` masking in `randomService.ts`, `routeService.ts`
-(4-byte codec), `starService.ts`, and `useSeedRoute.ts`. `ROOT_SEED = 12345`
-is a plain number; it needs to become a 256-bit constant. Needed: a 32-byte
-seed type (byte array or BigInt), a base64url codec at ~43 chars, PRNG
-seeding from the full 256 bits, `deriveSeed` domain-splitting kept, and
-every seed-typed call site above converted together.
+## Stage 4: 256-bit seeds — DONE
+`Seed` is a 32-byte `number[]` (`randomService.ts`), fed through
+`hashSeedBytes` before `deriveSeed`'s domain-split avalanche mix.
+`routeService.ts` codes seeds as raw base64url bytes (~43 chars); `ROOT_SEED`
+is a 32-byte literal. Every seed-typed call site (`starService.ts`,
+`skyService.ts`, hooks, `Sky`/`StarField`) now uses `Seed`.
 
 ## Stage 5: Counter display — PARTIAL
 Footer renders the saved/destroyed/died tagline (`Footer.tsx`,

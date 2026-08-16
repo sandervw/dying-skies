@@ -1,4 +1,5 @@
 import type { Palette } from "./palette";
+import type { Seed } from "../services/randomService";
 
 /** one coloured pixel, offset from the star's centre. */
 interface StarPixel {
@@ -10,7 +11,7 @@ interface StarPixel {
 /** one live falling star; seed is identity, position moves. */
 interface FallingStar {
   readonly id: number;
-  readonly seed: number;
+  readonly seed: Seed;
   readonly positionX: number;
   readonly positionY: number;
   readonly velocityX: number;
