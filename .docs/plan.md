@@ -34,5 +34,5 @@ The full breakdown lives on `/analytics`.
    session-local or disabled saving.
 2. **Backend and storage**: Postgres, FastAPI, HMAC seed issuance, counters.
 3. **Custom auth**: accounts, persistent collections, destroy-saved-sky.
-4. **Analytics**: Dagster, dbt, evidence.dev.
+4. **Analytics**: Dagster, dbt, Observable Framework.
 5. **MIDI audio**: seed-driven tune per sky via the Web Audio API.

@@ -11,7 +11,7 @@ standards below apply everywhere.
 
 - **`frontend/`**: Vite + React, Canvas 2D visual layer. The active track.
 - **`backend/`**: FastAPI + Postgres API. Not started.
-- **`analytics/`**: Dagster + dbt + evidence.dev pipeline. Not started.
+- **`analytics/`**: Dagster + dbt + Observable Framework pipeline. Not started.
 - **`.docs/`**: cross-cutting docs (`plan.md`). Each piece keeps its own
   `.docs_<piece>/` folder.
 
