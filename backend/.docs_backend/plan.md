@@ -7,7 +7,7 @@ into the stages below; an agent implements exactly one stage per pass.
 GCP: FastAPI container on Cloud Run, Postgres on Cloud SQL. Frontend stays on
 Cloudflare. Deploy via Docker image + `gcloud run deploy`; infra as Terraform.
 
-## Stage 1: Project and infra scaffold - TODO
+## Stage 1: Project and infra scaffold - DONE
 - FastAPI app skeleton with a health check route.
 - Postgres connection setup (local dev via Docker Compose or equivalent).
 - Dockerfile for the FastAPI service.
