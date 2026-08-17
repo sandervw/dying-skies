@@ -5,24 +5,32 @@ import { ImmersionToggle } from "./components/ImmersionToggle";
 import { RandomSeedButton } from "./components/RandomSeedButton";
 import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
+import { AnalyticsView } from "./components/AnalyticsView";
 import { useImmersion } from "./hooks/useImmersion";
 import { useSeedRoute } from "./hooks/useSeedRoute";
 import { useStats } from "./hooks/useStats";
 
 const App = (): ReactElement => {
   const { immersive, toggleImmersion } = useImmersion();
-  const { seed, navigateToSeed, navigateToRandomSeed } = useSeedRoute();
+  const { seed, view, navigateToSeed, navigateToRandomSeed, navigateToAnalytics } =
+    useSeedRoute();
   const stats = useStats();
 
   return (
     <div className={immersive ? "immersive" : undefined}>
-      <Sky seed={seed} />
-      <StarField seed={seed} onSelectStar={navigateToSeed} />
-      <RandomSeedButton onRandomize={navigateToRandomSeed} />
+      {view === "sky" ? (
+        <>
+          <Sky seed={seed} />
+          <StarField seed={seed} onSelectStar={navigateToSeed} />
+          <RandomSeedButton onRandomize={navigateToRandomSeed} />
+        </>
+      ) : (
+        <AnalyticsView />
+      )}
       <ImmersionToggle onToggle={toggleImmersion} />
       <div className="ui">
         <Header />
-        <Footer stats={stats} />
+        <Footer stats={stats} onNavigateToAnalytics={navigateToAnalytics} />
       </div>
     </div>
   );

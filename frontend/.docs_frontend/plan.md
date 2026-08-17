@@ -14,8 +14,8 @@ Vite + React SPA, Canvas 2D. Concept: `../../.docs/plan.md`.
 ## Stage 2: Falling star render loop and interaction - DONE
 `useStarField.ts` drives a `requestAnimationFrame` loop: spawns, advances, and culls stars; tail wag via `tailWave`; hover detection freezes the hovered star (`findStarAtCoordinates`, `frozenStarId`); click calls `onSelectStar` to traverse into that star's seed.
 
-## Stage 3: Routing - PARTIAL
-`useSeedRoute.ts` reads/writes `/` and `/sky/<seed>` via the native History API (`routeService.ts`), no router library. Root and sky routes work, including back/forward. `/analytics` is not implemented: the Footer's analytics icon links to `#` with no route or view behind it.
+## Stage 3: Routing - DONE
+`useSeedRoute.ts` reads/writes `/`, `/sky/<seed>`, and `/analytics` via the native History API (`routeService.ts`), no router library. All routes work, including back/forward. `/analytics` renders `AnalyticsView`, a placeholder pending the analytics piece.
 
 ## Stage 4: 256-bit seeds - DONE
 `Seed` is a 32-byte `number[]` (`randomService.ts`), fed through `hashSeedBytes` before `deriveSeed`'s domain-split avalanche mix. `routeService.ts` codes seeds as raw base64url bytes (~43 chars); `ROOT_SEED` is a 32-byte literal. Every seed-typed call site (`starService.ts`, `skyService.ts`, hooks, `Sky`/`StarField`) now uses `Seed`.
