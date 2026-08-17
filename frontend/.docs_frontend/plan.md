@@ -20,8 +20,8 @@ Vite + React SPA, Canvas 2D. Concept: `../../.docs/plan.md`.
 ## Stage 4: 256-bit seeds - DONE
 `Seed` is a 32-byte `number[]` (`randomService.ts`), fed through `hashSeedBytes` before `deriveSeed`'s domain-split avalanche mix. `routeService.ts` codes seeds as raw base64url bytes (~43 chars); `ROOT_SEED` is a 32-byte literal. Every seed-typed call site (`starService.ts`, `skyService.ts`, hooks, `Sky`/`StarField`) now uses `Seed`.
 
-## Stage 5: Counter display - PARTIAL
-Footer renders the saved/destroyed/died tagline (`Footer.tsx`, `statService.ts`). Data is `MOCK_STATS`, a hardcoded constant; `useStats.ts` does not poll or fetch anything. No `GET /counters` call exists yet; blocked on the backend.
+## Stage 5: Counter display - DONE
+Footer renders the saved/destroyed/died tagline (`Footer.tsx`, `statService.ts`). `useStats.ts` polls `GET /counters` every 15s via TanStack Query (`QueryClientProvider` in `main.tsx`); `toStats` maps `Counters` to `Stats`, falling back to `MOCK_STATS` while loading or on error.
 
 ## Stage 6: Root sky access control - TODO
 `ROOT_SEED` exists and resolves to `/`, but the plan's split (anonymous visitors get a view-only screensaver; logged-in users get full traversal) is not implemented. `StarField` always wires `onSelectStar`, so every visitor can click and traverse from any sky, root included. No auth or session concept exists in the frontend yet; this is blocked on backend auth.
