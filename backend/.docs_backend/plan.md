@@ -19,7 +19,7 @@ GCP: FastAPI container on Cloud Run, Postgres on Cloud SQL. Frontend stays on Cl
 - Each falling star carries its `seed` and `tag`.
 - Confirmed: `tag = HMAC-SHA256(secret, seed)`, a separate MAC over the seed. Stage 3 verifies saves statelessly by recomputing this HMAC; nothing is stored per issue.
 
-## Stage 3: Save verification and persistence - TODO
+## Stage 3: Save verification and persistence - DONE
 - `POST /stars/save` accepts `{seed, tag}` from the client.
 - The server recomputes the HMAC, checks the tag, checks the seed is unsaved, stores the 32-byte seed, and increments the saved counter.
 - Offscreen stars are never reported.

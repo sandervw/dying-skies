@@ -18,3 +18,8 @@ def generate_seed(session_id: str, counter: int, secret: bytes) -> bytes:
 def generate_tag(seed: bytes, secret: bytes) -> bytes:
     """Derive a 32-byte tag authenticating a seed."""
     return hmac.new(secret, seed, hashlib.sha256).digest()
+
+
+def verify_tag(seed: bytes, tag: bytes, secret: bytes) -> bool:
+    """Constant-time check that tag authenticates seed."""
+    return hmac.compare_digest(generate_tag(seed, secret), tag)

@@ -30,3 +30,8 @@ async def ensure_schema(pool: asyncpg.Pool) -> None:
         "session_id TEXT PRIMARY KEY, "
         "counter BIGINT NOT NULL DEFAULT 0)"
     )
+    await pool.execute(
+        "CREATE TABLE IF NOT EXISTS saved_stars ("
+        "seed BYTEA PRIMARY KEY, "
+        "saved_at TIMESTAMPTZ NOT NULL DEFAULT now())"
+    )
