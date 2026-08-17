@@ -13,13 +13,11 @@ GCP: FastAPI container on Cloud Run, Postgres on Cloud SQL. Frontend stays on Cl
 
 ## Stage 2: Session identity and seed issuance - DONE
 - On first sky-open, the server sets an anonymous session cookie carrying `session_id`.
-- The server holds a secret key `K`.
-- `POST /seeds/batch` issues a batch of seeds. Each seed is the full 256-bit `HMAC-SHA256(K, session_id || counter)` output; the counter increments and nothing is stored per issue.
+- The server holds a secret key called `secret`.
+- `POST /seeds/batch` issues a batch of seeds. Each seed is the full 256-bit `HMAC-SHA256(secret, session_id || counter)` output; the counter increments and nothing is stored per issue.
 - 256 bits covers visual generation now and future MIDI audio; the seed space makes collisions effectively impossible at any real scale.
 - Each falling star carries its `seed` and `tag`.
-- Confirmed: `tag = HMAC-SHA256(K, seed)`, a separate MAC over the seed.
-  Stage 3 verifies saves statelessly by recomputing this HMAC; nothing is
-  stored per issue.
+- Confirmed: `tag = HMAC-SHA256(secret, seed)`, a separate MAC over the seed. Stage 3 verifies saves statelessly by recomputing this HMAC; nothing is stored per issue.
 
 ## Stage 3: Save verification and persistence - TODO
 - `POST /stars/save` accepts `{seed, tag}` from the client.
@@ -42,5 +40,5 @@ GCP: FastAPI container on Cloud Run, Postgres on Cloud SQL. Frontend stays on Cl
 ## Stage 6: Deploy - TODO
 - Build and push the Docker image.
 - Provision Cloud SQL Postgres and Cloud Run service via Terraform.
-- `gcloud run deploy` from the built image; wire environment secrets (including `K`) through Cloud Run, never committed.
+- `gcloud run deploy` from the built image; wire environment secrets (including `secret`) through Cloud Run, never committed.
 - Point the frontend's API base URL at the deployed Cloud Run service.

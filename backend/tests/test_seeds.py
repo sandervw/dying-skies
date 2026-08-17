@@ -5,7 +5,7 @@ import os
 os.environ.setdefault(
     "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/dying_skies"
 )
-os.environ.setdefault("SEED_HMAC_KEY", "00" * 32)
+os.environ.setdefault("SEED_HMAC_SECRET", "00" * 32)
 
 from fastapi.testclient import TestClient
 
