@@ -9,6 +9,7 @@ const MOCK_STATS: Stats = {
 
 const formatCount = (value: number): string => value.toLocaleString("en-US");
 
+/** derives display Stats from raw Counters. */
 const toStats = (counters: Readonly<Counters>): Stats => ({
   saved: counters.saved,
   destroyed: counters.destroyed,

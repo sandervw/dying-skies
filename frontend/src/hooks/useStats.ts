@@ -15,6 +15,7 @@ const fetchCounters = async (): Promise<Counters> => {
   return response.json() as Promise<Counters>;
 };
 
+/** fetches and polls counters, returning display-ready Stats. */
 const useStats = (): Stats => {
   const { data } = useQuery({
     queryKey: ["counters"],
