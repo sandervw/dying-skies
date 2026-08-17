@@ -24,5 +24,6 @@ Homepage tagline: how many skies humanity has saved, destroyed, and let die. The
 1. **Core experience** (active): React SPA, falling stars, seed traversal, session-local or disabled saving.
 2. **Backend and storage**: Postgres, FastAPI, HMAC seed issuance, counters.
 3. **Custom auth**: accounts, persistent collections, destroy-saved-sky.
+   - Reminder: `saved_stars` (and destroyed rows) gain an owner reference here. Decide global-first-saver vs per-user-collection ownership. Pre-auth saves are anonymous; capture `session_id` at save time earlier only if those saves must be adoptable on signup.
 4. **Analytics**: Dagster, dbt, Observable Framework.
 5. **MIDI audio**: seed-driven tune per sky via the Web Audio API.
