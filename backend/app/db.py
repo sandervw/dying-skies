@@ -21,3 +21,12 @@ async def close_pool() -> None:
     if _pool is not None:
         await _pool.close()
         _pool = None
+
+
+async def ensure_schema(pool: asyncpg.Pool) -> None:
+    """Create required tables if they do not already exist."""
+    await pool.execute(
+        "CREATE TABLE IF NOT EXISTS sessions ("
+        "session_id TEXT PRIMARY KEY, "
+        "counter BIGINT NOT NULL DEFAULT 0)"
+    )
