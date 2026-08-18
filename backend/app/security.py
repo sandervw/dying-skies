@@ -1,7 +1,12 @@
-"""HMAC-based seed and tag generation."""
+"""HMAC-based seed/tag generation and password hashing."""
 import hashlib
 import hmac
 import os
+
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError
+
+_password_hasher = PasswordHasher()
 
 
 def load_secret() -> bytes:
@@ -23,3 +28,16 @@ def generate_tag(seed: bytes, secret: bytes) -> bytes:
 def verify_tag(seed: bytes, tag: bytes, secret: bytes) -> bool:
     """Constant-time check that tag authenticates seed."""
     return hmac.compare_digest(generate_tag(seed, secret), tag)
+
+
+def hash_password(password: str) -> str:
+    """Hash a password with argon2id."""
+    return _password_hasher.hash(password)
+
+
+def verify_password(password: str, password_hash: str) -> bool:
+    """Check a password against its argon2id hash."""
+    try:
+        return _password_hasher.verify(password_hash, password)
+    except VerifyMismatchError:
+        return False

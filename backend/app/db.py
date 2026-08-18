@@ -35,3 +35,14 @@ async def ensure_schema(pool: asyncpg.Pool) -> None:
         "seed BYTEA PRIMARY KEY, "
         "saved_at TIMESTAMPTZ NOT NULL DEFAULT now())"
     )
+    await pool.execute(
+        "CREATE TABLE IF NOT EXISTS users ("
+        "id UUID PRIMARY KEY, "
+        "email TEXT UNIQUE NOT NULL, "
+        "password_hash TEXT NOT NULL, "
+        "created_at TIMESTAMPTZ NOT NULL DEFAULT now())"
+    )
+    await pool.execute(
+        "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS "
+        "user_id UUID REFERENCES users(id)"
+    )

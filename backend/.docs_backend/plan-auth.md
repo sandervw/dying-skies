@@ -7,7 +7,7 @@ FastAPI + Postgres. Concept and decisions: `../../.docs/plan.md` Phase 3. Custom
 - Saving requires login. Seed issuance and viewing stay anonymous.
 - No `session_id` is stored on save.
 
-## Stage 1: Accounts and sessions - TODO
+## Stage 1: Accounts and sessions - DONE
 - `users` table: `id UUID`, `email`, `password_hash`, `created_at TIMESTAMPTZ`.
 - Endpoints: `POST /auth/signup`, `POST /auth/login`, `POST /auth/logout`, `GET /auth/me`.
 - Authenticated session upgrades the anonymous session cookie to carry the user; cookie stays httpOnly.

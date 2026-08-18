@@ -41,3 +41,29 @@ async def reserve_counter_range(session_id: str, count: int) -> range:
         session_id,
     )
     return range(new_counter - count, new_counter)
+
+
+async def set_session_user(session_id: str, user_id: str) -> None:
+    """Link a session to an authenticated user."""
+    pool = await get_pool()
+    await pool.execute(
+        "UPDATE sessions SET user_id = $1 WHERE session_id = $2",
+        user_id,
+        session_id,
+    )
+
+
+async def clear_session_user(session_id: str) -> None:
+    """Unlink a session from its authenticated user."""
+    pool = await get_pool()
+    await pool.execute(
+        "UPDATE sessions SET user_id = NULL WHERE session_id = $1", session_id
+    )
+
+
+async def get_session_user_id(session_id: str) -> str | None:
+    """Return the authenticated user id for a session, if any."""
+    pool = await get_pool()
+    return await pool.fetchval(
+        "SELECT user_id FROM sessions WHERE session_id = $1", session_id
+    )
