@@ -23,11 +23,11 @@ Vite + React SPA, Canvas 2D. Concept: `../../.docs/plan.md`.
 ## Stage 5: Counter display - DONE
 Footer renders the saved/destroyed/died tagline (`Footer.tsx`, `statService.ts`). `useStats.ts` polls `GET /counters` every 15s via TanStack Query (`QueryClientProvider` in `main.tsx`); `toStats` maps `Counters` to `Stats`, falling back to `MOCK_STATS` while loading or on error.
 
-## Stage 6: Root sky access control - TODO
-`ROOT_SEED` exists and resolves to `/`, but the plan's split (anonymous visitors get a view-only screensaver; logged-in users get full traversal) is not implemented. `StarField` always wires `onSelectStar`, so every visitor can click and traverse from any sky, root included. No auth or session concept exists in the frontend yet; this is blocked on backend auth.
+## Stage 6: Auth and access control - TODO
+Add login/signup UI, auth state, and wiring to the backend `/auth/*` endpoints. Saving requires login. Anonymous visitors get a view-only screensaver on every sky; login unlocks click-to-save-and-traverse. Seed issuance and rendering stay anonymous. `StarField` currently always wires `onSelectStar`; gate it on auth. Blocked on backend auth Stage 1.
 
 ## Stage 7: Saved skies gallery and backend integration - TODO
-No gallery component, no save action, no API service file, and no `fetch` calls anywhere in `src/`. All data is session-local per `frontend/CLAUDE.md`. Browsing/sorting UX is still undecided (see Scope below). Blocked on the backend API existing.
+No gallery component, no save action, no API service file, and no `fetch` calls anywhere in `src/`. Add an API service, a save action calling `POST /stars/save` (login required), and a gallery reading `GET /stars/mine`. Browsing/sorting UX is still undecided (see Scope below). Blocked on backend auth Stage 2.
 
 ## Sky composition
 - Pitch-black background.

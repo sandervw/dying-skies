@@ -42,3 +42,6 @@ GCP: FastAPI container on Cloud Run, Postgres on Cloud SQL. Frontend stays on Cl
 - Provision Cloud SQL Postgres and Cloud Run service via Terraform.
 - `gcloud run deploy` from the built image; wire environment secrets (including `secret`) through Cloud Run, never committed.
 - Point the frontend's API base URL at the deployed Cloud Run service.
+
+## Phase 3: Auth
+Accounts and login-gated saving live in `plan-auth.md`. `saved_stars` gains `owner_id` there.

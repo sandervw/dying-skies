@@ -23,7 +23,10 @@ Homepage tagline: how many skies humanity has saved, destroyed, and let die. The
 ## Phases
 1. **Core experience** (active): React SPA, falling stars, seed traversal, session-local or disabled saving.
 2. **Backend and storage**: Postgres, FastAPI, HMAC seed issuance, counters.
-3. **Custom auth**: accounts, persistent collections, destroy-saved-sky.
-   - Reminder: `saved_stars` (and destroyed rows) gain an owner reference here. Decide global-first-saver vs per-user-collection ownership. Pre-auth saves are anonymous; capture `session_id` at save time earlier only if those saves must be adoptable on signup.
-4. **Analytics**: Dagster, dbt, Observable Framework.
+3. **Custom auth**: email/password accounts, persistent collections, destroy-saved-sky.
+   - Global-first-saver: one row per seed; `saved_stars.owner_id` is the first and only saver, nullable for pre-auth legacy rows.
+   - Saving requires login. Seed issuance and viewing stay anonymous.
+   - No `session_id` is stored on save; pre-auth saves are never adopted.
+   - Auth stages: backend `../backend/.docs_backend/plan-auth.md`; frontend plan Stage 6; analytics adds the `users` source and total-users metric.
+4. **Analytics**: Dagster, dbt, Observable Framework. Includes total users from the `users` table.
 5. **MIDI audio**: seed-driven tune per sky via the Web Audio API.
