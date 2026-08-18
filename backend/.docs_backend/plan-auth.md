@@ -14,6 +14,6 @@ FastAPI + Postgres. Concept and decisions: `../../.docs/plan.md` Phase 3. Custom
 - Passwords hashed with argon2id.
 
 ## Stage 2: Login-gated saves and ownership - TODO
-- Migration: add `owner_id UUID NULL REFERENCES users(id)` to `saved_stars`.
+- `saved_stars.owner_id` already exists in the base schema, nullable.
 - `POST /stars/save` requires an authenticated session and sets `owner_id` to the caller; anonymous callers get the `{error, code}` envelope.
 - `GET /stars/mine` returns the caller's saved seeds, newest first.

@@ -24,17 +24,7 @@ async def close_pool() -> None:
 
 
 async def ensure_schema(pool: asyncpg.Pool) -> None:
-    """Create required tables if they do not already exist."""
-    await pool.execute(
-        "CREATE TABLE IF NOT EXISTS sessions ("
-        "session_id TEXT PRIMARY KEY, "
-        "counter BIGINT NOT NULL DEFAULT 0)"
-    )
-    await pool.execute(
-        "CREATE TABLE IF NOT EXISTS saved_stars ("
-        "seed BYTEA PRIMARY KEY, "
-        "saved_at TIMESTAMPTZ NOT NULL DEFAULT now())"
-    )
+    """Create the full schema if tables do not already exist."""
     await pool.execute(
         "CREATE TABLE IF NOT EXISTS users ("
         "id UUID PRIMARY KEY, "
@@ -43,6 +33,14 @@ async def ensure_schema(pool: asyncpg.Pool) -> None:
         "created_at TIMESTAMPTZ NOT NULL DEFAULT now())"
     )
     await pool.execute(
-        "ALTER TABLE sessions ADD COLUMN IF NOT EXISTS "
-        "user_id UUID REFERENCES users(id)"
+        "CREATE TABLE IF NOT EXISTS sessions ("
+        "session_id TEXT PRIMARY KEY, "
+        "counter BIGINT NOT NULL DEFAULT 0, "
+        "user_id UUID REFERENCES users(id))"
+    )
+    await pool.execute(
+        "CREATE TABLE IF NOT EXISTS saved_stars ("
+        "seed BYTEA PRIMARY KEY, "
+        "owner_id UUID REFERENCES users(id), "
+        "saved_at TIMESTAMPTZ NOT NULL DEFAULT now())"
     )
