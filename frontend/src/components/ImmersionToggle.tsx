@@ -7,11 +7,7 @@ interface ImmersionToggleProps {
 
 const ImmersionToggle = ({ onToggle }: ImmersionToggleProps): ReactElement => {
   return (
-    <button
-      className="btn immersion-toggle"
-      onClick={onToggle}
-      aria-label="Toggle immersive mode"
-    >
+    <button className="icon" onClick={onToggle} aria-label="Toggle immersive mode">
       <Icon name="fullscreen" />
     </button>
   );

@@ -46,17 +46,21 @@
   line-height: var(--line-height-normal);
 }
 
-.immersion-toggle {
+.controls {
   position: fixed;
-  bottom: var(--medium);
-  right: var(--medium);
+  top: var(--small);
+  left: 0;
+  width: var(--percent-100);
   z-index: var(--z-nav);
+  display: flex;
+  justify-content: center;
+  gap: var(--small);
 }
 
 .immersive .ui {
   display: none;
 }
-.immersive .immersion-toggle {
+.immersive .controls {
   opacity: var(--percent-25);
 }
 
@@ -67,15 +71,4 @@
   width: var(--percent-100);
   height: var(--percent-100);
   z-index: var(--z-base);
-}
-
-.random-seed {
-  position: fixed;
-  bottom: var(--medium);
-  left: var(--medium);
-  z-index: var(--z-nav);
-}
-
-.immersive .random-seed {
-  opacity: var(--percent-25);
 }

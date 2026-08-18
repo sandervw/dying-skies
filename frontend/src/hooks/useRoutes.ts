@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Seed } from "../services/randomService";
-import { createSeededRandom, generateSeed, seedsEqual } from "../services/randomService";
+import { seedsEqual } from "../services/randomService";
 import {
   ANALYTICS_PATH,
   isAnalyticsPath,
@@ -10,16 +10,15 @@ import {
 
 type View = "sky" | "analytics";
 
-interface SeedRoute {
+interface Routes {
   readonly seed: Seed;
   readonly view: View;
   readonly navigateToSeed: (starSeed: Seed) => void;
-  readonly navigateToRandomSeed: () => void;
   readonly navigateToAnalytics: () => void;
 }
 
 /** drive the active sky seed and view from the URL, with back/forward support. */
-const useSeedRoute = (): SeedRoute => {
+const useRoutes = (): Routes => {
   const [seed, setSeed] = useState<Seed>((): Seed =>
     seedFromPath(window.location.pathname),
   );
@@ -34,10 +33,6 @@ const useSeedRoute = (): SeedRoute => {
     }
     window.history.pushState(null, "", seedToPath(starSeed));
     setSeed(starSeed);
-  };
-
-  const navigateToRandomSeed = (): void => {
-    navigateToSeed(generateSeed(createSeededRandom(Date.now())));
   };
 
   const navigateToAnalytics = (): void => {
@@ -62,7 +57,7 @@ const useSeedRoute = (): SeedRoute => {
     };
   }, []);
 
-  return { seed, view, navigateToSeed, navigateToRandomSeed, navigateToAnalytics };
+  return { seed, view, navigateToSeed, navigateToAnalytics };
 };
 
-export { useSeedRoute };
+export { useRoutes };

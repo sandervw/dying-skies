@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Request, Response
 from pydantic import BaseModel
 
 from app.db import get_pool
+from app.errors import error_response
 from app.security import hash_password, verify_password
 from app.session import (
     clear_session_user,
@@ -38,12 +39,6 @@ class AuthUserResponse(BaseModel):
     email: str
 
 
-def _error(response: Response, status_code: int, code: str) -> dict:
-    """Build an {error, code} envelope and set the response status."""
-    response.status_code = status_code
-    return {"error": code, "code": code}
-
-
 @router.post("/auth/signup")
 async def post_auth_signup(
     body: AuthSignupRequest,
@@ -64,7 +59,7 @@ async def post_auth_signup(
             password_hash,
         )
     except asyncpg.UniqueViolationError:
-        return _error(response, 409, "email_taken")
+        return error_response(response, 409, "email_taken")
 
     await set_session_user(session_id, user_id)
     return AuthUserResponse(id=user_id, email=email).model_dump()
@@ -83,7 +78,7 @@ async def post_auth_login(
         "SELECT id, password_hash FROM users WHERE email = $1", email
     )
     if row is None or not verify_password(body.password, row["password_hash"]):
-        return _error(response, 401, "invalid_credentials")
+        return error_response(response, 401, "invalid_credentials")
 
     user_id = str(row["id"])
     await set_session_user(session_id, user_id)
@@ -105,11 +100,11 @@ async def get_auth_me(request: Request, response: Response) -> dict:
     session_id = request.cookies.get("session_id")
     user_id = await get_session_user_id(session_id) if session_id else None
     if user_id is None:
-        return _error(response, 401, "not_authenticated")
+        return error_response(response, 401, "not_authenticated")
 
     pool = await get_pool()
     row = await pool.fetchrow("SELECT id, email FROM users WHERE id = $1", user_id)
     if row is None:
-        return _error(response, 401, "not_authenticated")
+        return error_response(response, 401, "not_authenticated")
 
     return AuthUserResponse(id=str(row["id"]), email=row["email"]).model_dump()

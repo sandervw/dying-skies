@@ -14,7 +14,7 @@ GCP: FastAPI container on Cloud Run, Postgres on Cloud SQL. Frontend stays on Cl
 ## Stage 2: Session identity and seed issuance - DONE
 - On first sky-open, the server sets an anonymous session cookie carrying `session_id`.
 - The server holds a secret key called `secret`.
-- `POST /seeds/batch` issues a batch of seeds. Each seed is the full 256-bit `HMAC-SHA256(secret, session_id || counter)` output; the counter increments and nothing is stored per issue.
+- `POST /stars/batch` issues a batch of stars. Each carries a seed, the full 256-bit `HMAC-SHA256(secret, session_id || counter)` output; the counter increments and nothing is stored per issue.
 - 256 bits covers visual generation now and future MIDI audio; the seed space makes collisions effectively impossible at any real scale.
 - Each falling star carries its `seed` and `tag`.
 - Confirmed: `tag = HMAC-SHA256(secret, seed)`, a separate MAC over the seed. Stage 3 verifies saves statelessly by recomputing this HMAC; nothing is stored per issue.
@@ -26,13 +26,13 @@ GCP: FastAPI container on Cloud Run, Postgres on Cloud SQL. Frontend stays on Cl
 - Only saved stars persist; storage stays negligible in practice.
 - Saved and destroyed records store a timestamp of the save/destroy event (cross-piece requirement from analytics: historical trends are derived from row timestamps, since the counters are mutable totals).
 
-## Stage 4: Counters and sky data endpoints - TODO
-- `GET /counters` returns current totals: a single incrementing `issued` total, plus `saved` and `destroyed`. `dead = issued - saved - destroyed`.
+## Stage 4: Stats and sky data endpoints - TODO
+- `GET /stats` returns `{saved, destroyed, died}`. `died = issued - saved - destroyed`, derived server-side from an incrementing `issued` total.
 - `GET /sky/:seed` returns sky data for a seed.
-- Destroyed-seed blacklist enforcement is Phase 3 work (root plan). This stage exposes the `destroyed` counter field only.
+- Destroyed-seed blacklist enforcement is Phase 3 work (root plan). This stage exposes the `destroyed` total only.
 
 ## Stage 5: API contract finalized against frontend - TODO
-- Freeze the full contract as a set: `POST /seeds/batch`, `POST /stars/save`, `GET /counters`, `GET /sky/:seed`.
+- Freeze the full contract as a set: `POST /stars/batch`, `POST /stars/save`, `GET /stats`, `GET /sky/:seed`.
 - Seeds and tags travel as base64url strings in JSON.
 - Errors use a `{error, code}` envelope.
 - Confirm shapes against the frontend piece before frontend integration begins; document any changes here and in `backend/CLAUDE.md`.
