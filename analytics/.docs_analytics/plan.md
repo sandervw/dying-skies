@@ -13,8 +13,19 @@ Observable Framework builds a static site served at `dyingskies.com/analytics/` 
 
 ## Stages
 
-### Stage 1: Backend data-access contract (TODO)
+### Stage 1: Backend data-access contract (IN PROGRESS)
 Coordinate with the backend piece: a read-only Postgres role scoped to `saved_stars`, `sessions`, `users`, and counters, plus confirmation that save, destroy, and death events are stored as timestamped rows. `saved_stars` and `sessions` exist now; `users` lands with backend auth.
+
+`sql/grants.sql` and `.docs_analytics/data-contract.md` are written,
+scoping `analytics_reader` to `SELECT` on `sessions` and `saved_stars`
+only. `saved_stars.saved_at` is confirmed as a timestamped row against
+`backend/app/db.py`. Grants for `users` and a counters table stay
+pending until backend delivers those tables.
+
+Pending: Sander must run `sql/grants.sql` against the live backend
+Postgres instance; analytics has no backend DB credentials to do this
+itself. Stage 1 is not done until that run completes and the role is
+confirmed connectable.
 
 ### Stage 2: dbt sources and staging (TODO)
 dbt project scaffold. Declare the backend's Postgres tables as dbt sources (no copying), including `saved_stars`, `sessions`, and `users`. Staging models normalize the raw event, user, and counter tables.
