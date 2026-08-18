@@ -53,10 +53,10 @@ const LoginForm = ({
       <button className="btn" type="submit">
         enter
       </button>
-      <button className="link text-center" type="button" onClick={onSwitch}>
+      <button className="btn" type="button" onClick={onSwitch}>
         create account
       </button>
-      <button className="link text-center" type="button" onClick={onClose}>
+      <button className="btn" type="button" onClick={onClose}>
         cancel
       </button>
     </form>

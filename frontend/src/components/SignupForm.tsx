@@ -107,10 +107,10 @@ const SignupForm = ({
       >
         enter
       </button>
-      <button className="link text-center" type="button" onClick={onSwitch}>
-        have an account? sign in
+      <button className="btn" type="button" onClick={onSwitch}>
+        or, sign in
       </button>
-      <button className="link text-center" type="button" onClick={onClose}>
+      <button className="btn" type="button" onClick={onClose}>
         cancel
       </button>
     </form>
