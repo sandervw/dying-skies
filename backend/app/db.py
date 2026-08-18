@@ -28,7 +28,7 @@ async def ensure_schema(pool: asyncpg.Pool) -> None:
     await pool.execute(
         "CREATE TABLE IF NOT EXISTS users ("
         "id UUID PRIMARY KEY, "
-        "email TEXT UNIQUE NOT NULL, "
+        "username TEXT UNIQUE NOT NULL, "
         "password_hash TEXT NOT NULL, "
         "created_at TIMESTAMPTZ NOT NULL DEFAULT now())"
     )

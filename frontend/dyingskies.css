@@ -72,3 +72,28 @@
   height: var(--percent-100);
   z-index: var(--z-base);
 }
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--medium);
+  width: var(--percent-75);
+  max-width: var(--breakpoint-tablet);
+  max-height: var(--percent-75);
+  overflow-y: auto;
+}
+
+.auth-rules {
+  list-style: none;
+  padding: 0;
+  line-height: var(--line-height-normal);
+}
+
+.rule-pending {
+  color: var(--color-gray);
+}
+
+.auth-error {
+  color: var(--color-gray);
+  text-align: center;
+}

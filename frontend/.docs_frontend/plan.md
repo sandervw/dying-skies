@@ -23,8 +23,8 @@ Vite + React SPA, Canvas 2D. Concept: `../../.docs/plan.md`.
 ## Stage 5: Counter display - DONE
 Footer renders the saved/destroyed/died tagline (`Footer.tsx`, `statService.ts`). `useStats.ts` polls `GET /stats` every 15s via TanStack Query (`QueryClientProvider` in `main.tsx`), returning `Stats` directly and falling back to `MOCK_STATS` while loading or on error.
 
-## Stage 6: Auth and access control - TODO
-Add login/signup UI, auth state, and wiring to the backend `/auth/*` endpoints. Saving requires login. Anonymous visitors get a view-only screensaver on every sky; login unlocks click-to-save-and-traverse. Seed issuance and rendering stay anonymous. `StarField` currently always wires `onSelectStar`; gate it on auth. Blocked on backend auth Stage 1.
+## Stage 6: Auth and access control - DONE
+`useAuth.ts` holds session state from `GET /auth/me`; `authService.ts` wraps the `/auth/*` calls with `credentials: "include"`. `AuthControl` sits in `.controls` beside immersion and analytics, showing `signin` when anonymous and `signout` when authed. Clicking opens `AuthOverlay`, a sparse `.modal` over a `.modal-backdrop` with the sky still falling behind; login, signup, and logout each carry a cancel. Traversal is gated: `App` passes `onSelectStar` only when logged in, so anonymous visitors get a view-only screensaver. Signup collects a username, assigns a riddle, warns that a forgotten login is lost forever, and shows a live rule checklist driven by `POST /auth/password/check`; lists never reach the client. Seed issuance and rendering stay anonymous.
 
 ## Stage 7: Saved skies gallery and backend integration - TODO
 No gallery component, no save action, no API service file, and no `fetch` calls anywhere in `src/`. Add an API service, a save action calling `POST /stars/save` (login required), and a gallery reading `GET /stars/mine`. Browsing/sorting UX is still undecided (see Scope below). Blocked on backend auth Stage 2.
