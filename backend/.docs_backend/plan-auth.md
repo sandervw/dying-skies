@@ -23,7 +23,7 @@ FastAPI + Postgres. Concept and decisions: `../../.docs/plan.md` Phase 3. Custom
 - `POST /auth/signup` re-runs the same checks; failure returns `422 {error, code: "weak_password", rules}`.
 - Matching is present-anywhere, case-insensitive; not bulletproof by design.
 
-## Stage 2: Login-gated saves and ownership - TODO
+## Stage 2: Login-gated saves and ownership - DONE
 - `saved_stars.owner_id` already exists in the base schema, nullable.
 - `POST /stars/save` requires an authenticated session and sets `owner_id` to the caller; anonymous callers get the `{error, code}` envelope.
 - `GET /stars/mine` returns the caller's saved seeds, newest first.

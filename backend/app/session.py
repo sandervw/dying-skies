@@ -67,3 +67,9 @@ async def get_session_user_id(session_id: str) -> str | None:
     return await pool.fetchval(
         "SELECT user_id FROM sessions WHERE session_id = $1", session_id
     )
+
+
+async def get_authenticated_user_id(request: Request) -> str | None:
+    """Return the authenticated user id for the request's session cookie, if any."""
+    session_id = request.cookies.get(SESSION_COOKIE_NAME)
+    return await get_session_user_id(session_id) if session_id else None

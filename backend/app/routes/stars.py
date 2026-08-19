@@ -6,7 +6,11 @@ from app.db import get_pool
 from app.encoding import decode_base64url, encode_base64url
 from app.errors import error_response
 from app.security import generate_seed, generate_tag, load_secret, verify_tag
-from app.session import get_session_id, reserve_counter_range
+from app.session import (
+    get_authenticated_user_id,
+    get_session_id,
+    reserve_counter_range,
+)
 
 router = APIRouter()
 
@@ -37,6 +41,19 @@ class StarSaveRequest(BaseModel):
     tag: str
 
 
+class SavedStar(BaseModel):
+    """A single saved star: its seed and save timestamp."""
+
+    seed: str
+    saved_at: str
+
+
+class SavedStarsResponse(BaseModel):
+    """Response body listing the caller's saved stars."""
+
+    stars: list[SavedStar]
+
+
 @router.post("/stars/batch")
 async def post_stars_batch(
     body: StarsBatchRequest, session_id: str = Depends(get_session_id)
@@ -53,8 +70,15 @@ async def post_stars_batch(
 
 
 @router.post("/stars/save")
-async def post_stars_save(body: StarSaveRequest, response: Response) -> dict:
-    """Verify a star's tag and persist its seed once."""
+async def post_stars_save(
+    body: StarSaveRequest,
+    response: Response,
+    user_id: str | None = Depends(get_authenticated_user_id),
+) -> dict:
+    """Verify a star's tag and persist its seed once, owned by the caller."""
+    if user_id is None:
+        return error_response(response, 401, "not_authenticated")
+
     try:
         seed = decode_base64url(body.seed)
         tag = decode_base64url(body.tag)
@@ -69,11 +93,34 @@ async def post_stars_save(body: StarSaveRequest, response: Response) -> dict:
 
     pool = await get_pool()
     row = await pool.fetchrow(
-        "INSERT INTO saved_stars (seed) VALUES ($1) "
+        "INSERT INTO saved_stars (seed, owner_id) VALUES ($1, $2) "
         "ON CONFLICT (seed) DO NOTHING RETURNING seed",
         seed,
+        user_id,
     )
     if row is None:
         return error_response(response, 409, "already_saved")
 
     return {"status": "saved"}
+
+
+@router.get("/stars/mine")
+async def get_stars_mine(
+    response: Response,
+    user_id: str | None = Depends(get_authenticated_user_id),
+) -> dict:
+    """Return the caller's saved seeds, newest first."""
+    if user_id is None:
+        return error_response(response, 401, "not_authenticated")
+
+    pool = await get_pool()
+    rows = await pool.fetch(
+        "SELECT seed, saved_at FROM saved_stars WHERE owner_id = $1 "
+        "ORDER BY saved_at DESC",
+        user_id,
+    )
+    stars = [
+        SavedStar(seed=encode_base64url(row["seed"]), saved_at=row["saved_at"].isoformat())
+        for row in rows
+    ]
+    return SavedStarsResponse(stars=stars).model_dump()
