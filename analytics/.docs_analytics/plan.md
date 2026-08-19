@@ -20,8 +20,8 @@ Coordinate with the backend piece: a read-only Postgres role scoped to `saved_st
 
 Pending: Sander must run `sql/grants.sql` against the live backend Postgres instance; analytics has no backend DB credentials to do this itself. Stage 1 is not done until that run completes and the role is confirmed connectable.
 
-### Stage 2: dbt sources and staging (TODO)
-dbt project scaffold. Declare the backend's Postgres tables as dbt sources (no copying), including `saved_stars`, `sessions`, and `users`. Staging models normalize the raw event, user, and counter tables.
+### Stage 2: dbt sources and staging (DONE)
+dbt project scaffold. Declares the backend's Postgres tables as dbt sources (no copying), including `saved_stars`, `sessions`, and `users`. Staging models normalize each: `stg_backend__users` (excludes `password_hash`), `stg_backend__sessions`, `stg_backend__saved_stars`.
 
 ### Stage 3: dbt marts (TODO)
 Mart models built on staging: the global counter breakdown (saved/destroyed/dead), total users, and historical trends of saves, destroys, deaths, and signups over time (daily/weekly rollups from timestamped rows). These marts are what Observable Framework queries.

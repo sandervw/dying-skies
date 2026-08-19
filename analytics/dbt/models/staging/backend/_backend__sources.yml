@@ -1,0 +1,22 @@
+version: 2
+
+sources:
+  - name: backend
+    schema: public
+    tables:
+      - name: users
+        columns:
+          - name: id
+          - name: username
+          - name: password_hash
+          - name: created_at
+      - name: sessions
+        columns:
+          - name: session_id
+          - name: counter
+          - name: user_id
+      - name: saved_stars
+        columns:
+          - name: seed
+          - name: owner_id
+          - name: saved_at

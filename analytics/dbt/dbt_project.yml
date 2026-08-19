@@ -1,0 +1,16 @@
+name: 'dying_skies_analytics'
+version: '1.0.0'
+config-version: 2
+
+profile: 'dying_skies_analytics'
+
+model-paths: ["models"]
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  dying_skies_analytics:
+    staging:
+      +materialized: view

@@ -4,4 +4,5 @@ GRANT CONNECT ON DATABASE dying_skies TO analytics_reader;
 GRANT USAGE ON SCHEMA public TO analytics_reader;
 GRANT SELECT ON sessions TO analytics_reader;
 GRANT SELECT ON saved_stars TO analytics_reader;
--- Pending: grant users and a counters table once backend delivers them.
+GRANT SELECT ON users TO analytics_reader;
+-- Pending: grant the counters table once backend delivers it.

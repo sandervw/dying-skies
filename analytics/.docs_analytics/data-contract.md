@@ -7,24 +7,25 @@ Analytics reads the backend's Postgres tables directly as dbt sources. This note
 - `saved_stars.saved_at` is `TIMESTAMPTZ NOT NULL DEFAULT now()`. This drives historical save trends.
 - `saved_stars.seed` is the primary key, `BYTEA`.
 - `sessions` has `session_id` (`TEXT` primary key) and `counter` (`BIGINT NOT NULL DEFAULT 0`), a mutable running total.
+- `users` has `id` (`UUID` primary key), `username` (`TEXT UNIQUE NOT NULL`), `password_hash` (`TEXT NOT NULL`), and `created_at` (`TIMESTAMPTZ NOT NULL DEFAULT now()`). `password_hash` exists but is excluded from every staging model; it never leaves the backend.
 
 ## Access granted
 
-`analytics/sql/grants.sql` creates a read-only role, `analytics_reader`, with `SELECT` only, scoped to exactly two tables:
+`analytics/sql/grants.sql` creates a read-only role, `analytics_reader`, with `SELECT` only, scoped to exactly three tables:
 
 - `sessions`
 - `saved_stars`
+- `users`
 
 No write access anywhere. No access to any other table. The script has not been executed yet; see "Execution pending" below.
 
 ## Access pending
 
-Blocks the corresponding Stage 2 sources until backend delivers these:
+Blocks the corresponding Stage 2 source until backend delivers it:
 
-- `users`: does not exist in the backend schema yet. Lands with backend auth (Phase 3).
 - A timestamped counters table (destroyed/dead events): does not exist yet.
 
-Both must be added to `grants.sql` once delivered.
+Must be added to `grants.sql` once delivered.
 
 ## Execution pending
 
