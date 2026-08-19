@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { ReactElement } from "react";
 import { Sky } from "./components/Sky";
 import { StarField } from "./components/StarField";
-import { Icon } from "./components/Icon";
+import { ButtonBox } from "./components/ButtonBox";
 import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { AnalyticsView } from "./components/AnalyticsView";
@@ -17,7 +17,7 @@ const App = (): ReactElement => {
   const { seed, view, navigateToSeed, navigateToAnalytics } = useRoutes();
   const stats = useStats();
   const { user, setUser } = useAuth();
-  const [authOpen, setAuthOpen] = useState(false);
+  const [open, setOpen] = useState<boolean>(false);
 
   return (
     <div className={immersive ? "immersive" : undefined}>
@@ -32,40 +32,20 @@ const App = (): ReactElement => {
       ) : (
         <AnalyticsView />
       )}
-      <div className="controls">
-        <button
-          className="icon link"
-          onClick={toggleImmersion}
-          aria-label="immersive-mode"
-        >
-          <Icon name="fullscreen" />
-        </button>
-        <button
-          className="icon link"
-          aria-label="Analytics"
-          onClick={(event) => {
-            event.preventDefault();
-            navigateToAnalytics();
-          }}
-        >
-          <Icon name="analytics" />
-        </button>
-        <button
-          className="icon link"
-          onClick={() => setAuthOpen(true)}
-          aria-label="Account/Sign-in"
-        >
-          <Icon name={user !== null ? "signout" : "signin"} />
-        </button>
-      </div>
+      <ButtonBox
+        user={user}
+        toggleImmersion={toggleImmersion}
+        navigateToAnalytics={navigateToAnalytics}
+        setOpen={setOpen}
+      />
       <div className="ui">
         <Header />
         <Footer stats={stats} />
       </div>
-      {authOpen ? (
+      {open ? (
         <AuthOverlay
           user={user}
-          onClose={() => setAuthOpen(false)}
+          onClose={() => setOpen(false)}
           setUser={setUser}
         />
       ) : null}

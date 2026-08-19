@@ -6,6 +6,7 @@ interface AuthUser {
 
 /** per-rule pass/fail booleans for the signup password. */
 interface PasswordRules {
+  readonly middlename: boolean;
   readonly color: boolean;
   readonly zodiac: boolean;
   readonly riddle: boolean;

@@ -15,7 +15,14 @@ interface SignupFormProps {
   readonly onSwitch: () => void;
 }
 
-const RULE_KEYS = ["color", "zodiac", "riddle", "year", "special"] as const;
+const RULE_KEYS = [
+  "middlename",
+  "color",
+  "zodiac",
+  "riddle",
+  "year",
+  "special",
+] as const;
 
 const allRulesPass = (rules: PasswordRules | null): boolean =>
   rules !== null && RULE_KEYS.every((key) => rules[key]);
@@ -68,7 +75,11 @@ const SignupForm = ({
   };
 
   return (
-    <form className="modal auth-form" onSubmit={handleSubmit}>
+    <form
+      className="modal auth-form"
+      autoComplete="off"
+      onSubmit={handleSubmit}
+    >
       <p className="rule-pending text-center">
         Write down your username and password. Forget them and they are lost
         forever.
@@ -87,9 +98,7 @@ const SignupForm = ({
         onChange={(event) => setPassword(event.target.value)}
       />
       <ul className="auth-rules">
-        <li className="rule-pending">
-          · Your middle name, first letter capitalized
-        </li>
+        <RuleRow met={rules?.middlename} label="Your middle name" />
         <RuleRow met={rules?.color} label="A creative color" />
         <RuleRow met={rules?.zodiac} label="Your zodiac sign" />
         <RuleRow

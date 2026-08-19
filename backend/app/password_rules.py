@@ -19,10 +19,11 @@ _RIDDLES = _load("riddles.json")
 _RIDDLE_BY_ID = {riddle["id"]: riddle for riddle in _RIDDLES}
 
 # rule keys returned to the client, in display order.
-RULE_KEYS = ("color", "zodiac", "riddle", "year", "special")
+RULE_KEYS = ("middlename", "color", "zodiac", "riddle", "year", "special")
 
 _SPECIAL_PATTERN = re.compile(r"[^A-Za-z0-9]")
 _DIGIT_PATTERN = re.compile(r"\d")
+_LETTER_PATTERN = re.compile(r"[A-Za-z]")
 
 
 def _contains_any(haystack: str, needles: list) -> bool:
@@ -46,6 +47,7 @@ def check_password(password: str, riddle_id: str) -> dict:
     riddle = get_riddle(riddle_id)
     riddle_answers = [answer.lower() for answer in riddle["answers"]] if riddle else []
     return {
+        "middlename": bool(_LETTER_PATTERN.search(password)),
         "color": _contains_any(lowered, _COLORS),
         "zodiac": _contains_any(lowered, _ZODIAC),
         "riddle": _contains_any(lowered, riddle_answers),
