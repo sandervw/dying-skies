@@ -1,4 +1,4 @@
--- Read-only analytics_reader role, SELECT only, run manually on backend DB.
+-- Read-only analytics_reader role contract; backend ensure_analytics_role applies it.
 CREATE ROLE analytics_reader WITH LOGIN PASSWORD '__SET_SEPARATELY__';
 GRANT CONNECT ON DATABASE dying_skies TO analytics_reader;
 GRANT USAGE ON SCHEMA public TO analytics_reader;

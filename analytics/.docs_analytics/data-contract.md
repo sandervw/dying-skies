@@ -11,13 +11,13 @@ Analytics reads the backend's Postgres tables directly as dbt sources. This note
 
 ## Access granted
 
-`analytics/sql/grants.sql` creates a read-only role, `analytics_reader`, with `SELECT` only, scoped to exactly three tables:
+`analytics/sql/grants.sql` defines a read-only role, `analytics_reader`, with `SELECT` only, scoped to exactly three tables:
 
 - `sessions`
 - `saved_stars`
 - `users`
 
-No write access anywhere. No access to any other table. The script has not been executed yet; see "Execution pending" below.
+No write access anywhere. No access to any other table.
 
 ## Access pending
 
@@ -27,6 +27,6 @@ Blocks the corresponding Stage 2 source until backend delivers it:
 
 Must be added to `grants.sql` once delivered.
 
-## Execution pending
+## Provisioning
 
-Analytics cannot run `grants.sql` itself; it needs backend database credentials that Sander controls. The script is written and reviewed for SQL syntax. Sander must run it against the live backend Postgres instance before `analytics_reader` exists. Stage 2 dbt source declarations depend on this role existing and being connectable.
+The backend provisions the role on startup: `ensure_analytics_role` in `backend/app/db.py` runs the same grants, reading the reader password from `ANALYTICS_READER_PASSWORD`. Sander sets that env var in the backend `.env` (local) or Terraform (deploy); no manual SQL run. `grants.sql` stays the source-of-truth contract the backend implements.

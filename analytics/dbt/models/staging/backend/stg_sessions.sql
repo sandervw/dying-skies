@@ -1,3 +1,4 @@
+-- Sessions: session identity and mutable issuance counter.
 select
     session_id,
     counter,

@@ -44,3 +44,40 @@ async def ensure_schema(pool: asyncpg.Pool) -> None:
         "owner_id UUID REFERENCES users(id), "
         "saved_at TIMESTAMPTZ NOT NULL DEFAULT now())"
     )
+
+
+_ENSURE_ANALYTICS_ROLE = """
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'analytics_reader') THEN
+    EXECUTE format(
+      'CREATE ROLE analytics_reader LOGIN PASSWORD %L',
+      current_setting('analytics.reader_password'));
+  ELSE
+    EXECUTE format(
+      'ALTER ROLE analytics_reader WITH PASSWORD %L',
+      current_setting('analytics.reader_password'));
+  END IF;
+END $$
+"""
+
+
+async def ensure_analytics_role(pool: asyncpg.Pool) -> None:
+    """Create the analytics_reader role and grants when its password is set."""
+    password = os.environ.get("ANALYTICS_READER_PASSWORD")
+    if not password:
+        return
+    async with pool.acquire() as connection:
+        async with connection.transaction():
+            # Pass password via a session setting; role DDL cannot bind params.
+            await connection.execute(
+                "SELECT set_config('analytics.reader_password', $1, true)", password
+            )
+            await connection.execute(_ENSURE_ANALYTICS_ROLE)
+            await connection.execute(
+                "GRANT CONNECT ON DATABASE dying_skies TO analytics_reader"
+            )
+            await connection.execute("GRANT USAGE ON SCHEMA public TO analytics_reader")
+            await connection.execute(
+                "GRANT SELECT ON sessions, saved_stars, users TO analytics_reader"
+            )

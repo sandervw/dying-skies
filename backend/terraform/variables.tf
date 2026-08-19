@@ -21,3 +21,8 @@ variable "db_password" {
   type      = string
   sensitive = true
 }
+
+variable "analytics_reader_password" {
+  type      = string
+  sensitive = true
+}

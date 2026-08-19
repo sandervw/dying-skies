@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.db import close_pool, ensure_schema, get_pool
+from app.db import close_pool, ensure_analytics_role, ensure_schema, get_pool
 from app.routes.auth import router as auth_router
 from app.routes.health import router as health_router
 from app.routes.stars import router as stars_router
@@ -19,6 +19,7 @@ async def lifespan(app: FastAPI):
     """Open the DB pool on startup, close it on shutdown."""
     pool = await get_pool()
     await ensure_schema(pool)
+    await ensure_analytics_role(pool)
     yield
     await close_pool()
 

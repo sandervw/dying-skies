@@ -13,15 +13,13 @@ Observable Framework builds a static site served at `dyingskies.com/analytics/` 
 
 ## Stages
 
-### Stage 1: Backend data-access contract (IN PROGRESS)
-Coordinate with the backend piece: a read-only Postgres role scoped to `saved_stars`, `sessions`, `users`, and counters, plus confirmation that save, destroy, and death events are stored as timestamped rows. `saved_stars` and `sessions` exist now; `users` lands with backend auth.
+### Stage 1: Backend data-access contract (DONE)
+A read-only Postgres role, `analytics_reader`, is scoped to `SELECT` on `saved_stars`, `sessions`, and `users`. `saved_stars.saved_at` is a timestamped row confirmed against `backend/app/db.py`. A counters table stays pending until backend delivers it.
 
-`sql/grants.sql` and `.docs_analytics/data-contract.md` are written, scoping `analytics_reader` to `SELECT` on `sessions` and `saved_stars` only. `saved_stars.saved_at` is confirmed as a timestamped row against `backend/app/db.py`. Grants for `users` and a counters table stay pending until backend delivers those tables.
-
-Pending: Sander must run `sql/grants.sql` against the live backend Postgres instance; analytics has no backend DB credentials to do this itself. Stage 1 is not done until that run completes and the role is confirmed connectable.
+The backend provisions the role: `ensure_analytics_role` in `backend/app/db.py` runs the grants on startup, reading the reader password from `ANALYTICS_READER_PASSWORD`. Sander sets that env var in the backend `.env` (local) or Terraform (deploy). `sql/grants.sql` is the source-of-truth contract the backend implements.
 
 ### Stage 2: dbt sources and staging (DONE)
-dbt project scaffold. Declares the backend's Postgres tables as dbt sources (no copying), including `saved_stars`, `sessions`, and `users`. Staging models normalize each: `stg_backend__users` (excludes `password_hash`), `stg_backend__sessions`, `stg_backend__saved_stars`.
+dbt project scaffold. Declares the backend's Postgres tables as dbt sources (no copying), including `saved_stars`, `sessions`, and `users`. Staging models normalize each: `stg_users` (excludes `password_hash`), `stg_sessions`, `stg_saved_stars`.
 
 ### Stage 3: dbt marts (TODO)
 Mart models built on staging: the global counter breakdown (saved/destroyed/dead), total users, and historical trends of saves, destroys, deaths, and signups over time (daily/weekly rollups from timestamped rows). These marts are what Observable Framework queries.

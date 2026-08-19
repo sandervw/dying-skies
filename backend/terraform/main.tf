@@ -5,6 +5,10 @@ resource "google_cloud_run_v2_service" "api" {
   template {
     containers {
       image = "gcr.io/${var.project_id}/${var.service_name}"
+      env {
+        name  = "ANALYTICS_READER_PASSWORD"
+        value = var.analytics_reader_password
+      }
     }
   }
 }

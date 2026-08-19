@@ -43,5 +43,8 @@ GCP: FastAPI container on Cloud Run, Postgres on Cloud SQL. Frontend stays on Cl
 - `gcloud run deploy` from the built image; wire environment secrets (including `secret`) through Cloud Run, never committed.
 - Point the frontend's API base URL at the deployed Cloud Run service.
 
+## Analytics access
+On startup `ensure_analytics_role` provisions a read-only `analytics_reader` role, granting `SELECT` on `sessions`, `saved_stars`, and `users`. The reader password comes from `ANALYTICS_READER_PASSWORD`; unset skips provisioning. The grant contract lives in `analytics/sql/grants.sql`.
+
 ## Phase 3: Auth
 Accounts and login-gated saving live in `plan-auth.md`. `saved_stars` gains `owner_id` there.
