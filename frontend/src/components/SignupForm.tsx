@@ -8,6 +8,7 @@ import {
   fetchSignupRiddle,
   signup,
 } from "../services/authService";
+import { manualEntryGuards } from "../services/manualEntryGuards";
 
 interface SignupFormProps {
   readonly setUser: (user: AuthUser) => void;
@@ -87,13 +88,14 @@ const SignupForm = ({
       <input
         className="input"
         placeholder="username"
+        {...manualEntryGuards}
         value={username}
         onChange={(event) => setUsername(event.target.value)}
       />
       <input
         className="input"
-        type="password"
         placeholder="password"
+        {...manualEntryGuards}
         value={password}
         onChange={(event) => setPassword(event.target.value)}
       />

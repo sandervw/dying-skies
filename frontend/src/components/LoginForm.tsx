@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { FormEvent, ReactElement } from "react";
 import type { AuthUser } from "../types/auth";
 import { AuthError, login } from "../services/authService";
+import { manualEntryGuards } from "../services/manualEntryGuards";
 
 interface LoginFormProps {
   readonly setUser: (user: AuthUser) => void;
@@ -35,17 +36,22 @@ const LoginForm = ({
   };
 
   return (
-    <form className="modal auth-form" onSubmit={handleSubmit}>
+    <form
+      className="modal auth-form"
+      autoComplete="off"
+      onSubmit={handleSubmit}
+    >
       <input
         className="input"
         placeholder="username"
+        {...manualEntryGuards}
         value={username}
         onChange={(event) => setUsername(event.target.value)}
       />
       <input
         className="input"
-        type="password"
         placeholder="password"
+        {...manualEntryGuards}
         value={password}
         onChange={(event) => setPassword(event.target.value)}
       />

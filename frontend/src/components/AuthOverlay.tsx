@@ -35,7 +35,7 @@ const AuthOverlay = ({
           <button className="btn" onClick={handleLogout}>
             log out
           </button>
-          <button className="link text-center" onClick={onClose}>
+          <button className="btn" onClick={onClose}>
             cancel
           </button>
         </div>
