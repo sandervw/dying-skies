@@ -36,11 +36,7 @@ const LoginForm = ({
   };
 
   return (
-    <form
-      className="modal auth-form"
-      autoComplete="off"
-      onSubmit={handleSubmit}
-    >
+    <form className="modal auth-form" onSubmit={handleSubmit}>
       <input
         className="input"
         placeholder="username"

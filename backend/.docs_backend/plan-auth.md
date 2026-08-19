@@ -16,7 +16,7 @@ FastAPI + Postgres. Concept and decisions: `../../.docs/plan.md` Phase 3. Custom
 - Passwords hashed with argon2id.
 
 ### Password rules (custom, deliberately absurd)
-- A password must contain: the user's middle name (uncheckable, honor system), a creative color, a zodiac sign, the answer to an assigned riddle, a favorite year (any digits), and a special character.
+- A password must contain: a creative color, a zodiac sign, the answer to an assigned riddle, a favorite year (any digits), and a special character.
 - Word lists (`app/data/*.json`: colors, zodiac, riddles) live server-side only and never ship to the client.
 - `GET /auth/signup-riddle` assigns a riddle `{riddle_id, text}`; the answer stays server-side.
 - `POST /auth/password/check` (`{password, riddle_id}`) returns `{rules: {color, zodiac, riddle, year, special}}` booleans only, for the live checklist.
