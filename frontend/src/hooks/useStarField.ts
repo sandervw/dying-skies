@@ -2,6 +2,8 @@ import { useEffect, useRef } from "react";
 import type { MouseEvent as ReactMouseEvent, RefObject } from "react";
 import { createSeededRandom } from "../services/randomService";
 import type { Seed } from "../services/randomService";
+import { fetchStarBatch, rememberTag } from "../services/starApiService";
+import type { IssuedStar } from "../services/starApiService";
 import {
   findStarAtCoordinates,
   generateSkyProfile,
@@ -10,6 +12,13 @@ import {
   stepStarField,
 } from "../services/starService";
 import type { StarFieldState } from "../types/star";
+
+// stars requested per batch call; the backend caps a batch at 100.
+const BATCH_SIZE = 100;
+// refill once the issuance queue drops below this many stars.
+const REFILL_THRESHOLD = 20;
+// wait this long before retrying a failed or empty batch call.
+const RETRY_DELAY_MS = 2000;
 
 interface StarFieldHandle {
   readonly canvasRef: RefObject<HTMLCanvasElement | null>;
@@ -70,6 +79,9 @@ const useStarField = (
     const { x, y } = getCanvasCoordinates(event);
     const star = findStarAtCoordinates(state.stars, fallAngleRef.current, x, y);
     if (star !== null) {
+      if (star.tag !== null) {
+        rememberTag(star.seed, star.tag);
+      }
       onSelectStar(star.seed);
     }
   };
@@ -98,8 +110,43 @@ const useStarField = (
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
     };
 
+    const issuedQueue: IssuedStar[] = [];
+    let isRefilling = false;
+    let refillAfterMs = 0;
+
+    // top up the queue from the backend, throttled on failure or empty.
+    const refillQueue = (): void => {
+      if (isRefilling || Date.now() < refillAfterMs) {
+        return;
+      }
+      isRefilling = true;
+      refillAfterMs = Date.now() + RETRY_DELAY_MS;
+      void fetchStarBatch(BATCH_SIZE)
+        .then((batch): void => {
+          issuedQueue.push(...batch);
+        })
+        .catch((): void => {})
+        .finally((): void => {
+          isRefilling = false;
+        });
+    };
+
+    // hand out one issued pair, refilling as the queue runs low.
+    const takeSeedAndTag = (): IssuedStar | null => {
+      if (issuedQueue.length < REFILL_THRESHOLD) {
+        refillQueue();
+      }
+      return issuedQueue.shift() ?? null;
+    };
+
     resize();
-    let state = populateStarField(profile, sessionRandom, logicalWidth, logicalHeight);
+    let state = populateStarField(
+      profile,
+      sessionRandom,
+      logicalWidth,
+      logicalHeight,
+      takeSeedAndTag,
+    );
     stateRef.current = state;
     let previousTime = performance.now();
     let elapsedSeconds = 0;
@@ -117,22 +164,17 @@ const useStarField = (
         logicalWidth,
         logicalHeight,
         deltaSeconds,
+        takeSeedAndTag,
         hoveredStarIdRef.current,
       );
       stateRef.current = state;
-      renderStarField(
-        context,
-        state,
-        profile,
-        logicalWidth,
-        logicalHeight,
-        elapsedSeconds,
-      );
+      renderStarField(context, state, profile, logicalWidth, logicalHeight, elapsedSeconds);
       animationFrame = window.requestAnimationFrame(tick);
     };
 
     animationFrame = window.requestAnimationFrame(tick);
     window.addEventListener("resize", resize);
+
     return (): void => {
       window.cancelAnimationFrame(animationFrame);
       window.removeEventListener("resize", resize);

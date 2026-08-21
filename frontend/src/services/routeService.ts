@@ -84,12 +84,24 @@ const ANALYTICS_PATH = "/analytics";
 const isAnalyticsPath = (pathname: string): boolean =>
   ANALYTICS_PATH_PATTERN.test(pathname);
 
+// matches "/gallery" with an optional trailing slash.
+const GALLERY_PATH_PATTERN = /^\/gallery\/?$/;
+
+/** the URL path for the saved-skies gallery view. */
+const GALLERY_PATH = "/gallery";
+
+/** true when a URL path points at the gallery view. */
+const isGalleryPath = (pathname: string): boolean =>
+  GALLERY_PATH_PATTERN.test(pathname);
+
 export {
   ROOT_SEED,
   ANALYTICS_PATH,
+  GALLERY_PATH,
   encodeSeed,
   decodeSeed,
   seedToPath,
   seedFromPath,
   isAnalyticsPath,
+  isGalleryPath,
 };

@@ -10,10 +10,16 @@ interface Edge {
   readonly to: number;
 }
 
-/** a full sky: its dot field and constellation edges. */
-interface Sky {
+/** one constellation: its own member dots and connecting edges. */
+interface Constellation {
   readonly dots: readonly Dot[];
   readonly edges: readonly Edge[];
+}
+
+/** a full sky: its scattered background dots plus one constellation. */
+interface Sky {
+  readonly backgroundDots: readonly Dot[];
+  readonly constellation: Constellation;
 }
 
 /** a dot's index paired with its squared distance from an anchor. */
@@ -29,4 +35,4 @@ interface CandidateEdge {
   readonly squaredDistance: number;
 }
 
-export type { Dot, Edge, Sky, NearnessEntry, CandidateEdge };
+export type { Dot, Edge, Constellation, Sky, NearnessEntry, CandidateEdge };

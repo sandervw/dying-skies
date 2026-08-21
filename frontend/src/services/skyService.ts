@@ -1,6 +1,13 @@
 import { createSeededRandom, deriveSeed } from "./randomService";
 import type { RandomNumberGenerator, Seed } from "./randomService";
-import type { Dot, Edge, Sky, NearnessEntry, CandidateEdge } from "../types/sky";
+import type {
+  Dot,
+  Edge,
+  Constellation,
+  Sky,
+  NearnessEntry,
+  CandidateEdge,
+} from "../types/sky";
 
 ////////////////////////////////////////////////////////////
 // DOTS
@@ -144,13 +151,13 @@ const collectLoopEdges = (
     }));
 };
 
-// build one constellation: a tree backbone plus optional loop edges.
+// build a self-contained constellation: tree backbone plus optional loop edges.
 const generateConstellation = (
   dots: readonly Dot[],
   random: RandomNumberGenerator,
-): readonly Edge[] => {
+): Constellation => {
   if (dots.length < CONSTELLATION_STAR_MINIMUM) {
-    return [];
+    return { dots: [], edges: [] };
   }
   const desiredStarCount = Math.floor(
     CONSTELLATION_STAR_MINIMUM +
@@ -158,23 +165,25 @@ const generateConstellation = (
   );
   const starCount = Math.min(desiredStarCount, dots.length);
   const memberIndices = selectMemberIndices(dots, random, starCount);
-  const treeEdges = buildMinimumSpanningTree(dots, memberIndices);
+  const memberDots = memberIndices.map((index: number): Dot => dots[index]);
+  const localIndices = memberDots.map((_dot: Dot, index: number): number => index);
+  const treeEdges = buildMinimumSpanningTree(memberDots, localIndices);
   const maximumLoopEdges = Math.floor(starCount * LOOP_EDGE_RATIO);
   const loopEdgeCount = Math.floor(random() * (maximumLoopEdges + 1));
-  const loopEdges = collectLoopEdges(dots, memberIndices, treeEdges, loopEdgeCount);
-  return [...treeEdges, ...loopEdges];
+  const loopEdges = collectLoopEdges(memberDots, localIndices, treeEdges, loopEdgeCount);
+  return { dots: memberDots, edges: [...treeEdges, ...loopEdges] };
 };
 
 ////////////////////////////////////////////////////////////
 // SKY
 ////////////////////////////////////////////////////////////
 
-/** generate a full sky (dots + constellation) from one seed. */
+/** generate a full sky: background dots plus one constellation, from one seed. */
 const generateSky = (seed: Seed): Sky => {
   const random = createSeededRandom(deriveSeed(seed, "sky-backdrop"));
-  const dots = generateDots(random);
-  const edges = generateConstellation(dots, random);
-  return { dots, edges };
+  const backgroundDots = generateDots(random);
+  const constellation = generateConstellation(backgroundDots, random);
+  return { backgroundDots, constellation };
 };
 
 ////////////////////////////////////////////////////////////
@@ -248,8 +257,25 @@ const renderSky = (
   height: number,
 ): void => {
   context.clearRect(0, 0, width, height);
-  drawConstellation(context, sky.dots, sky.edges, width, height);
-  drawDots(context, sky.dots, width, height);
+  drawConstellation(
+    context,
+    sky.constellation.dots,
+    sky.constellation.edges,
+    width,
+    height,
+  );
+  drawDots(context, sky.backgroundDots, width, height);
 };
 
-export { generateSky, renderSky };
+// paint only a constellation's own dots and edges; caller clears first.
+const renderConstellation = (
+  context: CanvasRenderingContext2D,
+  constellation: Constellation,
+  width: number,
+  height: number,
+): void => {
+  drawConstellation(context, constellation.dots, constellation.edges, width, height);
+  drawDots(context, constellation.dots, width, height);
+};
+
+export { generateSky, renderSky, renderConstellation };

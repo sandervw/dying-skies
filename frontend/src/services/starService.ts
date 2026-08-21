@@ -1,4 +1,4 @@
-import { createSeededRandom, deriveSeed, generateSeed } from "./randomService";
+import { createSeededRandom, deriveSeed } from "./randomService";
 import type { RandomNumberGenerator, Seed } from "./randomService";
 import { generatePalette, toCssColor } from "./paletteService";
 import type {
@@ -109,13 +109,19 @@ const generateSkyProfile = (seed: Seed): SkyProfile => {
 // SPAWNING
 ////////////////////////////////////////////////////////////
 
-// draw a fresh 256-bit star seed from the session stream.
-const drawSeed = (sessionRandom: RandomNumberGenerator): Seed =>
-  generateSeed(sessionRandom);
+/** a seed paired with its real, backend-issued save tag. */
+interface SeedTagPair {
+  readonly seed: Seed;
+  readonly tag: string;
+}
+
+// pulls the next issued pair, or null when none available.
+type SeedTagSource = () => SeedTagPair | null;
 
 // build one star: seed fixes appearance, position is given.
 const buildStar = (
   starSeed: Seed,
+  tag: string | null,
   id: number,
   profile: SkyProfile,
   positionX: number,
@@ -129,6 +135,7 @@ const buildStar = (
   return {
     id,
     seed: starSeed,
+    tag,
     positionX,
     positionY,
     velocityX: Math.cos(profile.fallAngle) * speed,
@@ -165,10 +172,10 @@ const spawnStar = (
   sessionRandom: RandomNumberGenerator,
   width: number,
   height: number,
+  issued: SeedTagPair,
 ): FallingStar => {
-  const starSeed = drawSeed(sessionRandom);
   const entry = pickEntryPoint(profile.fallAngle, sessionRandom, width, height, SIZE_MAXIMUM);
-  return buildStar(starSeed, id, profile, entry.x, entry.y);
+  return buildStar(issued.seed, issued.tag, id, profile, entry.x, entry.y);
 };
 
 // spawn rate that, at steady state, holds the target on-screen count.
@@ -178,21 +185,34 @@ const spawnRatePerSecond = (fallAngle: number, height: number): number => {
   return TARGET_STAR_COUNT / lifetimeSeconds;
 };
 
-/** start with the field already full, scattered across the whole frame. */
+/** fill the field up to the target count with issued stars, if available. */
 const populateStarField = (
   profile: SkyProfile,
   sessionRandom: RandomNumberGenerator,
   width: number,
   height: number,
+  takeSeedAndTag: SeedTagSource,
 ): StarFieldState => {
   const stars: FallingStar[] = [];
-  for (let id = 0; id < TARGET_STAR_COUNT; id += 1) {
-    const starSeed = drawSeed(sessionRandom);
+  let nextStarId = 0;
+  while (nextStarId < TARGET_STAR_COUNT) {
+    const issued = takeSeedAndTag();
+    if (issued === null) {
+      break;
+    }
     stars.push(
-      buildStar(starSeed, id, profile, sessionRandom() * width, sessionRandom() * height),
+      buildStar(
+        issued.seed,
+        issued.tag,
+        nextStarId,
+        profile,
+        sessionRandom() * width,
+        sessionRandom() * height,
+      ),
     );
+    nextStarId += 1;
   }
-  return { stars, spawnAccumulator: 0, nextStarId: TARGET_STAR_COUNT };
+  return { stars, spawnAccumulator: 0, nextStarId };
 };
 
 ////////////////////////////////////////////////////////////
@@ -229,6 +249,7 @@ const stepStarField = (
   width: number,
   height: number,
   deltaSeconds: number,
+  takeSeedAndTag: SeedTagSource,
   frozenStarId?: number | null,
 ): StarFieldState => {
   const step = Math.min(deltaSeconds, MAXIMUM_DELTA_SECONDS);
@@ -241,8 +262,12 @@ const stepStarField = (
   let nextStarId = state.nextStarId;
   const stars: FallingStar[] = [...survivors];
   while (spawnAccumulator >= 1) {
+    const issued = takeSeedAndTag();
+    if (issued === null) {
+      break;
+    }
     spawnAccumulator -= 1;
-    stars.push(spawnStar(nextStarId, profile, sessionRandom, width, height));
+    stars.push(spawnStar(nextStarId, profile, sessionRandom, width, height, issued));
     nextStarId += 1;
   }
   return { stars, spawnAccumulator, nextStarId };
@@ -347,8 +372,10 @@ const findStarAtCoordinates = (
 
 export {
   generateSkyProfile,
+  buildStar,
   populateStarField,
   stepStarField,
+  drawStar,
   renderStarField,
   findStarAtCoordinates,
 };
