@@ -1,12 +1,18 @@
 import { useEffect, useRef } from "react";
-import type { ReactElement } from "react";
+import type { MouseEvent, ReactElement } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { fetchMyStars, saveStar } from "../services/starApiService";
 import { decodeSeed, seedToPath } from "../services/routeService";
 import { generateSky, renderConstellation } from "../services/skyService";
-import { buildStar, drawStar, generateSkyProfile } from "../services/starService";
+import {
+  buildStar,
+  drawStar,
+  findStarAtCoordinates,
+  generateSkyProfile,
+} from "../services/starService";
 import type { AuthUser } from "../types/auth";
+import type { FallingStar, SkyProfile } from "../types/star";
 import type { Seed } from "../services/randomService";
 
 const GALLERY_QUERY_KEY = ["stars", "mine"] as const;
@@ -30,6 +36,8 @@ const GallerySkyBox = ({
   onSelect: (seed: Seed) => void;
 }): ReactElement => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const starRef = useRef<FallingStar | null>(null);
+  const profileRef = useRef<SkyProfile | null>(null);
   useEffect((): (() => void) => {
     const canvas = canvasRef.current;
     const context = canvas?.getContext("2d") ?? null;
@@ -44,6 +52,8 @@ const GallerySkyBox = ({
     const { constellation } = generateSky(seed);
     const profile = generateSkyProfile(seed);
     const star = buildStar(seed, null, 0, profile, 0, 0);
+    starRef.current = star;
+    profileRef.current = profile;
     let frame = 0;
     const startedAt = performance.now();
 
@@ -62,10 +72,26 @@ const GallerySkyBox = ({
     return (): void => window.cancelAnimationFrame(frame);
   }, [seed]);
 
+  // navigate only when the click lands on the star, not the backdrop.
+  const handleClick = (event: MouseEvent<HTMLCanvasElement>): void => {
+    const canvas = canvasRef.current;
+    const star = starRef.current;
+    const profile = profileRef.current;
+    if (canvas === null || star === null || profile === null) {
+      return;
+    }
+    const rect = canvas.getBoundingClientRect();
+    const pointX = event.clientX - rect.left - rect.width / 2;
+    const pointY = event.clientY - rect.top - rect.height / 2;
+    if (findStarAtCoordinates([star], profile.fallAngle, pointX, pointY) !== null) {
+      onSelect(seed);
+    }
+  };
+
   return (
-    <button className="gallery-box" onClick={() => onSelect(seed)} aria-label="Open sky">
-      <canvas ref={canvasRef} />
-    </button>
+    <div className="gallery-box">
+      <canvas ref={canvasRef} onClick={handleClick} aria-label="Open sky" />
+    </div>
   );
 };
 
@@ -86,7 +112,7 @@ const GalleryView = ({ user }: GalleryViewProps): ReactElement => {
     .filter((sky): sky is { token: string; seed: Seed } => sky.seed !== null);
 
   if (user === null) {
-    return <p className="tagline text-center">Sign in to view your saved skies.</p>;
+    return <Navigate to="/" replace />;
   }
   if (isLoading) {
     return <p className="tagline text-center">Loading your saved skies...</p>;

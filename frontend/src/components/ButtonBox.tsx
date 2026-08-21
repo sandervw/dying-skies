@@ -56,13 +56,15 @@ const ButtonBox = ({
       >
         <Icon name="analytics" />
       </button>
-      <button
-        className="icon link"
-        aria-label={onGallery ? "Back" : "Gallery"}
-        onClick={handleGallery}
-      >
-        <Icon name={onGallery ? "return" : "archive"} />
-      </button>
+      {user !== null ? (
+        <button
+          className="icon link"
+          aria-label={onGallery ? "Back" : "Gallery"}
+          onClick={handleGallery}
+        >
+          <Icon name={onGallery ? "return" : "archive"} />
+        </button>
+      ) : null}
       {user !== null && canSaveCurrentSky ? (
         <button
           className="icon link"
