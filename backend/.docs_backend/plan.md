@@ -26,9 +26,9 @@ GCP: FastAPI container on Cloud Run, Postgres on Cloud SQL. Frontend stays on Cl
 - Only saved stars persist; storage stays negligible in practice.
 - Saved and destroyed records store a timestamp of the save/destroy event (cross-piece requirement from analytics: historical trends are derived from row timestamps, since the counters are mutable totals).
 
-## Stage 4: Stats and sky data endpoints - TODO
-- `GET /stats` returns `{saved, destroyed, died}`. `died = issued - saved - destroyed`, derived server-side from an incrementing `issued` total.
-- `GET /sky/:seed` returns sky data for a seed.
+## Stage 4: Stats and sky data endpoints - SPLIT
+- `GET /stats` - DONE. Returns `{saved, destroyed, died}`; `issued` sums `sessions.counter`, `saved` counts `saved_stars`, `destroyed` is hardcoded to 0, `died = issued - saved - destroyed`.
+- `GET /sky/:seed` - DEFERRED by Sander.
 - Destroyed-seed blacklist enforcement is Phase 3 work (root plan). This stage exposes the `destroyed` total only.
 
 ## Stage 5: API contract finalized against frontend - TODO

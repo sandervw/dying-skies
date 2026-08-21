@@ -24,10 +24,10 @@ Vite + React SPA, Canvas 2D. Concept: `../../.docs/plan.md`.
 Footer renders the saved/destroyed/died tagline (`Footer.tsx`, `statService.ts`). `useStats.ts` polls `GET /stats` every 15s via TanStack Query (`QueryClientProvider` in `main.tsx`), returning `Stats` directly and falling back to `MOCK_STATS` while loading or on error.
 
 ## Stage 6: Auth and access control - DONE
-`useAuth.ts` holds session state from `GET /auth/me`; `authService.ts` wraps the `/auth/*` calls with `credentials: "include"`. `AuthControl` sits in `.controls` beside immersion and analytics, showing `signin` when anonymous and `signout` when authed. Clicking opens `AuthOverlay`, a sparse `.modal` over a `.modal-backdrop` with the sky still falling behind; login, signup, and logout each carry a cancel. Traversal is gated: `App` passes `onSelectStar` only when logged in, so anonymous visitors get a view-only screensaver. Signup collects a username, assigns a riddle, warns that a forgotten login is lost forever, and shows a live rule checklist driven by `POST /auth/password/check`; lists never reach the client. Seed issuance and rendering stay anonymous.
+`useAuth.ts` holds session state from `GET /auth/me`; `authService.ts` wraps the `/auth/*` calls with `credentials: "include"`. `AuthControl` sits in `.controls` beside immersion and analytics, showing `signin` when anonymous and `signout` when authed. Clicking opens `AuthOverlay`, a sparse `.modal` over a `.modal-backdrop` with the sky still falling behind; login, signup, and logout each carry a cancel. Traversal is gated: `App` passes `onSelectStar` only when logged in, so anonymous visitors get a view-only screensaver. Signup assigns a riddle and shows a live rule checklist via `POST /auth/password/check`; lists never reach the client. Seed issuance and rendering stay anonymous.
 
-## Stage 7: Saved skies gallery and backend integration - TODO
-No gallery component, no save action, no API service file, and no `fetch` calls anywhere in `src/`. Add an API service, a save action calling `POST /stars/save` (login required), and a gallery reading `GET /stars/mine`. Browsing/sorting UX is still undecided (see Scope below). Blocked on backend auth Stage 2.
+## Stage 7: Saved skies gallery and backend integration - DONE
+`starApiService.ts` wraps `GET /stars/mine`; `useGallery.ts` and `useGalleryStar.ts` drive a login-gated `/gallery` route (`GalleryView.tsx`, `GallerySkyBox.tsx`) `starIssuanceService.ts` calls `POST /stars/batch` for seed/tag pairs. `useStarField.ts` awaits an initial batch before spawning, then refills below a threshold.
 
 ## Sky composition
 - Pitch-black background.
@@ -51,9 +51,6 @@ Screensaver aesthetic. Very minimal UI.
 ## Counter display
 - Homepage tagline shows saved, destroyed, and dead totals.
 - The client polls `GET /stats` at a short interval.
-
-## Saved skies gallery
-How users browse saved skies (thumbnail constellation renders or seed list) and sort or filter options are TBD.
 
 ## Out of scope
 Seed issuance, persistence, auth (backend); the analytics pipeline (analytics).

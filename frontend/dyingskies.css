@@ -97,3 +97,35 @@
   color: var(--color-gray);
   text-align: center;
 }
+
+.gallery {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--percent-100);
+  height: var(--percent-100);
+  z-index: var(--z-base);
+  overflow-y: auto;
+  background-color: var(--color-bg-primary);
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--medium);
+  padding: var(--xlarge);
+}
+
+.gallery-box {
+  aspect-ratio: 1;
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.gallery-box canvas {
+  width: var(--percent-100);
+  height: var(--percent-100);
+  display: block;
+}
