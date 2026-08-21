@@ -17,9 +17,6 @@ async def get_session_id(request: Request, response: Response) -> str:
     pool = await get_pool()
     if session_id is None:
         session_id = secrets.token_urlsafe(24)
-        await pool.execute(
-            "INSERT INTO sessions (session_id) VALUES ($1)", session_id
-        )
         response.set_cookie(
             key=SESSION_COOKIE_NAME,
             value=session_id,
@@ -28,6 +25,11 @@ async def get_session_id(request: Request, response: Response) -> str:
             secure=os.environ.get("COOKIE_SECURE", "false").lower() == "true",
             max_age=_ONE_YEAR_SECONDS,
         )
+    # Upsert so a stale cookie without a row still has one.
+    await pool.execute(
+        "INSERT INTO sessions (session_id) VALUES ($1) ON CONFLICT DO NOTHING",
+        session_id,
+    )
     return session_id
 
 
