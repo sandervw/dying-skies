@@ -1,18 +1,15 @@
 import type { ReactElement } from "react";
-import type { Stats } from "../types/stats";
-import { formatCount } from "../services/statService";
+import { useStats } from "../hooks/useStats";
 
-interface FooterProps {
-  readonly stats: Stats;
-}
+const Footer = (): ReactElement => {
+  const formatCount = (value: number): string => value.toLocaleString("en-US");
+  const stats = useStats();
 
-const Footer = ({ stats }: FooterProps): ReactElement => {
   return (
     <footer className="footer">
       <p className="tagline text-center">
-        So far, man has saved {formatCount(stats.saved)} skies, destroyed{" "}
-        {formatCount(stats.destroyed)} skies, and allowed{" "}
-        {formatCount(stats.died)} skies to die.
+        So far, man has saved {stats.saved} skies, destroyed {stats.destroyed}{" "}
+        skies, and allowed {stats.died} skies to die.
       </p>
     </footer>
   );

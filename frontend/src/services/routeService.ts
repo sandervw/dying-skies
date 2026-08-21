@@ -74,15 +74,8 @@ const seedFromPath = (pathname: string): Seed => {
   return decodeSeed(match[1]) ?? ROOT_SEED;
 };
 
-// matches "/analytics" with an optional trailing slash.
-const ANALYTICS_PATH_PATTERN = /^\/analytics\/?$/;
-
 /** the URL path for the analytics view. */
 const ANALYTICS_PATH = "/analytics";
-
-/** true when a URL path points at the analytics view. */
-const isAnalyticsPath = (pathname: string): boolean =>
-  ANALYTICS_PATH_PATTERN.test(pathname);
 
 // matches "/gallery" with an optional trailing slash.
 const GALLERY_PATH_PATTERN = /^\/gallery\/?$/;
@@ -102,6 +95,5 @@ export {
   decodeSeed,
   seedToPath,
   seedFromPath,
-  isAnalyticsPath,
   isGalleryPath,
 };

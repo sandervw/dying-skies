@@ -1,43 +1,43 @@
 import type { MouseEvent, ReactElement } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "./Icon";
 import type { AuthUser } from "../types/auth";
-import type { View } from "../hooks/useRoutes";
+import {
+  ANALYTICS_PATH,
+  GALLERY_PATH,
+  isGalleryPath,
+} from "../services/routeService";
 
 interface ButtonBoxProps {
   readonly user: AuthUser | null;
-  readonly view: View;
   readonly canSaveCurrentSky: boolean;
   readonly onSaveCurrentSky: () => void;
   readonly toggleImmersion: () => void;
-  readonly navigateToAnalytics: () => void;
-  readonly navigateToGallery: () => void;
-  readonly navigateBack: () => void;
   readonly setOpen: (open: boolean) => void;
 }
 
 const ButtonBox = ({
   user,
-  view,
   canSaveCurrentSky,
   onSaveCurrentSky,
   toggleImmersion,
-  navigateToAnalytics,
-  navigateToGallery,
-  navigateBack,
   setOpen,
 }: ButtonBoxProps): ReactElement => {
+  const navigate = useNavigate();
+  const onGallery = isGalleryPath(useLocation().pathname);
+
   const handleAnalytics = (event: MouseEvent<HTMLButtonElement>): void => {
     event.preventDefault();
-    navigateToAnalytics();
+    navigate(ANALYTICS_PATH);
   };
 
   const handleGallery = (event: MouseEvent<HTMLButtonElement>): void => {
     event.preventDefault();
-    if (view === "gallery") {
-      navigateBack();
+    if (onGallery) {
+      navigate(-1);
       return;
     }
-    navigateToGallery();
+    navigate(GALLERY_PATH);
   };
 
   return (
@@ -58,10 +58,10 @@ const ButtonBox = ({
       </button>
       <button
         className="icon link"
-        aria-label={view === "gallery" ? "Back" : "Gallery"}
+        aria-label={onGallery ? "Back" : "Gallery"}
         onClick={handleGallery}
       >
-        <Icon name={view === "gallery" ? "return" : "archive"} />
+        <Icon name={onGallery ? "return" : "archive"} />
       </button>
       {user !== null && canSaveCurrentSky ? (
         <button

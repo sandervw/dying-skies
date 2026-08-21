@@ -1,8 +1,9 @@
 import { useEffect, useRef } from "react";
 import type { ReactElement } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { fetchMyStars, saveStar } from "../services/starApiService";
-import { decodeSeed } from "../services/routeService";
+import { decodeSeed, seedToPath } from "../services/routeService";
 import { generateSky, renderConstellation } from "../services/skyService";
 import { buildStar, drawStar, generateSkyProfile } from "../services/starService";
 import type { AuthUser } from "../types/auth";
@@ -70,11 +71,11 @@ const GallerySkyBox = ({
 
 interface GalleryViewProps {
   readonly user: AuthUser | null;
-  readonly navigateToSeed: (seed: Seed) => void;
 }
 
 /** the saved-skies gallery: a scrollable grid, gated on login. */
-const GalleryView = ({ user, navigateToSeed }: GalleryViewProps): ReactElement => {
+const GalleryView = ({ user }: GalleryViewProps): ReactElement => {
+  const navigate = useNavigate();
   const { data, isLoading } = useQuery({
     queryKey: GALLERY_QUERY_KEY,
     queryFn: fetchMyStars,
@@ -98,7 +99,11 @@ const GalleryView = ({ user, navigateToSeed }: GalleryViewProps): ReactElement =
       <div className="gallery-grid">
         {skies.map(
           (sky): ReactElement => (
-            <GallerySkyBox key={sky.token} seed={sky.seed} onSelect={navigateToSeed} />
+            <GallerySkyBox
+              key={sky.token}
+              seed={sky.seed}
+              onSelect={(star) => navigate(seedToPath(star))}
+            />
           ),
         )}
       </div>

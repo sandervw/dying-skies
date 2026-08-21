@@ -1,6 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import type { Stats } from "../types/stats";
-import { MOCK_STATS } from "../services/statService";
+
+interface Stats {
+  readonly saved: number;
+  readonly destroyed: number;
+  readonly died: number;
+}
 
 const STATS_REFETCH_INTERVAL_MS = 15000;
 
@@ -22,7 +26,11 @@ const useStats = (): Stats => {
     refetchInterval: STATS_REFETCH_INTERVAL_MS,
   });
 
-  return data ?? MOCK_STATS;
+  return data ?? {
+    saved: 0,
+    destroyed: 0,
+    died: 0,
+  };
 };
 
 export { useStats };
