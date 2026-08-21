@@ -1,3 +1,4 @@
+import { useContext } from "react";
 import type { MouseEvent, ReactElement } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "./Icon";
@@ -7,24 +8,22 @@ import {
   GALLERY_PATH,
   isGalleryPath,
 } from "../services/routeService";
+import { SkyContext } from "../SkyContext";
 
 interface ButtonBoxProps {
   readonly user: AuthUser | null;
-  readonly canSaveCurrentSky: boolean;
-  readonly onSaveCurrentSky: () => void;
   readonly toggleImmersion: () => void;
   readonly setOpen: (open: boolean) => void;
 }
 
 const ButtonBox = ({
   user,
-  canSaveCurrentSky,
-  onSaveCurrentSky,
   toggleImmersion,
   setOpen,
 }: ButtonBoxProps): ReactElement => {
   const navigate = useNavigate();
   const onGallery = isGalleryPath(useLocation().pathname);
+  const { tag, save } = useContext(SkyContext);
 
   const handleAnalytics = (event: MouseEvent<HTMLButtonElement>): void => {
     event.preventDefault();
@@ -65,11 +64,11 @@ const ButtonBox = ({
           <Icon name={onGallery ? "return" : "archive"} />
         </button>
       ) : null}
-      {user !== null && canSaveCurrentSky ? (
+      {user !== null && tag !== null ? (
         <button
           className="icon link"
           aria-label="Save this sky"
-          onClick={onSaveCurrentSky}
+          onClick={save}
         >
           <Icon name="save" />
         </button>

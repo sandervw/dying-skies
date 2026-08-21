@@ -5,6 +5,7 @@ import { BrowserRouter } from "react-router-dom";
 import "../sparse.css";
 import "../dyingskies.css";
 import { App } from "./App";
+import { SkyProvider } from "./SkyContext";
 
 const container = document.getElementById("root");
 
@@ -18,7 +19,9 @@ createRoot(container).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <App />
+        <SkyProvider>
+          <App />
+        </SkyProvider>
       </BrowserRouter>
     </QueryClientProvider>
   </StrictMode>,

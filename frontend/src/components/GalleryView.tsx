@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
 import type { MouseEvent, ReactElement } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
-import { fetchMyStars, saveStar } from "../services/starApiService";
+import { fetchMyStars } from "../services/starApiService";
 import { decodeSeed, seedToPath } from "../services/routeService";
 import { generateSky, renderConstellation } from "../services/skyService";
 import {
@@ -16,16 +16,6 @@ import type { FallingStar, SkyProfile } from "../types/star";
 import type { Seed } from "../services/randomService";
 
 const GALLERY_QUERY_KEY = ["stars", "mine"] as const;
-
-/** save the open sky's star; refreshes the gallery on success. */
-const useSaveStar = () => {
-  const queryClient = useQueryClient();
-  const mutation = useMutation({
-    mutationFn: ({ seed, tag }: { seed: Seed; tag: string }) => saveStar(seed, tag),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: GALLERY_QUERY_KEY }),
-  });
-  return { save: mutation.mutate };
-};
 
 // one clickable tile: a saved sky's constellation and its wagging star.
 const GallerySkyBox = ({
@@ -137,4 +127,4 @@ const GalleryView = ({ user }: GalleryViewProps): ReactElement => {
   );
 };
 
-export { GalleryView, useSaveStar };
+export { GalleryView };
