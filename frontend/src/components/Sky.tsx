@@ -1,10 +1,7 @@
 import type { ReactElement } from "react";
-import { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSky } from "../hooks/useSky";
-import { useStarField } from "../hooks/useStarField";
 import { seedToPath } from "../services/routeService";
-import { SkyContext } from "../SkyContext";
 import type { AuthUser } from "../types/auth";
 
 interface SkyProps {
@@ -12,29 +9,18 @@ interface SkyProps {
 }
 
 const Sky = ({ user }: SkyProps): ReactElement => {
-  const { seed } = useContext(SkyContext);
   const navigate = useNavigate();
-  const { canvasRef } = useSky(seed);
-  const {
-    canvasRef: starCanvasRef,
-    handleClick,
-    handleMouseMove,
-    handleMouseLeave,
-  } = useStarField(
-    seed,
+  const { canvasRef, handleClick, handleMouseMove, handleMouseLeave } = useSky(
     user !== null ? (star) => navigate(seedToPath(star)) : undefined,
   );
   return (
-    <>
-      <canvas ref={canvasRef} className="sky" />
-      <canvas
-        ref={starCanvasRef}
-        className="star-field"
-        onClick={handleClick}
-        onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
-      />
-    </>
+    <canvas
+      ref={canvasRef}
+      className="sky"
+      onClick={handleClick}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    />
   );
 };
 

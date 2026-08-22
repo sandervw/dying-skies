@@ -4,6 +4,7 @@ import type { AuthUser } from "../types/auth";
 import { logout } from "../services/authService";
 import { LoginForm } from "./LoginForm";
 import { SignupForm } from "./SignupForm";
+import { useNavigate } from "react-router-dom";
 
 interface AuthOverlayProps {
   readonly user: AuthUser | null;
@@ -20,10 +21,13 @@ const AuthOverlay = ({
 }: AuthOverlayProps): ReactElement => {
   const [mode, setMode] = useState<Mode>("login");
 
+  const navigate = useNavigate();
+
   const handleLogout = async (): Promise<void> => {
     await logout();
     setUser(null);
     onClose();
+    navigate("/");
   };
 
   return (

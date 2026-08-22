@@ -309,16 +309,13 @@ const drawStar = (
   }
 };
 
-/** clear, then paint every live star, tails wagging. */
+/** paint every live star, tails wagging; caller clears first. */
 const renderStarField = (
   context: CanvasRenderingContext2D,
   state: StarFieldState,
   profile: SkyProfile,
-  width: number,
-  height: number,
   elapsedSeconds: number,
 ): void => {
-  context.clearRect(0, 0, width, height);
   for (const star of state.stars) {
     context.save();
     context.translate(star.positionX, star.positionY);
