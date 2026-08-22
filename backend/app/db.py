@@ -44,6 +44,12 @@ async def ensure_schema(pool: asyncpg.Pool) -> None:
         "owner_id UUID REFERENCES users(id), "
         "saved_at TIMESTAMPTZ NOT NULL DEFAULT now())"
     )
+    await pool.execute(
+        "CREATE TABLE IF NOT EXISTS destroyed_stars ("
+        "seed BYTEA PRIMARY KEY, "
+        "owner_id UUID REFERENCES users(id), "
+        "destroyed_at TIMESTAMPTZ NOT NULL DEFAULT now())"
+    )
 
 
 _ENSURE_ANALYTICS_ROLE = """
@@ -79,5 +85,5 @@ async def ensure_analytics_role(pool: asyncpg.Pool) -> None:
             )
             await connection.execute("GRANT USAGE ON SCHEMA public TO analytics_reader")
             await connection.execute(
-                "GRANT SELECT ON sessions, saved_stars, users TO analytics_reader"
+                "GRANT SELECT ON sessions, saved_stars, destroyed_stars, users TO analytics_reader"
             )

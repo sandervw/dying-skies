@@ -27,7 +27,7 @@ GCP: FastAPI container on Cloud Run, Postgres on Cloud SQL. Frontend stays on Cl
 - Saved and destroyed records store a timestamp of the save/destroy event (cross-piece requirement from analytics: historical trends are derived from row timestamps, since the counters are mutable totals).
 
 ## Stage 4: Stats and sky data endpoints - SPLIT
-- `GET /stats` - DONE. Returns `{saved, destroyed, died}`; `issued` sums `sessions.counter`, `saved` counts `saved_stars`, `destroyed` is hardcoded to 0, `died = issued - saved - destroyed`.
+- `GET /stats` - DONE. Returns `{saved, destroyed, died}`; `issued` sums `sessions.counter`, `saved` counts `saved_stars`, `destroyed` counts `destroyed_stars` (empty until a Phase 3 destroy path exists), `died = issued - saved - destroyed`.
 - `GET /sky/:seed` - DEFERRED by Sander.
 - Destroyed-seed blacklist enforcement is Phase 3 work (root plan). This stage exposes the `destroyed` total only.
 
@@ -44,7 +44,7 @@ GCP: FastAPI container on Cloud Run, Postgres on Cloud SQL. Frontend stays on Cl
 - Point the frontend's API base URL at the deployed Cloud Run service.
 
 ## Analytics access
-On startup `ensure_analytics_role` provisions a read-only `analytics_reader` role, granting `SELECT` on `sessions`, `saved_stars`, and `users`. The reader password comes from `ANALYTICS_READER_PASSWORD`; unset skips provisioning. The grant contract lives in `analytics/sql/grants.sql`.
+On startup `ensure_analytics_role` provisions a read-only `analytics_reader` role, granting `SELECT` on `sessions`, `saved_stars`, `destroyed_stars`, and `users`. The reader password comes from `ANALYTICS_READER_PASSWORD`; unset skips provisioning. The grant contract lives in `analytics/sql/grants.sql`.
 
 ## Phase 3: Auth
 Accounts and login-gated saving live in `plan-auth.md`. `saved_stars` gains `owner_id` there.

@@ -14,6 +14,6 @@ async def get_stats() -> dict:
         "SELECT COALESCE(SUM(counter), 0)::bigint FROM sessions"
     )
     saved = await pool.fetchval("SELECT COUNT(*) FROM saved_stars")
-    destroyed = 0
+    destroyed = await pool.fetchval("SELECT COUNT(*) FROM destroyed_stars")
     died = issued - saved - destroyed
     return {"saved": saved, "destroyed": destroyed, "died": died}
