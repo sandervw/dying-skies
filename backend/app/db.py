@@ -87,6 +87,7 @@ async def ensure_analytics_role(pool: asyncpg.Pool) -> None:
             await connection.execute(
                 "GRANT SELECT ON sessions, saved_stars, destroyed_stars, users TO analytics_reader"
             )
+            await connection.execute("CREATE SCHEMA IF NOT EXISTS analytics")
             await connection.execute(
-                "CREATE SCHEMA IF NOT EXISTS analytics AUTHORIZATION analytics_reader"
+                "ALTER SCHEMA analytics OWNER TO analytics_reader"
             )
