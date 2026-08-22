@@ -16,7 +16,7 @@ Observable Framework builds a static site served at `dyingskies.com/analytics/` 
 ### Stage 1: Backend data-access contract (DONE)
 A read-only Postgres role, `analytics_reader`, is scoped to `SELECT` on `saved_stars`, `sessions`, and `users`. `saved_stars.saved_at` is a timestamped row confirmed against `backend/app/db.py`. A counters table stays pending until backend delivers it.
 
-The backend provisions the role: `ensure_analytics_role` in `backend/app/db.py` runs the grants on startup, reading the reader password from `ANALYTICS_READER_PASSWORD`. Sander sets that env var in the backend `.env` (local) or Terraform (deploy). `sql/grants.sql` is the source-of-truth contract the backend implements.
+The backend provisions the role: `ensure_analytics_role` in `backend/app/db.py` is the source-of-truth contract. On startup it grants `SELECT` on `sessions`, `saved_stars`, `destroyed_stars`, and `users`, and creates an `analytics` schema owned by `analytics_reader` where dbt materializes marts. It reads the reader password from `ANALYTICS_READER_PASSWORD`. Sander sets that env var in the backend `.env` (local) or Terraform (deploy).
 
 ### Stage 2: dbt sources and staging (DONE)
 dbt project scaffold. Declares the backend's Postgres tables as dbt sources (no copying), including `saved_stars`, `sessions`, and `users`. Staging models normalize each: `stg_users` (excludes `password_hash`), `stg_sessions`, `stg_saved_stars`.

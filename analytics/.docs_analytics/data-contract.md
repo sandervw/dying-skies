@@ -13,14 +13,16 @@ Analytics reads the backend's Postgres tables directly as dbt sources. This note
 
 ## Access granted
 
-`analytics/sql/grants.sql` defines a read-only role, `analytics_reader`, with `SELECT` only, scoped to exactly four tables:
+The backend's `ensure_analytics_role` defines a read-only role, `analytics_reader`, with `SELECT` only, scoped to exactly four tables:
 
 - `sessions`
 - `saved_stars`
 - `users`
 - `destroyed_stars`
 
-No write access anywhere. No access to any other table.
+It also creates an `analytics` schema owned by `analytics_reader`, where dbt materializes marts. dbt connects as `analytics_reader` and builds into that schema.
+
+No write access anywhere else. No access to any other table.
 
 ## Access pending
 
@@ -28,4 +30,4 @@ None. A death event table does not exist; dead stays a computed total, not a tre
 
 ## Provisioning
 
-The backend provisions the role on startup: `ensure_analytics_role` in `backend/app/db.py` runs the same grants, reading the reader password from `ANALYTICS_READER_PASSWORD`. Sander sets that env var in the backend `.env` (local) or Terraform (deploy); no manual SQL run. `grants.sql` stays the source-of-truth contract the backend implements.
+The backend provisions the role on startup: `ensure_analytics_role` in `backend/app/db.py` is the source-of-truth contract, reading the reader password from `ANALYTICS_READER_PASSWORD`. Sander sets that env var in the backend `.env` (local) or Terraform (deploy); no manual SQL run.
