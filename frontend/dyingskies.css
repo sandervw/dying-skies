@@ -1,5 +1,193 @@
-/* site theme, loads after sparse.css */
+/* site theme + in-use sparse foundations (single stylesheet) */
 
+/* ### The Laws of Sparse CSS
+*By Sander Vanwilligen*
+1. There are no more than 5 of any variable type. `No Exceptions.`
+2. There are no hardcoded numeric values - only CSS variables. `No Exceptions.`
+3. There are no ems - only rems. `No Exceptions.`
+4. There are no more than 3 distinct 'types' of a class. `No Exceptions.`
+5. There are 4 percentages: 25%, 50%, 75%, 100%. `No Exceptions.`
+6. There are 2 colors: 'copper' and 'danger'. `No Exceptions.`
+7. There may be no more than 2 classes applied to any element. `No Exceptions.`
+8. There is only one animation speed. `No Exceptions.`
+9. There is only one border radius. `No Exceptions.`
+10. No box shadows. `No Exceptions.`
+
+`No Exceptions.` */
+
+/*============================================
+  RESET
+  ============================================*/
+*,
+*::before,
+*::after {
+  font-family: "ia-writer-quattro-s", arial, sans-serif;
+  color: var(--color-text-primary);
+  text-decoration: none;
+  margin: 0;
+}
+html,
+body,
+#root {
+  max-height: var(--percent-100);
+}
+
+/*============================================
+  VARIABLES
+  ============================================*/
+:root {
+  /* Colors */
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-gray: #808080;
+  --color-accent: var(--color-white);
+  --color-placeholder: var(--color-gray);
+  --color-danger: var(--color-gray);
+  --color-text-primary: var(--color-white);
+  --color-bg-primary: var(--color-black);
+  background-color: var(--color-bg-primary);
+  /* Sizes */
+  --xsmall: 0.25rem;
+  --small: 0.5rem;
+  --medium: 1rem;
+  --large: 1.5rem;
+  --xlarge: 2rem;
+  /* Percentages */
+  --percent-25: 25%;
+  --percent-50: 50%;
+  --percent-75: 75%;
+  --percent-100: 100%;
+  /* Font weights */
+  --weight-light: 700;
+  --weight-medium: 700;
+  --weight-bold: 700;
+  /* Line heights */
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.5;
+  --line-height-loose: 1.8;
+  /* Borders */
+  --border-width: 1px;
+  /* Z-index layers */
+  --z-base: 0;
+  --z-overlay: 100;
+  --z-nav: 200;
+  --z-modal: 300;
+  --z-hoverable: 400;
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  /* Breakpoints */
+  --breakpoint-tablet: 67.5rem;
+}
+
+/*============================================
+  FONT UTILITIES
+  ============================================*/
+.font-large {
+  font-size: var(--large);
+}
+.text-center {
+  text-align: center;
+}
+
+/*============================================
+  SVG-ICON STYLES
+  ============================================*/
+.icon {
+  width: var(--large);
+  height: var(--large);
+  padding: 0;
+  border: none;
+  background-color: transparent;
+  transition: var(--transition-fast);
+}
+svg {
+  fill: var(--color-text-primary);
+  transition: var(--transition-fast);
+}
+svg:hover {
+  fill: var(--color-accent);
+}
+
+/*============================================
+  BUTTON
+  ============================================*/
+.btn {
+  padding: var(--medium);
+  border: var(--border-width) solid var(--color-gray);
+  border-radius: var(--medium);
+  background-color: transparent;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  font-size: var(--medium);
+}
+.btn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/*============================================
+  INPUT
+  ============================================*/
+.input {
+  min-width: 0;
+  padding: var(--small) var(--medium);
+  border: var(--border-width) solid var(--color-gray);
+  border-radius: var(--medium);
+  background-color: transparent;
+  transition: var(--transition-fast);
+  outline: none;
+  &::placeholder {
+    color: var(--color-placeholder);
+  }
+}
+.input:focus {
+  border-color: var(--color-accent);
+}
+::placeholder {
+  color: var(--color-placeholder);
+  pointer-events: none;
+}
+
+/*============================================
+  LINK
+  ============================================*/
+.link {
+  display: block;
+  transition: var(--transition-fast);
+  cursor: pointer;
+}
+.link:hover {
+  color: var(--color-accent);
+}
+
+/*============================================
+  MODAL
+  ============================================*/
+.modal {
+  position: fixed;
+  top: var(--percent-50);
+  left: var(--percent-50);
+  transform: translate(-50%, -50%);
+  z-index: var(--z-modal);
+  padding: var(--large);
+  border: var(--border-width) solid var(--color-gray);
+  border-radius: var(--medium);
+  background-color: var(--color-bg-primary);
+}
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--percent-100);
+  height: var(--percent-100);
+  z-index: var(--z-overlay);
+  background-color: var(--color-black);
+  opacity: var(--percent-75);
+}
+
+/*============================================
+  SITE THEME
+  ============================================*/
 .sky {
   position: fixed;
   top: 0;
