@@ -1,29 +1,37 @@
 import { useContext } from "react";
 import type { MouseEvent, ReactElement } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "./Icon";
-import type { AuthUser } from "../types/auth";
 import {
   ANALYTICS_PATH,
   GALLERY_PATH,
+  encodeSeed,
   isGalleryPath,
 } from "../services/routeService";
-import { SkyContext } from "../SkyContext";
+import { SkyContext } from "../contexts/SkyContext";
+import { fetchMyStars } from "../services/starApiService";
+import { useAuth } from "../hooks/useAuth";
 
 interface ButtonBoxProps {
-  readonly user: AuthUser | null;
   readonly toggleImmersion: () => void;
   readonly setOpen: (open: boolean) => void;
 }
 
 const ButtonBox = ({
-  user,
   toggleImmersion,
   setOpen,
 }: ButtonBoxProps): ReactElement => {
   const navigate = useNavigate();
   const onGallery = isGalleryPath(useLocation().pathname);
-  const { tag, save } = useContext(SkyContext);
+  const { seed, tag, save } = useContext(SkyContext);
+  const { user } = useAuth();
+  const { data: savedTokens } = useQuery({
+    queryKey: ["stars", "mine"],
+    queryFn: fetchMyStars,
+    enabled: user !== null,
+  });
+  const isSaved = (savedTokens ?? []).includes(encodeSeed(seed));
 
   const handleAnalytics = (event: MouseEvent<HTMLButtonElement>): void => {
     event.preventDefault();
@@ -64,7 +72,7 @@ const ButtonBox = ({
           <Icon name={onGallery ? "return" : "archive"} />
         </button>
       ) : null}
-      {user !== null && tag !== null ? (
+      {user !== null && tag !== null && !isSaved ? (
         <button
           className="icon link"
           aria-label="Save this sky"

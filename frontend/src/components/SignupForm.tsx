@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { FormEvent, ReactElement } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { AuthUser, PasswordRules } from "../types/auth";
+import type { PasswordRules } from "../types/auth";
 import {
   AuthError,
   checkPassword,
@@ -9,9 +9,9 @@ import {
   signup,
 } from "../services/authService";
 import { manualEntryGuards } from "../services/manualEntryGuards";
+import { useAuth } from "../hooks/useAuth";
 
 interface SignupFormProps {
-  readonly setUser: (user: AuthUser) => void;
   readonly onClose: () => void;
   readonly onSwitch: () => void;
 }
@@ -27,11 +27,8 @@ const RULE_KEYS = [
 const allRulesPass = (rules: PasswordRules | null): boolean =>
   rules !== null && RULE_KEYS.every((key) => rules[key]);
 
-const SignupForm = ({
-  setUser,
-  onClose,
-  onSwitch,
-}: SignupFormProps): ReactElement => {
+const SignupForm = ({ onClose, onSwitch }: SignupFormProps): ReactElement => {
+  const { setUser } = useAuth();
   const { data: riddle } = useQuery({
     queryKey: ["auth", "signup-riddle"],
     queryFn: fetchSignupRiddle,

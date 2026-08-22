@@ -9,36 +9,24 @@ import { AnalyticsView } from "./components/AnalyticsView";
 import { GalleryView } from "./components/GalleryView";
 import { AuthOverlay } from "./components/AuthOverlay";
 import { useImmersion } from "./hooks/useImmersion";
-import { useAuth } from "./hooks/useAuth";
 
 const App = (): ReactElement => {
   const { immersive, toggleImmersion } = useImmersion();
-  const { user, setUser } = useAuth();
   const [open, setOpen] = useState<boolean>(false);
 
   return (
     <div className={immersive ? "immersive" : undefined}>
       <Routes>
-        <Route path="/gallery" element={<GalleryView user={user} />} />
+        <Route path="/gallery" element={<GalleryView />} />
         <Route path="/analytics" element={<AnalyticsView />} />
-        <Route path="*" element={<Sky user={user} />} />
+        <Route path="*" element={<Sky />} />
       </Routes>
-      <ButtonBox
-        user={user}
-        toggleImmersion={toggleImmersion}
-        setOpen={setOpen}
-      />
+      <ButtonBox toggleImmersion={toggleImmersion} setOpen={setOpen} />
       <div className="ui">
         <Header />
         <Footer />
       </div>
-      {open ? (
-        <AuthOverlay
-          user={user}
-          onClose={() => setOpen(false)}
-          setUser={setUser}
-        />
-      ) : null}
+      {open ? <AuthOverlay onClose={() => setOpen(false)} /> : null}
     </div>
   );
 };

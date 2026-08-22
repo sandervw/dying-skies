@@ -3,6 +3,7 @@ import type { MouseEvent, ReactElement } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
 import { fetchMyStars } from "../services/starApiService";
+import { useAuth } from "../hooks/useAuth";
 import { decodeSeed, seedToPath } from "../services/routeService";
 import { generateSky, renderConstellation } from "../services/skyService";
 import {
@@ -11,7 +12,6 @@ import {
   findStarAtCoordinates,
   generateSkyProfile,
 } from "../services/starService";
-import type { AuthUser } from "../types/auth";
 import type { FallingStar } from "../types/star";
 import type { SkyProfile } from "../types/sky";
 import type { Seed } from "../services/randomService";
@@ -86,13 +86,10 @@ const GallerySkyBox = ({
   );
 };
 
-interface GalleryViewProps {
-  readonly user: AuthUser | null;
-}
-
 /** the saved-skies gallery: a scrollable grid, gated on login. */
-const GalleryView = ({ user }: GalleryViewProps): ReactElement => {
+const GalleryView = (): ReactElement => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { data, isLoading } = useQuery({
     queryKey: GALLERY_QUERY_KEY,
     queryFn: fetchMyStars,

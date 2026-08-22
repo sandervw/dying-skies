@@ -1,20 +1,16 @@
 import { useState } from "react";
 import type { FormEvent, ReactElement } from "react";
-import type { AuthUser } from "../types/auth";
 import { AuthError, login } from "../services/authService";
 import { manualEntryGuards } from "../services/manualEntryGuards";
+import { useAuth } from "../hooks/useAuth";
 
 interface LoginFormProps {
-  readonly setUser: (user: AuthUser) => void;
   readonly onClose: () => void;
   readonly onSwitch: () => void;
 }
 
-const LoginForm = ({
-  setUser,
-  onClose,
-  onSwitch,
-}: LoginFormProps): ReactElement => {
+const LoginForm = ({ onClose, onSwitch }: LoginFormProps): ReactElement => {
+  const { setUser } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");

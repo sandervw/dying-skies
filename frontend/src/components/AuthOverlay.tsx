@@ -1,26 +1,20 @@
 import { useState } from "react";
 import type { ReactElement } from "react";
-import type { AuthUser } from "../types/auth";
 import { logout } from "../services/authService";
 import { LoginForm } from "./LoginForm";
 import { SignupForm } from "./SignupForm";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 
 interface AuthOverlayProps {
-  readonly user: AuthUser | null;
   readonly onClose: () => void;
-  readonly setUser: (user: AuthUser | null) => void;
 }
 
 type Mode = "login" | "signup";
 
-const AuthOverlay = ({
-  user,
-  onClose,
-  setUser,
-}: AuthOverlayProps): ReactElement => {
+const AuthOverlay = ({ onClose }: AuthOverlayProps): ReactElement => {
   const [mode, setMode] = useState<Mode>("login");
-
+  const { user, setUser } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async (): Promise<void> => {
@@ -44,17 +38,9 @@ const AuthOverlay = ({
           </button>
         </div>
       ) : mode === "login" ? (
-        <LoginForm
-          setUser={setUser}
-          onClose={onClose}
-          onSwitch={() => setMode("signup")}
-        />
+        <LoginForm onClose={onClose} onSwitch={() => setMode("signup")} />
       ) : (
-        <SignupForm
-          setUser={setUser}
-          onClose={onClose}
-          onSwitch={() => setMode("login")}
-        />
+        <SignupForm onClose={onClose} onSwitch={() => setMode("login")} />
       )}
     </>
   );

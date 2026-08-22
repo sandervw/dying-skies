@@ -2,7 +2,7 @@ import { useContext, useEffect, useRef } from "react";
 import type { MouseEvent as ReactMouseEvent, RefObject } from "react";
 import { createSeededRandom } from "../services/randomService";
 import type { Seed } from "../services/randomService";
-import { SkyContext } from "../SkyContext";
+import { SkyContext } from "../contexts/SkyContext";
 import { fetchStarBatch, rememberTag } from "../services/starApiService";
 import type { IssuedStar } from "../services/starApiService";
 import { generateSky, renderSky } from "../services/skyService";

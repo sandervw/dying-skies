@@ -4,7 +4,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
 import "../dyingskies.css";
 import { App } from "./App";
-import { SkyProvider } from "./SkyContext";
+import { SkyProvider } from "./contexts/SkyContext";
+import { AuthProvider } from "./contexts/AuthContext";
 
 const container = document.getElementById("root");
 
@@ -17,11 +18,13 @@ const queryClient = new QueryClient();
 createRoot(container).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <SkyProvider>
-          <App />
-        </SkyProvider>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <SkyProvider>
+            <App />
+          </SkyProvider>
+        </BrowserRouter>
+      </AuthProvider>
     </QueryClientProvider>
   </StrictMode>,
 );

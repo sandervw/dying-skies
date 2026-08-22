@@ -2,14 +2,11 @@ import type { ReactElement } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSky } from "../hooks/useSky";
 import { seedToPath } from "../services/routeService";
-import type { AuthUser } from "../types/auth";
+import { useAuth } from "../hooks/useAuth";
 
-interface SkyProps {
-  readonly user: AuthUser | null;
-}
-
-const Sky = ({ user }: SkyProps): ReactElement => {
+const Sky = (): ReactElement => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { canvasRef, handleClick, handleMouseMove, handleMouseLeave } = useSky(
     user !== null ? (star) => navigate(seedToPath(star)) : undefined,
   );
