@@ -1,12 +1,8 @@
 import { createSeededRandom, deriveSeed } from "./randomService";
 import type { RandomNumberGenerator, Seed } from "./randomService";
 import { generatePalette, toCssColor } from "./paletteService";
-import type {
-  FallingStar,
-  SkyProfile,
-  StarFieldState,
-  StarPixel,
-} from "../types/star";
+import type { FallingStar, StarFieldState, StarPixel } from "../types/star";
+import type { SkyProfile } from "../types/sky";
 
 ////////////////////////////////////////////////////////////
 // TUNABLES

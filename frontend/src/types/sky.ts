@@ -1,3 +1,11 @@
+import type { Palette } from "./palette";
+
+/** deterministic, sky-level parameters shared by every falling star. */
+interface SkyProfile {
+  readonly palette: Palette;
+  readonly fallAngle: number;
+}
+
 /** one static background dot; x/y are 0..1 fractions. */
 interface Dot {
   readonly x: number;
@@ -35,4 +43,12 @@ interface CandidateEdge {
   readonly squaredDistance: number;
 }
 
-export type { Dot, Edge, Constellation, Sky, NearnessEntry, CandidateEdge };
+export type {
+  SkyProfile,
+  Dot,
+  Edge,
+  Constellation,
+  Sky,
+  NearnessEntry,
+  CandidateEdge,
+};

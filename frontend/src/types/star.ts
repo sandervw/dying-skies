@@ -1,4 +1,3 @@
-import type { Palette } from "./palette";
 import type { Seed } from "../services/randomService";
 
 /** one coloured pixel, offset from the star's centre. */
@@ -23,12 +22,6 @@ interface FallingStar {
   readonly pixels: readonly StarPixel[];
 }
 
-/** deterministic, sky-level parameters shared by every falling star. */
-interface SkyProfile {
-  readonly palette: Palette;
-  readonly fallAngle: number;
-}
-
 /** the whole simulation at one instant; each step returns the next. */
 interface StarFieldState {
   readonly stars: readonly FallingStar[];
@@ -36,4 +29,4 @@ interface StarFieldState {
   readonly nextStarId: number;
 }
 
-export type { StarPixel, FallingStar, SkyProfile, StarFieldState };
+export type { StarPixel, FallingStar, StarFieldState };

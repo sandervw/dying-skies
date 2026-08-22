@@ -12,7 +12,8 @@ import {
   generateSkyProfile,
 } from "../services/starService";
 import type { AuthUser } from "../types/auth";
-import type { FallingStar, SkyProfile } from "../types/star";
+import type { FallingStar } from "../types/star";
+import type { SkyProfile } from "../types/sky";
 import type { Seed } from "../services/randomService";
 
 const GALLERY_QUERY_KEY = ["stars", "mine"] as const;
