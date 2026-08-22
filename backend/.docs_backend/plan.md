@@ -44,7 +44,7 @@ GCP: FastAPI container on Cloud Run, Postgres on Cloud SQL. Frontend stays on Cl
 - Point the frontend's API base URL at the deployed Cloud Run service.
 
 ## Analytics access
-On startup `ensure_analytics_role` provisions a read-only `analytics_reader` role, granting `SELECT` on `sessions`, `saved_stars`, `destroyed_stars`, and `users`. The reader password comes from `ANALYTICS_READER_PASSWORD`; unset skips provisioning. The grant contract lives in `analytics/sql/grants.sql`.
+`ensure_analytics_role` in `app/db.py` is the single source of truth for analytics DB access. On startup it provisions the `analytics_reader` role, grants `CONNECT` + `USAGE` + `SELECT` on `sessions`, `saved_stars`, `destroyed_stars`, and `users`, and creates an `analytics` schema owned by `analytics_reader` so dbt can materialize marts there. The reader password comes from `ANALYTICS_READER_PASSWORD`; unset skips provisioning.
 
 ## Phase 3: Auth
 Accounts and login-gated saving live in `plan-auth.md`. `saved_stars` gains `owner_id` there.

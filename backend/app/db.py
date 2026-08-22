@@ -69,7 +69,7 @@ END $$
 
 
 async def ensure_analytics_role(pool: asyncpg.Pool) -> None:
-    """Create the analytics_reader role and grants when its password is set."""
+    """Create analytics_reader, its grants, and its marts schema."""
     password = os.environ.get("ANALYTICS_READER_PASSWORD")
     if not password:
         return
@@ -86,4 +86,7 @@ async def ensure_analytics_role(pool: asyncpg.Pool) -> None:
             await connection.execute("GRANT USAGE ON SCHEMA public TO analytics_reader")
             await connection.execute(
                 "GRANT SELECT ON sessions, saved_stars, destroyed_stars, users TO analytics_reader"
+            )
+            await connection.execute(
+                "CREATE SCHEMA IF NOT EXISTS analytics AUTHORIZATION analytics_reader"
             )
