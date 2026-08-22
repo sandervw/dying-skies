@@ -21,8 +21,8 @@ The backend provisions the role: `ensure_analytics_role` in `backend/app/db.py` 
 ### Stage 2: dbt sources and staging (DONE)
 dbt project scaffold. Declares the backend's Postgres tables as dbt sources (no copying), including `saved_stars`, `sessions`, and `users`. Staging models normalize each: `stg_users` (excludes `password_hash`), `stg_sessions`, `stg_saved_stars`.
 
-### Stage 3: dbt marts (TODO)
-Mart models built on staging: the global counter breakdown (saved/destroyed/dead), total users, and historical trends of saves, destroys, deaths, and signups over time (daily/weekly rollups from timestamped rows). These marts are what Observable Framework queries.
+### Stage 3: dbt marts (DONE)
+Mart models built on staging: the global counter breakdown (saved/destroyed/dead), total users, and historical trends of saves, destroys, and signups over time (daily/weekly rollups from timestamped rows). No death trend; dead is a computed total only. These marts are what Observable Framework queries.
 
 ### Stage 4: Dagster orchestration (TODO)
 Dagster project scaffold. Assets/jobs that schedule and run the dbt build and the Observable Framework site build, with lineage across them. Dagster does not ingest or store data; it only orchestrates. No freshness sensors or monitoring beyond scheduling the runs.

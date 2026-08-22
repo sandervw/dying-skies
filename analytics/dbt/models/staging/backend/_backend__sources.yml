@@ -20,3 +20,8 @@ sources:
           - name: seed
           - name: owner_id
           - name: saved_at
+      - name: destroyed_stars
+        columns:
+          - name: seed
+          - name: owner_id
+          - name: destroyed_at

@@ -1,0 +1,30 @@
+version: 2
+
+models:
+  - name: mart_star_counters
+    description: Global star counter breakdown.
+    columns:
+      - name: saved
+        description: Total stars currently saved.
+      - name: destroyed
+        description: Total stars destroyed.
+      - name: dead
+        description: Issued minus saved minus destroyed.
+
+  - name: mart_users_total
+    description: Total registered user count.
+    columns:
+      - name: total_users
+        description: Row count of stg_users.
+
+  - name: mart_star_trends
+    description: Daily/weekly counts of saves, destroys, signups.
+    columns:
+      - name: event_day
+        description: Day the events occurred.
+      - name: event_week
+        description: Week the events occurred.
+      - name: event_type
+        description: One of saved, destroyed, signup.
+      - name: event_count
+        description: Count of events in that bucket.
