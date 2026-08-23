@@ -22,7 +22,8 @@ const SkyProvider = ({ children }: { children: ReactNode }): ReactElement => {
   // stable reference per path; re-renders must not restart the star loop.
   const seed = useMemo(() => seedFromPath(pathname), [pathname]);
   const tag = tagForSeed(seed);
-  const mutation = useMutation({
+
+  const saveMutation = useMutation({
     mutationFn: () => saveStar(seed, tag ?? ""),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: ["stars", "mine"] }),
@@ -40,7 +41,7 @@ const SkyProvider = ({ children }: { children: ReactNode }): ReactElement => {
     if (tag === null) {
       return;
     }
-    mutation.mutate();
+    saveMutation.mutate();
   };
 
   // destroy the visible saved sky.
