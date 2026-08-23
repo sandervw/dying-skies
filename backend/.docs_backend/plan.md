@@ -27,12 +27,12 @@ GCP: FastAPI container on Cloud Run, Postgres on Cloud SQL. Frontend stays on Cl
 - Saved and destroyed records store a timestamp of the save/destroy event (cross-piece requirement from analytics: historical trends are derived from row timestamps, since the counters are mutable totals).
 
 ## Stage 4: Stats and sky data endpoints - SPLIT
-- `GET /stats` - DONE. Returns `{saved, destroyed, died}`; `issued` sums `sessions.counter`, `saved` counts `saved_stars`, `destroyed` counts `destroyed_stars` (empty until a Phase 3 destroy path exists), `died = issued - saved - destroyed`.
+- `GET /stats` - DONE. Returns `{saved, destroyed, died}`; `issued` sums `sessions.counter`, `saved` counts `saved_stars`, `destroyed` counts `destroyed_stars`, `died = issued - saved - destroyed`.
 - `GET /sky/:seed` - DEFERRED by Sander.
-- Destroyed-seed blacklist enforcement is Phase 3 work (root plan). This stage exposes the `destroyed` total only.
+- `POST /stars/destroy` - DONE. Owner-authorized (no tag); deletes the caller's `saved_stars` row and inserts into `destroyed_stars` in one transaction. Destruction is permanent: `POST /stars/save` rejects a destroyed seed with `already_destroyed`.
 
 ## Stage 5: API contract finalized against frontend - TODO
-- Freeze the full contract as a set: `POST /stars/batch`, `POST /stars/save`, `GET /stats`, `GET /sky/:seed`.
+- Freeze the full contract as a set: `POST /stars/batch`, `POST /stars/save`, `POST /stars/destroy`, `GET /stats`, `GET /sky/:seed`.
 - Seeds and tags travel as base64url strings in JSON.
 - Errors use a `{error, code}` envelope.
 - Confirm shapes against the frontend piece before frontend integration begins; document any changes here and in `backend/CLAUDE.md`.

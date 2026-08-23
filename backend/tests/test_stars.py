@@ -139,6 +139,61 @@ def test_stars_mine_returns_owned_seeds_newest_first():
         assert seeds == [second["seed"], first["seed"]]
 
 
+def test_star_destroy_requires_authentication():
+    """An anonymous destroy is rejected before decode."""
+    with TestClient(app) as client:
+        entry = _get_star(client)
+        response = client.post("/stars/destroy", json={"seed": entry["seed"]})
+        assert response.status_code == 401
+        assert response.json()["code"] == "not_authenticated"
+
+
+def test_star_destroy_removes_saved_star_permanently():
+    """Destroying a saved star removes it and blocks re-saving."""
+    with TestClient(app) as client:
+        password, riddle_id = _rule_password(client)
+        _signup(client, _username(), password, riddle_id)
+        entry = _get_star(client)
+        client.post("/stars/save", json=entry)
+
+        response = client.post("/stars/destroy", json={"seed": entry["seed"]})
+        assert response.status_code == 200
+        assert response.json() == {"status": "destroyed"}
+
+        mine = client.get("/stars/mine").json()["stars"]
+        assert entry["seed"] not in [star["seed"] for star in mine]
+
+        resave = client.post("/stars/save", json=entry)
+        assert resave.status_code == 409
+        assert resave.json()["code"] == "already_destroyed"
+
+
+def test_star_destroy_rejects_never_saved_seed():
+    """Destroying a valid but never-saved seed is rejected."""
+    with TestClient(app) as client:
+        password, riddle_id = _rule_password(client)
+        _signup(client, _username(), password, riddle_id)
+        entry = _get_star(client)
+
+        response = client.post("/stars/destroy", json={"seed": entry["seed"]})
+        assert response.status_code == 404
+        assert response.json()["code"] == "not_saved"
+
+
+def test_star_destroy_rejects_truncated_seed():
+    """A seed that does not decode to 32 bytes is rejected."""
+    with TestClient(app) as client:
+        password, riddle_id = _rule_password(client)
+        _signup(client, _username(), password, riddle_id)
+        entry = _get_star(client)
+
+        response = client.post(
+            "/stars/destroy", json={"seed": entry["seed"][:-4]}
+        )
+        assert response.status_code == 400
+        assert response.json()["code"] == "malformed_input"
+
+
 def test_stars_mine_only_returns_callers_own_seeds():
     """A caller only sees their own saved seeds, not another's."""
     with TestClient(app) as client:

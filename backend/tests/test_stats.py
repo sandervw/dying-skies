@@ -50,7 +50,7 @@ def test_stats_reflects_issued_and_saved_counts():
 
         after = client.get("/stats").json()
         assert after["saved"] == before["saved"] + 1
-        assert after["destroyed"] == 0
+        assert after["destroyed"] == before["destroyed"]
         assert after["died"] == before["died"] + 1
 
 

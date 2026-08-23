@@ -54,6 +54,12 @@ class SavedStarsResponse(BaseModel):
     stars: list[SavedStar]
 
 
+class StarDestroyRequest(BaseModel):
+    """Request body for a permanent star destruction."""
+
+    seed: str
+
+
 @router.post("/stars/batch")
 async def post_stars_batch(
     body: StarsBatchRequest, session_id: str = Depends(get_session_id)
@@ -92,6 +98,12 @@ async def post_stars_save(
         return error_response(response, 403, "invalid_tag")
 
     pool = await get_pool()
+    destroyed = await pool.fetchval(
+        "SELECT 1 FROM destroyed_stars WHERE seed = $1", seed
+    )
+    if destroyed:
+        return error_response(response, 409, "already_destroyed")
+
     row = await pool.fetchrow(
         "INSERT INTO saved_stars (seed, owner_id) VALUES ($1, $2) "
         "ON CONFLICT (seed) DO NOTHING RETURNING seed",
@@ -102,6 +114,45 @@ async def post_stars_save(
         return error_response(response, 409, "already_saved")
 
     return {"status": "saved"}
+
+
+@router.post("/stars/destroy")
+async def post_stars_destroy(
+    body: StarDestroyRequest,
+    response: Response,
+    user_id: str | None = Depends(get_authenticated_user_id),
+) -> dict:
+    """Permanently destroy one of the caller's saved stars."""
+    if user_id is None:
+        return error_response(response, 401, "not_authenticated")
+
+    try:
+        seed = decode_base64url(body.seed)
+    except ValueError:
+        return error_response(response, 400, "malformed_input")
+    if len(seed) != 32:
+        return error_response(response, 400, "malformed_input")
+
+    pool = await get_pool()
+    async with pool.acquire() as connection:
+        async with connection.transaction():
+            row = await connection.fetchrow(
+                "DELETE FROM saved_stars WHERE seed = $1 AND owner_id = $2 "
+                "RETURNING seed",
+                seed,
+                user_id,
+            )
+            if row is None:
+                return error_response(response, 404, "not_saved")
+
+            await connection.execute(
+                "INSERT INTO destroyed_stars (seed, owner_id) VALUES ($1, $2) "
+                "ON CONFLICT (seed) DO NOTHING",
+                seed,
+                user_id,
+            )
+
+    return {"status": "destroyed"}
 
 
 @router.get("/stars/mine")
