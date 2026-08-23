@@ -1,8 +1,9 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import type { MouseEvent, ReactElement } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "./Icon";
+import { DestroyOverlay } from "./DestroyOverlay";
 import {
   ANALYTICS_PATH,
   GALLERY_PATH,
@@ -24,8 +25,9 @@ const ButtonBox = ({
 }: ButtonBoxProps): ReactElement => {
   const navigate = useNavigate();
   const onGallery = isGalleryPath(useLocation().pathname);
-  const { seed, tag, save } = useContext(SkyContext);
+  const { seed, tag, save, destroy } = useContext(SkyContext);
   const { user } = useAuth();
+  const [destroyOpen, setDestroyOpen] = useState(false);
   const { data: savedTokens } = useQuery({
     queryKey: ["stars", "mine"],
     queryFn: fetchMyStars,
@@ -81,6 +83,15 @@ const ButtonBox = ({
           <Icon name="save" />
         </button>
       ) : null}
+      {user !== null && isSaved ? (
+        <button
+          className="icon link"
+          aria-label="Destroy this sky"
+          onClick={() => setDestroyOpen(true)}
+        >
+          <Icon name="skull" />
+        </button>
+      ) : null}
       <button
         className="icon link"
         onClick={() => setOpen(true)}
@@ -88,6 +99,15 @@ const ButtonBox = ({
       >
         <Icon name={user !== null ? "signout" : "signin"} />
       </button>
+      {destroyOpen ? (
+        <DestroyOverlay
+          onConfirm={() => {
+            destroy();
+            setDestroyOpen(false);
+          }}
+          onClose={() => setDestroyOpen(false)}
+        />
+      ) : null}
     </div>
   );
 };

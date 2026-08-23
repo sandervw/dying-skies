@@ -51,6 +51,14 @@ const saveStar = async (seed: Seed, tag: string): Promise<void> => {
   }
 };
 
+/** destroy a saved sky by its seed; rejects on any failure. */
+const destroyStar = async (seed: Seed): Promise<void> => {
+  const response = await postJson("/stars/destroy", { seed: encodeSeed(seed) });
+  if (!response.ok) {
+    throw new Error("destroy_failed");
+  }
+};
+
 /** fetch the caller's saved sky tokens, newest first; empty on failure. */
 const fetchMyStars = async (): Promise<readonly string[]> => {
   const response = await fetch(`${base}/stars/mine`, { credentials: "include" });
@@ -61,5 +69,12 @@ const fetchMyStars = async (): Promise<readonly string[]> => {
   return ((data?.stars ?? []) as { seed: string }[]).map((star) => star.seed);
 };
 
-export { fetchStarBatch, saveStar, fetchMyStars, rememberTag, tagForSeed };
+export {
+  fetchStarBatch,
+  saveStar,
+  destroyStar,
+  fetchMyStars,
+  rememberTag,
+  tagForSeed,
+};
 export type { IssuedStar };
