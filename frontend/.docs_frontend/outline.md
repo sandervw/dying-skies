@@ -36,6 +36,8 @@ Screensaver aesthetic. Very minimal UI.
 ## Outstand Items
 
 1. Adjust saved star gallery - outline around each box? Need to make it a clickable/link point when hovering over the comet.
-2. Delete sky functionality.
-3. Sharing Fuctionality?
-4. Sky music.
+2. Sharing Fuctionality?
+3. Sky music.
+
+## Done
+- Delete sky functionality (destroy button + `/stars/destroy`).
