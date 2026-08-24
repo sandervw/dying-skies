@@ -29,13 +29,16 @@ GCP: FastAPI container on Cloud Run, Postgres on Cloud SQL. Frontend stays on Cl
 ## Stage 4: Stats and sky data endpoints - DONE
 - `GET /stats` - DONE. Returns `{saved, destroyed, died}`; `issued` sums `sessions.counter`, `saved` counts `saved_stars`, `destroyed` counts `destroyed_stars`, `died = issued - saved - destroyed`.
 
-## Stage 5: API contract finalized against frontend - TODO
+## Stage 5: Auth - DONE
+Accounts and login-gated saving live. `saved_stars` gains `owner_id`.
+
+## Stage 6: API contract finalized against frontend - TODO
 - Freeze the full contract as a set: `POST /stars/batch`, `POST /stars/save`, `POST /stars/destroy`, `GET /stats`, `GET /sky/:seed`.
 - Seeds and tags travel as base64url strings in JSON.
 - Errors use a `{error, code}` envelope.
 - Confirm shapes against the frontend piece before frontend integration begins; document any changes here and in `backend/CLAUDE.md`.
 
-## Stage 6: Deploy - TODO
+## Stage 7: Deploy - TODO
 - Build and push the Docker image.
 - Provision Cloud SQL Postgres and Cloud Run service via Terraform.
 - `gcloud run deploy` from the built image; wire environment secrets (including `secret`) through Cloud Run, never committed.
@@ -43,6 +46,3 @@ GCP: FastAPI container on Cloud Run, Postgres on Cloud SQL. Frontend stays on Cl
 
 ## Analytics access
 `ensure_analytics_role` in `app/db.py` is the single source of truth for analytics DB access. On startup it provisions the `analytics_reader` role, grants `CONNECT` + `USAGE` + `SELECT` on `sessions`, `saved_stars`, `destroyed_stars`, and `users`, and creates an `analytics` schema owned by `analytics_reader` so dbt can materialize marts there. The reader password comes from `ANALYTICS_READER_PASSWORD`; unset skips provisioning.
-
-## Phase 3: Auth
-Accounts and login-gated saving live in `plan-auth.md`. `saved_stars` gains `owner_id` there.

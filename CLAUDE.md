@@ -24,9 +24,8 @@ Three independent pieces, each with its own tooling and its own `CLAUDE.md`. Whe
 - Code files stay under 300 lines. Ever.
 - Comments stay under 12 words.
 - Every exported function or object used outside its file carries a javadoc-style comment where the language allows.
-- A file's name matches its primary export; one primary export per file.
 - Full descriptive names; the only short forms are `id`, `url`, `api`.
-- Pieces integrate only through defined contracts such as the HTTP API. No piece imports another piece's code.
+- Pieces integrate through defined contracts such as the HTTP API.
 
 **Plans and stages**
 - Each plan file breaks into 4 to 7 stages. An agent implements exactly one stage per pass, after any needed clarifications, and never more than one.
@@ -36,12 +35,12 @@ Three independent pieces, each with its own tooling and its own `CLAUDE.md`. Whe
 - Secrets live in each piece's `.env`, never committed. A tracked `.env.sample` lists the keys with empty values.
 
 **Git**
-- Agents may stage, commit, and open PRs; commit subjects stay under 12 words.
-- Agents never push or merge; that stays with Sander.
+- Agents may stage, commit; commit subjects stay under 12 words.
+- Agents never push or merge.
 
 **System**
 - Windows/Linux only. Bash, `python`, `wc -w` for word counts.
 - Soft-wrap prose. No em-dashes. Prefer non-Microsoft tooling.
 
 ## Workflow
-Claude runs commands and code. Sander drives and reviews in small chunks, increasingly hands-off per piece.
+Claude runs commands and code. Sander drives and reviews.
