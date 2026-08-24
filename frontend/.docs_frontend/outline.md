@@ -2,9 +2,7 @@
 
 Vite + React SPA, Canvas 2D.
 
-## TODO - Outline
-
-Implemented so far:
+## Implementation
 - Seed-derived Canvas 2D sky: constellation, palette, and falling stars, drawn by `Sky.tsx` via `skyService` and `starService`.
 - Routing: `/` (root sky), `/sky/<seed>`, `/gallery`, `/analytics`, all through `routeService` and a catch-all route to `Sky`.
 - Session auth: `AuthContext` fetches the current user; `AuthOverlay` hosts `LoginForm`/`SignupForm`; gallery, save, and destroy actions are gated on login.
@@ -44,5 +42,4 @@ Screensaver aesthetic. Very minimal UI.
 ## Outstand Items
 
 1. Adjust saved star gallery - outline around each box? Need to make it a clickable/link point when hovering over the comet.
-2. Sharing Fuctionality?
-3. Sky music.
+2. Sky music.
