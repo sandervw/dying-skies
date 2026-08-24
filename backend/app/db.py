@@ -28,7 +28,8 @@ async def ensure_schema(pool: asyncpg.Pool) -> None:
     await pool.execute(
         "CREATE TABLE IF NOT EXISTS users ("
         "id UUID PRIMARY KEY, "
-        "username TEXT UNIQUE NOT NULL, "
+        "username TEXT UNIQUE NOT NULL "
+        "CHECK (char_length(username) BETWEEN 3 AND 64), "
         "password_hash TEXT NOT NULL, "
         "created_at TIMESTAMPTZ NOT NULL DEFAULT now())"
     )
@@ -36,7 +37,8 @@ async def ensure_schema(pool: asyncpg.Pool) -> None:
         "CREATE TABLE IF NOT EXISTS sessions ("
         "session_id TEXT PRIMARY KEY, "
         "counter BIGINT NOT NULL DEFAULT 0, "
-        "user_id UUID REFERENCES users(id))"
+        "user_id UUID REFERENCES users(id), "
+        "created_at TIMESTAMPTZ NOT NULL DEFAULT now())"
     )
     await pool.execute(
         "CREATE TABLE IF NOT EXISTS saved_stars ("
@@ -85,7 +87,12 @@ async def ensure_analytics_role(pool: asyncpg.Pool) -> None:
             )
             await connection.execute("GRANT USAGE ON SCHEMA public TO analytics_reader")
             await connection.execute(
-                "GRANT SELECT ON sessions, saved_stars, destroyed_stars, users TO analytics_reader"
+                "GRANT SELECT ON sessions, saved_stars, destroyed_stars TO analytics_reader"
+            )
+            # Never expose password_hash; grant only safe user columns.
+            await connection.execute("REVOKE ALL ON users FROM analytics_reader")
+            await connection.execute(
+                "GRANT SELECT (id, username, created_at) ON users TO analytics_reader"
             )
             await connection.execute("CREATE SCHEMA IF NOT EXISTS analytics")
             await connection.execute(

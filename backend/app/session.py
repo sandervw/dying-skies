@@ -9,6 +9,7 @@ from app.db import get_pool
 SESSION_COOKIE_NAME = "session_id"
 
 _ONE_YEAR_SECONDS = 60 * 60 * 24 * 365
+_MAX_SESSIONS_PER_USER = 4
 
 
 async def get_session_id(request: Request, response: Response) -> str:
@@ -22,7 +23,7 @@ async def get_session_id(request: Request, response: Response) -> str:
             value=session_id,
             httponly=True,
             samesite="lax",
-            secure=os.environ.get("COOKIE_SECURE", "false").lower() == "true",
+            secure=os.environ.get("COOKIE_SECURE", "true").lower() == "true",
             max_age=_ONE_YEAR_SECONDS,
         )
     # Upsert so a stale cookie without a row still has one.
@@ -46,13 +47,24 @@ async def reserve_counter_range(session_id: str, count: int) -> range:
 
 
 async def set_session_user(session_id: str, user_id: str) -> None:
-    """Link a session to an authenticated user."""
+    """Link a session to a user, keeping only the newest few per user."""
     pool = await get_pool()
-    await pool.execute(
-        "UPDATE sessions SET user_id = $1 WHERE session_id = $2",
-        user_id,
-        session_id,
-    )
+    async with pool.acquire() as connection:
+        async with connection.transaction():
+            await connection.execute(
+                "UPDATE sessions SET user_id = $1 WHERE session_id = $2",
+                user_id,
+                session_id,
+            )
+            # Evict oldest sessions, always keeping the current one.
+            await connection.execute(
+                "DELETE FROM sessions WHERE user_id = $1 AND session_id NOT IN ("
+                "SELECT session_id FROM sessions WHERE user_id = $1 "
+                "ORDER BY (session_id = $2) DESC, created_at DESC LIMIT $3)",
+                user_id,
+                session_id,
+                _MAX_SESSIONS_PER_USER,
+            )
 
 
 async def clear_session_user(session_id: str) -> None:

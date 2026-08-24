@@ -7,6 +7,7 @@ from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 
 _password_hasher = PasswordHasher()
+_DUMMY_HASH = _password_hasher.hash("dying-skies-timing-guard")
 
 
 def load_secret() -> bytes:
@@ -41,3 +42,8 @@ def verify_password(password: str, password_hash: str) -> bool:
         return _password_hasher.verify(password_hash, password)
     except VerifyMismatchError:
         return False
+
+
+def dummy_verify(password: str) -> None:
+    """Burn equivalent argon2 time to mask missing-user timing."""
+    verify_password(password, _DUMMY_HASH)

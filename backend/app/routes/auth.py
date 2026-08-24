@@ -1,14 +1,16 @@
 """Signup, login, logout, current-user, and password-rule routes."""
 import uuid
+from typing import Annotated
 
 import asyncpg
 from fastapi import APIRouter, Depends, Request, Response
-from pydantic import BaseModel
+from pydantic import BaseModel, StringConstraints
 
 from app.db import get_pool
 from app.errors import error_response
 from app.password_rules import all_rules_pass, check_password, random_riddle
-from app.security import hash_password, verify_password
+from app.rate_limit import limiter
+from app.security import dummy_verify, hash_password, verify_password
 from app.session import (
     clear_session_user,
     get_session_id,
@@ -18,26 +20,29 @@ from app.session import (
 
 router = APIRouter()
 
+Username = Annotated[str, StringConstraints(strip_whitespace=True, min_length=3, max_length=64)]
+Password = Annotated[str, StringConstraints(max_length=127)]
+
 
 class AuthSignupRequest(BaseModel):
     """Request body for account creation."""
 
-    username: str
-    password: str
+    username: Username
+    password: Password
     riddle_id: str
 
 
 class AuthLoginRequest(BaseModel):
     """Request body for login."""
 
-    username: str
-    password: str
+    username: Username
+    password: Password
 
 
 class PasswordCheckRequest(BaseModel):
     """Request body for the live password-rule check."""
 
-    password: str
+    password: Password
     riddle_id: str
 
 
@@ -56,13 +61,16 @@ async def get_signup_riddle() -> dict:
 
 
 @router.post("/auth/password/check")
-async def post_password_check(body: PasswordCheckRequest) -> dict:
+@limiter.limit("60/minute")
+async def post_password_check(request: Request, body: PasswordCheckRequest) -> dict:
     """Return per-rule booleans only; never the underlying lists."""
     return {"rules": check_password(body.password, body.riddle_id)}
 
 
 @router.post("/auth/signup")
+@limiter.limit("10/minute")
 async def post_auth_signup(
+    request: Request,
     body: AuthSignupRequest,
     response: Response,
     session_id: str = Depends(get_session_id),
@@ -73,7 +81,7 @@ async def post_auth_signup(
         response.status_code = 422
         return {"error": "weak_password", "code": "weak_password", "rules": rules}
 
-    username = body.username.strip()
+    username = body.username
     password_hash = hash_password(body.password)
     user_id = str(uuid.uuid4())
 
@@ -93,7 +101,9 @@ async def post_auth_signup(
 
 
 @router.post("/auth/login")
+@limiter.limit("10/minute")
 async def post_auth_login(
+    request: Request,
     body: AuthLoginRequest,
     response: Response,
     session_id: str = Depends(get_session_id),
@@ -102,14 +112,17 @@ async def post_auth_login(
     pool = await get_pool()
     row = await pool.fetchrow(
         "SELECT id, password_hash FROM users WHERE username = $1",
-        body.username.strip(),
+        body.username,
     )
-    if row is None or not verify_password(body.password, row["password_hash"]):
+    if row is None:
+        dummy_verify(body.password)  # equalize timing for unknown users
+        return error_response(response, 401, "invalid_credentials")
+    if not verify_password(body.password, row["password_hash"]):
         return error_response(response, 401, "invalid_credentials")
 
     user_id = str(row["id"])
     await set_session_user(session_id, user_id)
-    return AuthUserResponse(id=user_id, username=body.username.strip()).model_dump()
+    return AuthUserResponse(id=user_id, username=body.username).model_dump()
 
 
 @router.post("/auth/logout")

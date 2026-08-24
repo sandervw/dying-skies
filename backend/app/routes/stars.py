@@ -1,10 +1,11 @@
 """Star issuance and save verification routes."""
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Request, Response
 from pydantic import BaseModel, Field
 
 from app.db import get_pool
 from app.encoding import decode_base64url, encode_base64url
 from app.errors import error_response
+from app.rate_limit import limiter
 from app.security import generate_seed, generate_tag, load_secret, verify_tag
 from app.session import (
     get_authenticated_user_id,
@@ -61,8 +62,11 @@ class StarDestroyRequest(BaseModel):
 
 
 @router.post("/stars/batch")
+@limiter.limit("60/minute")
 async def post_stars_batch(
-    body: StarsBatchRequest, session_id: str = Depends(get_session_id)
+    request: Request,
+    body: StarsBatchRequest,
+    session_id: str = Depends(get_session_id),
 ) -> StarsBatchResponse:
     """Issue a batch of HMAC-derived stars for the session."""
     secret = load_secret()

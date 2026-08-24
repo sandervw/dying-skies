@@ -38,8 +38,3 @@ Screensaver aesthetic. Very minimal UI.
 ## Counter display
 - Homepage tagline shows saved, destroyed, and dead totals.
 - The client polls `GET /stats` at a short interval.
-
-## Outstand Items
-
-1. Adjust saved star gallery - outline around each box? Need to make it a clickable/link point when hovering over the comet.
-2. Sky music.

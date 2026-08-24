@@ -63,25 +63,43 @@ const GallerySkyBox = ({
     return (): void => window.cancelAnimationFrame(frame);
   }, [seed]);
 
-  // navigate only when the click lands on the star, not the backdrop.
-  const handleClick = (event: MouseEvent<HTMLCanvasElement>): void => {
+  // true when the pointer is over the star itself, not the backdrop.
+  const isPointerOnStar = (event: MouseEvent<HTMLCanvasElement>): boolean => {
     const canvas = canvasRef.current;
     const star = starRef.current;
     const profile = profileRef.current;
     if (canvas === null || star === null || profile === null) {
-      return;
+      return false;
     }
     const rect = canvas.getBoundingClientRect();
     const pointX = event.clientX - rect.left - rect.width / 2;
     const pointY = event.clientY - rect.top - rect.height / 2;
-    if (findStarAtCoordinates([star], profile.fallAngle, pointX, pointY) !== null) {
+    return findStarAtCoordinates([star], profile.fallAngle, pointX, pointY) !== null;
+  };
+
+  // navigate only when the click lands on the star, not the backdrop.
+  const handleClick = (event: MouseEvent<HTMLCanvasElement>): void => {
+    if (isPointerOnStar(event)) {
       onSelect(seed);
+    }
+  };
+
+  // pointer cursor over the star, default elsewhere on the tile.
+  const handleMouseMove = (event: MouseEvent<HTMLCanvasElement>): void => {
+    const canvas = canvasRef.current;
+    if (canvas !== null) {
+      canvas.style.cursor = isPointerOnStar(event) ? "pointer" : "default";
     }
   };
 
   return (
     <div className="gallery-box">
-      <canvas ref={canvasRef} onClick={handleClick} aria-label="Open sky" />
+      <canvas
+        ref={canvasRef}
+        onClick={handleClick}
+        onMouseMove={handleMouseMove}
+        aria-label="Open sky"
+      />
     </div>
   );
 };

@@ -79,6 +79,31 @@ def test_login_success_and_wrong_password():
         assert right.json()["username"] == username
 
 
+def test_session_cap_keeps_four_per_user():
+    """A fifth session for one user evicts the oldest, capping at four."""
+    with TestClient(app) as client:
+        username = _username()
+        password, riddle_id = _rule_password(client)
+        _signup(client, username, password, riddle_id)
+        session_ids = [client.cookies.get("session_id")]
+
+        for _ in range(4):
+            client.cookies.clear()
+            login = client.post(
+                "/auth/login", json={"username": username, "password": password}
+            )
+            assert login.status_code == 200
+            session_ids.append(client.cookies.get("session_id"))
+
+        still_authenticated = 0
+        for session_id in session_ids:
+            client.cookies.clear()
+            client.cookies.set("session_id", session_id)
+            if client.get("/auth/me").status_code == 200:
+                still_authenticated += 1
+        assert still_authenticated == 4
+
+
 def test_me_reflects_login_and_logout():
     """/auth/me is 401 unauthenticated, 200 after signup, 401 after logout."""
     with TestClient(app) as client:
