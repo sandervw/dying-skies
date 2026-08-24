@@ -32,11 +32,11 @@ GCP: FastAPI container on Cloud Run, Postgres on Cloud SQL. Frontend stays on Cl
 ## Stage 5: Auth - DONE
 Accounts and login-gated saving live. `saved_stars` gains `owner_id`.
 
-## Stage 6: API contract finalized against frontend - TODO
-- Freeze the full contract as a set: `POST /stars/batch`, `POST /stars/save`, `POST /stars/destroy`, `GET /stats`, `GET /sky/:seed`.
+## Stage 6: API contract finalized against frontend - DONE
+- Full contract in `api-contract.md`: health, stars batch/save/destroy/mine, stats, auth.
 - Seeds and tags travel as base64url strings in JSON.
 - Errors use a `{error, code}` envelope.
-- Confirm shapes against the frontend piece before frontend integration begins; document any changes here and in `backend/CLAUDE.md`.
+- `GET /sky/:seed` is out of scope; sky rendering is a frontend concern.
 
 ## Stage 7: Deploy - TODO
 - Build and push the Docker image.
