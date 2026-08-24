@@ -4,7 +4,15 @@ Vite + React SPA, Canvas 2D.
 
 ## TODO - Outline
 
-TODO - project details
+Implemented so far:
+- Seed-derived Canvas 2D sky: constellation, palette, and falling stars, drawn by `Sky.tsx` via `skyService` and `starService`.
+- Routing: `/` (root sky), `/sky/<seed>`, `/gallery`, `/analytics`, all through `routeService` and a catch-all route to `Sky`.
+- Session auth: `AuthContext` fetches the current user; `AuthOverlay` hosts `LoginForm`/`SignupForm`; gallery, save, and destroy actions are gated on login.
+- Save/destroy flow: backend issues seed/tag batches; `starApiService` calls `/stars/save` and `/stars/destroy`; `DestroyOverlay` confirms destruction.
+- Gallery view: fetches the user's saved seeds, renders a mini constellation and wagging star per tile, click opens that sky.
+- Counter tagline: `Footer` polls `GET /stats` every 15 seconds for saved, destroyed, and died totals.
+- Immersive/fullscreen toggle via `useImmersion`.
+- `/analytics` route exists but `AnalyticsView` is still a placeholder ("Analytics coming soon").
 
 ## Out of scope
 Seed issuance, persistence, auth (backend); the analytics pipeline (analytics).
