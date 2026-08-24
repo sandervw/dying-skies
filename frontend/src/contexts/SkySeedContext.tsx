@@ -7,7 +7,7 @@ import { saveStar, destroyStar, tagForSeed } from "../services/starApiService";
 import type { Seed } from "../services/randomService";
 
 /** the visible sky: its route-derived seed, save tag, and save/destroy actions. */
-const SkyContext = createContext<{
+const SkySeedContext = createContext<{
   seed: Seed;
   tag: string | null;
   save: () => void;
@@ -15,7 +15,7 @@ const SkyContext = createContext<{
 }>({ seed: ROOT_SEED, tag: null, save: () => {}, destroy: () => {} });
 
 /** provides the visible sky; a route change re-derives seed and tag. */
-const SkyProvider = ({ children }: { children: ReactNode }): ReactElement => {
+const SkySeedProvider = ({ children }: { children: ReactNode }): ReactElement => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const pathname = useLocation().pathname;
@@ -50,10 +50,10 @@ const SkyProvider = ({ children }: { children: ReactNode }): ReactElement => {
   };
 
   return (
-    <SkyContext.Provider value={{ seed, tag, save, destroy }}>
+    <SkySeedContext.Provider value={{ seed, tag, save, destroy }}>
       {children}
-    </SkyContext.Provider>
+    </SkySeedContext.Provider>
   );
 };
 
-export { SkyContext, SkyProvider };
+export { SkySeedContext, SkySeedProvider };

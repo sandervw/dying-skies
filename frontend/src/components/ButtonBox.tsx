@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useState } from "react";
 import type { MouseEvent, ReactElement } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -10,7 +10,7 @@ import {
   encodeSeed,
   isGalleryPath,
 } from "../services/routeService";
-import { SkyContext } from "../contexts/SkyContext";
+import { useSkySeed } from "../hooks/useSkySeed";
 import { fetchMyStars } from "../services/starApiService";
 import { useAuth } from "../hooks/useAuth";
 
@@ -19,13 +19,14 @@ interface ButtonBoxProps {
   readonly setOpen: (open: boolean) => void;
 }
 
+/** the floating control cluster: immersion, gallery, save, destroy, account. */
 const ButtonBox = ({
   toggleImmersion,
   setOpen,
 }: ButtonBoxProps): ReactElement => {
   const navigate = useNavigate();
   const onGallery = isGalleryPath(useLocation().pathname);
-  const { seed, tag, save, destroy } = useContext(SkyContext);
+  const { seed, tag, save, destroy } = useSkySeed();
   const { user } = useAuth();
   const [destroyOpen, setDestroyOpen] = useState(false);
   const { data: savedTokens } = useQuery({

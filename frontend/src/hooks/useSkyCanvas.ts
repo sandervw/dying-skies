@@ -1,8 +1,8 @@
-import { useContext, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import type { MouseEvent as ReactMouseEvent, RefObject } from "react";
 import { createSeededRandom } from "../services/randomService";
 import type { Seed } from "../services/randomService";
-import { SkyContext } from "../contexts/SkyContext";
+import { useSkySeed } from "./useSkySeed";
 import { fetchStarBatch, rememberTag } from "../services/starApiService";
 import type { IssuedStar } from "../services/starApiService";
 import { generateSky, renderSky } from "../services/skyService";
@@ -29,9 +29,9 @@ interface SkyHandle {
   readonly handleMouseLeave: () => void;
 }
 
-/** paint the background sky and falling-star loop on one canvas for the context seed. */
-const useSky = (onSelectStar?: (starSeed: Seed) => void): SkyHandle => {
-  const { seed } = useContext(SkyContext);
+/** paint the sky and falling-star loop on one canvas per seed. */
+const useSkyCanvas = (onSelectStar?: (starSeed: Seed) => void): SkyHandle => {
+  const { seed } = useSkySeed();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const stateRef = useRef<StarFieldState | null>(null);
   const fallAngleRef = useRef<number>(0);
@@ -188,4 +188,4 @@ const useSky = (onSelectStar?: (starSeed: Seed) => void): SkyHandle => {
   return { canvasRef, handleClick, handleMouseMove, handleMouseLeave };
 };
 
-export { useSky };
+export { useSkyCanvas };

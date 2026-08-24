@@ -1,6 +1,7 @@
 import type { ReactElement } from "react";
 import { useStats } from "../hooks/useStats";
 
+/** the live tagline of saved, destroyed, and died counts. */
 const Footer = (): ReactElement => {
   const stats = useStats();
 

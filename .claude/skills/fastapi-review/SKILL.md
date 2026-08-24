@@ -1,5 +1,5 @@
 ---
-name: api-review
+name: fastapi-review
 description: "Review this FastAPI code for security, performance, and best practices"
 ---
 

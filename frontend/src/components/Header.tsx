@@ -1,5 +1,6 @@
 import type { ReactElement } from "react";
 
+/** the fixed page title banner. */
 const Header = (): ReactElement => {
   return (
     <header className="header">

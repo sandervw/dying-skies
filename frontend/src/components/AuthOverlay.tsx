@@ -12,6 +12,7 @@ interface AuthOverlayProps {
 
 type Mode = "login" | "signup";
 
+/** modal switching between login, signup, and signed-in states. */
 const AuthOverlay = ({ onClose }: AuthOverlayProps): ReactElement => {
   const [mode, setMode] = useState<Mode>("login");
   const { user, setUser } = useAuth();

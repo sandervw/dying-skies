@@ -1,13 +1,14 @@
 import type { ReactElement } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSky } from "../hooks/useSky";
+import { useSkyCanvas } from "../hooks/useSkyCanvas";
 import { seedToPath } from "../services/routeService";
 import { useAuth } from "../hooks/useAuth";
 
+/** the full-screen falling-star canvas for the current seed. */
 const Sky = (): ReactElement => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { canvasRef, handleClick, handleMouseMove, handleMouseLeave } = useSky(
+  const { canvasRef, handleClick, handleMouseMove, handleMouseLeave } = useSkyCanvas(
     user !== null ? (star) => navigate(seedToPath(star)) : undefined,
   );
   return (

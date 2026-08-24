@@ -3,7 +3,7 @@
 Vite + React SPA, Canvas 2D.
 
 ## Implementation
-- Seed-derived Canvas 2D sky: constellation, palette, and falling stars, drawn by `Sky.tsx` via `skyService` and `starService`.
+- Seed-derived Canvas 2D sky: `SkySeedContext` holds the route seed and save/destroy; `Sky.tsx` paints constellation, palette, and falling stars via `useSkyCanvas`, `skyService`, and `starService`.
 - Routing: `/` (root sky), `/sky/<seed>`, `/gallery`, `/analytics`, all through `routeService` and a catch-all route to `Sky`.
 - Session auth: `AuthContext` fetches the current user; `AuthOverlay` hosts `LoginForm`/`SignupForm`; gallery, save, and destroy actions are gated on login.
 - Save/destroy flow: backend issues seed/tag batches; `starApiService` calls `/stars/save` and `/stars/destroy`; `DestroyOverlay` confirms destruction.

@@ -9,6 +9,7 @@ interface LoginFormProps {
   readonly onSwitch: () => void;
 }
 
+/** username and password sign-in form. */
 const LoginForm = ({ onClose, onSwitch }: LoginFormProps): ReactElement => {
   const { setUser } = useAuth();
   const [username, setUsername] = useState("");

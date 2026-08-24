@@ -27,6 +27,7 @@ const RULE_KEYS = [
 const allRulesPass = (rules: PasswordRules | null): boolean =>
   rules !== null && RULE_KEYS.every((key) => rules[key]);
 
+/** account creation form with live password-rule checks. */
 const SignupForm = ({ onClose, onSwitch }: SignupFormProps): ReactElement => {
   const { setUser } = useAuth();
   const { data: riddle } = useQuery({

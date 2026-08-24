@@ -6,6 +6,7 @@ interface IconProps {
   readonly className?: string;
 }
 
+/** inline SVG icon looked up by name. */
 const Icon = ({ name, className }: IconProps): ReactElement => {
   return (
     <span
