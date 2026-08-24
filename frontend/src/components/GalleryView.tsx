@@ -59,8 +59,23 @@ const GallerySkyBox = ({
       context.restore();
       frame = window.requestAnimationFrame(draw);
     };
-    frame = window.requestAnimationFrame(draw);
-    return (): void => window.cancelAnimationFrame(frame);
+
+    // only animate while the tile is on screen; pause once scrolled away.
+    const observer = new IntersectionObserver((entries): void => {
+      const isVisible = entries[0]?.isIntersecting ?? false;
+      if (isVisible && frame === 0) {
+        frame = window.requestAnimationFrame(draw);
+      } else if (!isVisible && frame !== 0) {
+        window.cancelAnimationFrame(frame);
+        frame = 0;
+      }
+    });
+    observer.observe(canvas);
+
+    return (): void => {
+      observer.disconnect();
+      window.cancelAnimationFrame(frame);
+    };
   }, [seed]);
 
   // true when the pointer is over the star itself, not the backdrop.

@@ -12,8 +12,8 @@ interface FallingStar {
   readonly id: number;
   readonly seed: Seed;
   readonly tag: string | null;
-  readonly positionX: number;
-  readonly positionY: number;
+  positionX: number;
+  positionY: number;
   readonly velocityX: number;
   readonly velocityY: number;
   readonly pixelSize: number;

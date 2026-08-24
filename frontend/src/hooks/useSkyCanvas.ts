@@ -111,6 +111,18 @@ const useSkyCanvas = (onSelectStar?: (starSeed: Seed) => void): SkyHandle => {
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
     };
 
+    // coalesce a burst of resize events into one resize per frame.
+    let resizeFrame = 0;
+    const scheduleResize = (): void => {
+      if (resizeFrame !== 0) {
+        return;
+      }
+      resizeFrame = window.requestAnimationFrame((): void => {
+        resizeFrame = 0;
+        resize();
+      });
+    };
+
     const issuedQueue: IssuedStar[] = [];
     let isRefilling = false;
     let refillAfterMs = 0;
@@ -175,11 +187,12 @@ const useSkyCanvas = (onSelectStar?: (starSeed: Seed) => void): SkyHandle => {
     };
 
     animationFrame = window.requestAnimationFrame(tick);
-    window.addEventListener("resize", resize);
+    window.addEventListener("resize", scheduleResize);
 
     return (): void => {
       window.cancelAnimationFrame(animationFrame);
-      window.removeEventListener("resize", resize);
+      window.cancelAnimationFrame(resizeFrame);
+      window.removeEventListener("resize", scheduleResize);
       stateRef.current = null;
       hoveredStarIdRef.current = null;
     };

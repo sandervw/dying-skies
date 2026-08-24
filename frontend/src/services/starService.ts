@@ -215,20 +215,17 @@ const populateStarField = (
 // SIMULATION
 ////////////////////////////////////////////////////////////
 
-// slide one star along its velocity by the elapsed time.
+// slide one star along its velocity in place; frozen stars hold still.
 const advanceStar = (
   star: FallingStar,
   deltaSeconds: number,
   isFrozen: boolean,
-): FallingStar => {
+): void => {
   if (isFrozen) {
-    return star;
+    return;
   }
-  return {
-    ...star,
-    positionX: star.positionX + star.velocityX * deltaSeconds,
-    positionY: star.positionY + star.velocityY * deltaSeconds,
-  };
+  star.positionX += star.velocityX * deltaSeconds;
+  star.positionY += star.velocityY * deltaSeconds;
 };
 
 // stars only fall, so cull once past the bottom or either side.
@@ -249,14 +246,14 @@ const stepStarField = (
   frozenStarId?: number | null,
 ): StarFieldState => {
   const step = Math.min(deltaSeconds, MAXIMUM_DELTA_SECONDS);
-  const survivors = state.stars
-    .map((star) => advanceStar(star, step, star.id === frozenStarId))
-    .filter((star) => isOnscreen(star, width, height));
+  for (const star of state.stars) {
+    advanceStar(star, step, star.id === frozenStarId);
+  }
+  const stars = state.stars.filter((star) => isOnscreen(star, width, height));
 
   let spawnAccumulator =
     state.spawnAccumulator + spawnRatePerSecond(profile.fallAngle, height) * step;
   let nextStarId = state.nextStarId;
-  const stars: FallingStar[] = [...survivors];
   while (spawnAccumulator >= 1) {
     const issued = takeSeedAndTag();
     if (issued === null) {
