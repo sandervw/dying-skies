@@ -4,6 +4,27 @@
 
 ## Commands
 
+**Cloud Commands:**
+A. One-time: Artifact Registry repo
+```
+gcloud artifacts repositories create dying-skies \
+  --repository-format=docker --location=us-central1
+```
+
+B. Build + push image
+```
+gcloud builds submit backend \
+  --tag us-central1-docker.pkg.dev/dying-skies/dying-skies/api:latest
+```
+C. One-time: let Terraform authenticate as you
+`gcloud auth application-default login`
+
+D. Provision (reads terraform.tfvars automatically)
+`cd backend/terraform && tofu apply`
+
+E. Smoke test
+`curl "$(tofu output -raw cloud_run_url)/health"`
+
 **Frontend:**
 `npm run dev` # run/test the frontend UI
 

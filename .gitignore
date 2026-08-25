@@ -150,3 +150,12 @@ __pycache__/
 .pytest_cache/
 .venv/
 venv/
+
+# Terraform (state holds secrets in plaintext; never commit)
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.sample
+crash.log
+crash.*.log

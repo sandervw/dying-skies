@@ -82,6 +82,8 @@ async def ensure_analytics_role(pool: asyncpg.Pool) -> None:
                 "SELECT set_config('analytics.reader_password', $1, true)", password
             )
             await connection.execute(_ENSURE_ANALYTICS_ROLE)
+            # Cloud SQL: membership lets us reassign schema ownership.
+            await connection.execute("GRANT analytics_reader TO CURRENT_USER")
             await connection.execute(
                 "GRANT CONNECT ON DATABASE dying_skies TO analytics_reader"
             )

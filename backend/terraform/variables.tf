@@ -17,7 +17,23 @@ variable "db_instance_name" {
   default = "dying-skies-db"
 }
 
+variable "image" {
+  type        = string
+  description = "Full Artifact Registry image ref the service runs."
+}
+
+variable "frontend_origin" {
+  type        = string
+  description = "Allowed CORS origin for the frontend."
+  default     = "https://dyingskies.com"
+}
+
 variable "db_password" {
+  type      = string
+  sensitive = true
+}
+
+variable "seed_hmac_secret" {
   type      = string
   sensitive = true
 }

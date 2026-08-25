@@ -1,6 +1,6 @@
 # Backend Plan
 
-FastAPI + Postgres. Concept: `../../.docs/plan.md`. Not started. Work breaks into the stages below; an agent implements exactly one stage per pass.
+FastAPI + Postgres. Concept: `../../.docs/plan.md`. Live on GCP Cloud Run + Cloud SQL. Work breaks into the stages below; an agent implements exactly one stage per pass.
 
 ## Hosting
 GCP: FastAPI container on Cloud Run, Postgres on Cloud SQL. Frontend stays on Cloudflare. Deploy via Docker image + `gcloud run deploy`; infra as Terraform.
@@ -38,11 +38,11 @@ Accounts and login-gated saving live. `saved_stars` gains `owner_id`.
 - Errors use a `{error, code}` envelope.
 - `GET /sky/:seed` is out of scope; sky rendering is a frontend concern.
 
-## Stage 7: Deploy - TODO
-- Build and push the Docker image.
-- Provision Cloud SQL Postgres and Cloud Run service via Terraform.
-- `gcloud run deploy` from the built image; wire environment secrets (including `secret`) through Cloud Run, never committed.
-- Point the frontend's API base URL at the deployed Cloud Run service.
+## Stage 7: Deploy - DONE (custom domain pending)
+- Image builds via Cloud Build to Artifact Registry repo `dying-skies`.
+- Cloud SQL, Cloud Run, and Secret Manager provisioned by OpenTofu in `terraform/`.
+- Live at https://dying-skies-api-rkfq6shtia-uc.a.run.app; secrets injected from Secret Manager.
+- Remaining: map `api.dyingskies.com`; point the frontend API base URL at it.
 
 ## Analytics access
 `ensure_analytics_role` in `app/db.py` is the single source of truth for analytics DB access. On startup it provisions the `analytics_reader` role, grants `CONNECT` + `USAGE` + `SELECT` on `sessions`, `saved_stars`, `destroyed_stars`, and `users`, and creates an `analytics` schema owned by `analytics_reader` so dbt can materialize marts there. The reader password comes from `ANALYTICS_READER_PASSWORD`; unset skips provisioning.
