@@ -28,6 +28,12 @@ variable "frontend_origin" {
   default     = "https://dyingskies.com"
 }
 
+variable "api_domain" {
+  type        = string
+  description = "Custom domain mapped to the Cloud Run API."
+  default     = "api.dyingskies.com"
+}
+
 variable "db_password" {
   type      = string
   sensitive = true

@@ -170,3 +170,17 @@ resource "google_cloud_run_v2_service_iam_member" "public" {
   role     = "roles/run.invoker"
   member   = "allUsers"
 }
+
+# Map the verified custom domain to the service.
+resource "google_cloud_run_domain_mapping" "api" {
+  name     = var.api_domain
+  location = google_cloud_run_v2_service.api.location
+
+  metadata {
+    namespace = var.project_id
+  }
+
+  spec {
+    route_name = google_cloud_run_v2_service.api.name
+  }
+}
