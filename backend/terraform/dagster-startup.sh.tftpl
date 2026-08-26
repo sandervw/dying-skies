@@ -12,8 +12,8 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y git curl ca-certificates python3
 
-# Node for the Observable site build and deploy.
-curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+# Node for the Observable site build and deploy (wrangler needs >=22).
+curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
 apt-get install -y nodejs
 npm install -g wrangler
 
