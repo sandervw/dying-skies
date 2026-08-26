@@ -1,6 +1,6 @@
 # Analytics Plan
 
-Dagster + dbt + Observable Framework. Concept: `../../.docs/plan.md`. Not started.
+Dagster + dbt + Observable Framework. Concept: `../../.docs/plan.md`. Stages 1-3 done; Stages 4-5 remain.
 
 ## Architecture
 dbt reads the backend's Postgres tables directly as dbt sources. No ingestion step, no analytics-owned raw schema, no data copied anywhere. Dagster only orchestrates: it schedules and runs dbt and the Observable Framework site build, and gives lineage across those runs. Historical trends come from timestamped rows in the source event tables, never from the mutable counter totals.

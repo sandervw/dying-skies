@@ -38,6 +38,3 @@ Screensaver aesthetic. Very minimal UI.
 ## Counter display
 - Homepage tagline shows saved, destroyed, and dead totals.
 - The client polls `GET /stats` at a short interval.
-
-## TODO
-Majors behind: vite 6.4 → 8.2, @vitejs/plugin-react 4.7 → 6.1. Not urgent; plan a bump before Vite 6 ages out.

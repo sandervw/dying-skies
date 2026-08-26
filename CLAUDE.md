@@ -5,10 +5,10 @@ Procedurally-generated "skies" as falling stars on a black field. Click a fallin
 ## Repo layout
 Three independent pieces, each with its own tooling and its own `CLAUDE.md`. When working in a piece, read that piece's `CLAUDE.md` for its deltas; the standards below apply everywhere.
 
-- **`frontend/`**: Vite + React, Canvas 2D visual layer. The active track.
-- **`backend/`**: FastAPI + Postgres API. Not started.
-- **`analytics/`**: Dagster + dbt + Observable Framework pipeline. Not started.
-- **`.docs/`**: cross-cutting docs (`plan.md`). Each piece keeps its own `.docs_<piece>/` folder.
+- **`frontend/`**: Vite + React, Canvas 2D visual layer. Done; deployed on Cloudflare.
+- **`backend/`**: FastAPI + Postgres API. Done; live on GCP.
+- **`analytics/`**: Dagster + dbt + Observable Framework pipeline. In progress; dbt done, Dagster and site remain.
+- **`.docs/`**: cross-cutting docs. Each piece keeps its own `.docs_<piece>/` folder.
 
 ## Standards (every piece, every request)
 
