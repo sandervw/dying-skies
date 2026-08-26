@@ -76,7 +76,8 @@ if [ ! -d "$ANALYTICS_DIR" ]; then
 fi
 if [ -d "$ANALYTICS_DIR" ]; then
   chown -R dagster:dagster "$APP_DIR"
-  su dagster -s /bin/bash -c "cd $ANALYTICS_DIR && /usr/local/bin/uv sync" || true
+  # Sync deps, then build the dbt manifest the code location needs.
+  su dagster -s /bin/bash -c "cd $ANALYTICS_DIR && /usr/local/bin/uv sync && set -a && . $ENV_DIR/dagster.env && set +a && /usr/local/bin/uv run dbt parse --project-dir dbt --profiles-dir dbt" || true
 fi
 
 cat > /etc/systemd/system/cloud-sql-proxy.service <<EOF
