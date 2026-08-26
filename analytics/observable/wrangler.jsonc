@@ -6,7 +6,9 @@
     "directory": "./dist/"
   },
   // More-specific route wins over the frontend's dyingskies.com/* custom domain.
+  // Bare path plus wildcard so /analytics redirects to /analytics/.
   "routes": [
+    { "pattern": "dyingskies.com/analytics", "zone_name": "dyingskies.com" },
     { "pattern": "dyingskies.com/analytics/*", "zone_name": "dyingskies.com" }
   ]
 }
