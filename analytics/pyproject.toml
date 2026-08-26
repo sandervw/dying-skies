@@ -1,0 +1,18 @@
+[project]
+name = "dying-skies-analytics"
+version = "0.1.0"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "dagster>=1.13",
+    "dagster-dbt>=0.29",
+    "dagster-webserver>=1.13",
+    "dbt-core>=1.9,<1.12",
+    "dbt-postgres>=1.9,<1.12",
+]
+
+[tool.uv]
+package = false
+
+[tool.dagster]
+module_name = "orchestration.definitions"
+code_location_name = "dying_skies"

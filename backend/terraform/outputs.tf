@@ -10,3 +10,12 @@ output "db_connection_name" {
 output "api_domain_dns_records" {
   value = google_cloud_run_domain_mapping.api.status[0].resource_records
 }
+
+output "dagster_instance" {
+  value = "${google_compute_instance.dagster.name} (${google_compute_instance.dagster.zone})"
+}
+
+# SSH tunnel to reach the localhost-only Dagster webserver.
+output "dagster_tunnel_command" {
+  value = "gcloud compute ssh ${google_compute_instance.dagster.name} --zone ${google_compute_instance.dagster.zone} --tunnel-through-iap -- -L 3000:localhost:3000"
+}

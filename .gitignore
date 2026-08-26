@@ -159,3 +159,5 @@ venv/
 !*.tfvars.sample
 crash.log
 crash.*.log
+
+.claude/settings.local.json

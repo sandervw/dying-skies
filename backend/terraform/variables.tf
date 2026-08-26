@@ -48,3 +48,44 @@ variable "analytics_reader_password" {
   type      = string
   sensitive = true
 }
+
+variable "zone" {
+  type    = string
+  default = "us-central1-a"
+}
+
+variable "dagster_instance_name" {
+  type    = string
+  default = "dying-skies-dagster"
+}
+
+variable "dagster_machine_type" {
+  type    = string
+  default = "e2-small"
+}
+
+variable "repo_url" {
+  type        = string
+  description = "Git URL cloned to the VM; private repos need a deploy token."
+  default     = "https://github.com/sandervw/dying-skies.git"
+}
+
+variable "cloudflare_account_id" {
+  type        = string
+  description = "Cloudflare account id for Email Sending and deploys."
+}
+
+variable "cloudflare_api_token" {
+  type      = string
+  sensitive = true
+}
+
+variable "alert_from" {
+  type    = string
+  default = "alerts@dyingskies.com"
+}
+
+variable "alert_to" {
+  type    = string
+  default = "samvanwilligen@gmail.com"
+}

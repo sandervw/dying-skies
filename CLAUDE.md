@@ -7,7 +7,7 @@ Three independent pieces, each with its own tooling and its own `CLAUDE.md`. Whe
 
 - **`frontend/`**: Vite + React, Canvas 2D visual layer. Done; deployed on Cloudflare.
 - **`backend/`**: FastAPI + Postgres API. Done; live on GCP.
-- **`analytics/`**: Dagster + dbt + Observable Framework pipeline. In progress; dbt done, Dagster and site remain.
+- **`analytics/`**: Dagster + dbt + Observable Framework pipeline. In progress; dbt and Dagster done, the Observable site remains.
 - **`.docs/`**: cross-cutting docs. Each piece keeps its own `.docs_<piece>/` folder.
 
 ## Standards (every piece, every request)

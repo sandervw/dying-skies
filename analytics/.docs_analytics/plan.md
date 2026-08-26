@@ -1,6 +1,6 @@
 # Analytics Plan
 
-Dagster + dbt + Observable Framework. Concept: `../../.docs/plan.md`. Stages 1-3 done; Stages 4-5 remain.
+Dagster + dbt + Observable Framework. Concept: `../../.docs/plan.md`. Stages 1-4 done; Stage 5 remains.
 
 ## Architecture
 dbt reads the backend's Postgres tables directly as dbt sources. No ingestion step, no analytics-owned raw schema, no data copied anywhere. Dagster only orchestrates: it schedules and runs dbt and the Observable Framework site build, and gives lineage across those runs. Historical trends come from timestamped rows in the source event tables, never from the mutable counter totals.
@@ -10,6 +10,9 @@ Every stage below reads from the backend's Postgres schema. `sessions` and `save
 
 ## Serving
 Observable Framework builds a static site served at `dyingskies.com/analytics/` via a Cloudflare subpath route and Observable's base-path setting. Black minimal look, static star backdrop, matching the frontend's near-invisible UI.
+
+## Hosting
+Dagster runs on an always-on GCP VM provisioned in `backend/terraform` (`dagster.tf`, `dagster-startup.sh.tftpl`). The VM reaches Cloud SQL through the Auth Proxy and uses default SQLite storage. The webserver binds to localhost; reach it with the `dagster_tunnel_command` output over IAP. dbt connects as `analytics_reader`.
 
 ## Stages
 
@@ -24,8 +27,8 @@ dbt project scaffold. Declares the backend's Postgres tables as dbt sources (no 
 ### Stage 3: dbt marts (DONE)
 Mart models built on staging: the global counter breakdown (saved/destroyed/dead), total users, and historical trends of saves, destroys, and signups over time (daily/weekly rollups from timestamped rows). No death trend; dead is a computed total only. These marts are what Observable Framework queries.
 
-### Stage 4: Dagster orchestration (TODO)
-Dagster project scaffold. Assets/jobs that schedule and run the dbt build and the Observable Framework site build, with lineage across them. Dagster does not ingest or store data; it only orchestrates. No freshness sensors or monitoring beyond scheduling the runs.
+### Stage 4: Dagster orchestration (DONE)
+Dagster code location under `orchestration/` (package, `[tool.dagster]` in `pyproject.toml`). `dbt_models` runs `dbt build`; `analytics_site` runs `npm run deploy` in `observable/`, downstream of the marts. `refresh_job` covers both, scheduled every 6 hours (`refresh`, America/Chicago). A `failure_alert` run-failure sensor emails via `alert.py` (Cloudflare Email Sending). Dagster only orchestrates; it ingests and stores no data. Run with `uv run dagster dev` from `analytics/`.
 
 ### Stage 5: Observable Framework site and Cloudflare deploy (TODO)
 Observable Framework project rendering the Stage 3 marts (counter breakdown, trends over time). Black minimal look, static star backdrop, base-path configured for `/analytics/`. Wire the static build into a Cloudflare subpath route at `dyingskies.com/analytics/`, confirming it doesn't collide with frontend routes.

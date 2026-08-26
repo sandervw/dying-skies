@@ -6,3 +6,7 @@ image      = "us-central1-docker.pkg.dev/dying-skies/dying-skies/api:latest"
 db_password               = ""
 seed_hmac_secret          = ""
 analytics_reader_password = ""
+
+# Analytics Dagster VM.
+cloudflare_account_id = ""
+cloudflare_api_token  = ""
