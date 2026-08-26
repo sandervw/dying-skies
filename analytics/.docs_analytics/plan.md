@@ -1,6 +1,6 @@
 # Analytics Plan
 
-Dagster + dbt + Observable Framework. Concept: `../../.docs/plan.md`. Stages 1-4 done; Stage 5 remains.
+Dagster + dbt + Observable Framework. Concept: `../../.docs/plan.md`. All stages done.
 
 ## Architecture
 dbt reads the backend's Postgres tables directly as dbt sources. No ingestion step, no analytics-owned raw schema, no data copied anywhere. Dagster only orchestrates: it schedules and runs dbt and the Observable Framework site build, and gives lineage across those runs. Historical trends come from timestamped rows in the source event tables, never from the mutable counter totals.
@@ -30,8 +30,8 @@ Mart models built on staging: the global counter breakdown (saved/destroyed/dead
 ### Stage 4: Dagster orchestration (DONE)
 Dagster code location under `orchestration/` (package, `[tool.dagster]` in `pyproject.toml`). `dbt_models` runs `dbt build`; `analytics_site` runs `npm run deploy` in `observable/`, downstream of the marts. `refresh_job` covers both, scheduled every 6 hours (`refresh`, America/Chicago). A `failure_alert` run-failure sensor emails via `alert.py` (Cloudflare Email Sending). Dagster only orchestrates; it ingests and stores no data. Run with `uv run dagster dev` from `analytics/`.
 
-### Stage 5: Observable Framework site and Cloudflare deploy (TODO)
-Observable Framework project rendering the Stage 3 marts (counter breakdown, trends over time). Black minimal look, static star backdrop, base-path configured for `/analytics/`. Wire the static build into a Cloudflare subpath route at `dyingskies.com/analytics/`, confirming it doesn't collide with frontend routes.
+### Stage 5: Observable Framework site and Cloudflare deploy (DONE)
+Observable Framework project in `observable/` renders the Stage 3 marts (counter breakdown, trends over time). Node data loaders read the marts via the `ANALYTICS_DB_*` env; missing database yields zeros so builds never block. Black minimal look, static seeded starfield, favicon from the frontend logo. `npm run deploy` runs `observable build` then `wrangler deploy`; output nests under `dist/analytics/` and binds the `dying-skies-analytics` Worker to the `dyingskies.com/analytics/*` route. Live at `dyingskies.com/analytics/`. The Dagster VM installs the site's npm deps and reuses `ANALYTICS_DB_*` and `CLOUDFLARE_*` for scheduled redeploys with real data.
 
 ## Scope
 Counter breakdown (saved/destroyed/dead), total users, and historical trends of saves, destroys, deaths, and signups over time. Metrics beyond this are out of scope until Sander scopes them.

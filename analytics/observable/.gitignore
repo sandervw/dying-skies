@@ -1,0 +1,5 @@
+node_modules/
+dist/
+.observablehq/cache/
+src/.observablehq/cache/
+.wrangler/
