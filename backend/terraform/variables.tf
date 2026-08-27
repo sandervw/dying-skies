@@ -92,17 +92,6 @@ variable "alert_from" {
   default = "alerts@dyingskies.com"
 }
 
-# Billing account id (XXXXXX-XXXXXX-XXXXXX) that owns the project.
-variable "billing_account" {
-  type = string
-}
-
-variable "monthly_budget_amount" {
-  type        = string
-  description = "Monthly budget ceiling in USD that triggers alert emails."
-  default     = "50"
-}
-
 variable "alert_to" {
   type    = string
   default = "samvanwilligen@gmail.com"
