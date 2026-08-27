@@ -4,95 +4,17 @@
 
 ## Commands
 
-**Cloud Commands:**
-A. One-time: Artifact Registry repo
-```
-gcloud artifacts repositories create dying-skies \
-  --repository-format=docker --location=us-central1
-```
-
-B. Build + push image
-```
-gcloud builds submit backend \
-  --tag us-central1-docker.pkg.dev/dying-skies/dying-skies/api:latest
-```
-C. One-time: let Terraform authenticate as you
-`gcloud auth application-default login`
-
-D. Provision (reads terraform.tfvars automatically)
-`cd backend/terraform && tofu apply`
-
-E. Smoke test
-`curl "$(tofu output -raw cloud_run_url)/health"`
-
-**Cloud Health/Debugging (read-only):**
-
-Context / auth
-```
-gcloud config list                    # active project, region, account
-gcloud auth list                      # which identity you're using
-gcloud projects describe dying-skies  # project overview
-```
-
-Cloud Run (the API)
-```
-gcloud run services list --region us-central1
-gcloud run services describe dying-skies-api --region us-central1
-# just the URL + latest ready revision:
-gcloud run services describe dying-skies-api --region us-central1 \
-  --format='value(status.url,status.latestReadyRevisionName)'
-gcloud run revisions list --service dying-skies-api --region us-central1
-gcloud run domain-mappings list --region us-central1     # cert/DNS status
-gcloud run services logs read dying-skies-api --region us-central1 --limit 50
-```
-
-Errors only (last hour, all services)
-```
-gcloud logging read \
-  'resource.type=cloud_run_revision AND severity>=ERROR' \
-  --limit 20 --freshness=1h --format='table(timestamp,textPayload)'
-```
-
-Cloud SQL (Postgres)
-```
-gcloud sql instances list
-gcloud sql instances describe dying-skies-db \
-  --format='value(state,databaseVersion,settings.tier)'
-gcloud sql databases list --instance dying-skies-db
-gcloud sql users list --instance dying-skies-db
-gcloud sql operations list --instance dying-skies-db --limit 5   # recent activity/failures
-```
-
-Secret Manager
-```
-gcloud secrets list
-gcloud secrets versions list database-url
-# prints the secret in plaintext - only when you really need it:
-gcloud secrets versions access latest --secret seed-hmac-secret
-```
-
-Artifact Registry (container images)
-```
-gcloud artifacts repositories list --location us-central1
-gcloud artifacts docker images list \
-  us-central1-docker.pkg.dev/dying-skies/dying-skies
-```
-
-One-line smoke test
-```
-curl -sS -w '\n%{http_code}\n' https://api.dyingskies.com/health
-```
-
-Tips: add `--format=json` to any describe for the full object; `gcloud <group> --help` lists subcommands.
-
 **Frontend:**
 `npm run dev` # run/test the frontend UI
 
-**Backend:**
+**Backend Local:**
 `docker compose up --build` # start the API and postgres server; add -d to run as bg task
 - API → http://localhost:8000/health (returns {"status":"ok"})
 - Postgres → localhost:5432
 `docker compose down` # stop; add -v to wipe the db
+
+**Backend:**
+
 
 ## Techs/Terms
 
@@ -101,7 +23,7 @@ Tips: add `--format=json` to any describe for the full object; `gcloud <group> -
 - `Postgres 18` - the database; talked to via `asyncpg`, async driver, keeps a connection pool (reused DB connections) open
 - `Docker` + `Docker Compose` - runs everything in containers; wires two services together (api + db) and uses a healthcheck so the API waits until Postgres is actually ready
 - `Dockerfile` - recipe that builds the API image (python:3.12-slim base)
-- `Terraform` - infrastructure-as-code for the cloud deploy (GCP)
+- `Terraform` - infrastructure-as-code for the deploy
 
 **Frontend:**
 - `Seed` - single value that deterministically generates an entire sky (dots, constellation, palette, star motion). Same seed always yields the same art.

@@ -1,0 +1,14 @@
+[Unit]
+Description=Dying Skies API
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+User=skies
+WorkingDirectory=/code/skies/backend
+EnvironmentFile=/etc/skies/.env
+ExecStart=/code/skies/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

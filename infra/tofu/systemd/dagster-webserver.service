@@ -1,0 +1,16 @@
+[Unit]
+Description=Dagster webserver
+After=network.target postgresql.service
+Wants=postgresql.service
+
+[Service]
+User=skies
+WorkingDirectory=/code/skies/analytics
+EnvironmentFile=/etc/skies/.env
+Environment=DAGSTER_HOME=/files/skies/dagster
+Environment=DAGSTER_PG_URL=postgresql://skies@/dying_skies?host=/var/run/postgresql
+ExecStart=/home/skies/.local/bin/uv run dagster-webserver -h 127.0.0.1 -p 3000
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

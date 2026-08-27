@@ -1,6 +1,6 @@
 # Backend Outline
 
-FastAPI + Postgres. Live on GCP Cloud Run + Cloud SQL. Full endpoint spec: `api-contract.md`.
+FastAPI + Postgres. Live on an OVH VPS (see `infra/`). Full endpoint spec: `api-contract.md`.
 
 ## Implementation
 - Star issuance: `POST /stars/batch` reserves a counter range for the session, derives each seed as `HMAC(secret, session_id || counter)` and a tag as `HMAC(secret, seed)`, returns base64url pairs (`stars.py`, `security.py`, `session.py`).
@@ -26,5 +26,5 @@ Sky rendering from a seed (frontend); the metrics pipeline that reads the analyt
 - A user keeps at most 4 sessions; a fifth login evicts the oldest device.
 
 ## Deployment
-- GCP Cloud Run (API) + Cloud SQL Postgres, provisioned via OpenTofu. Secrets live in the environment: `SEED_HMAC_SECRET`, `DATABASE_URL`, `FRONTEND_ORIGIN`, `ANALYTICS_READER_PASSWORD`.
-- Dagster runs on a GCE VM bound to localhost:3000. Set `cloudflare_tunnel_token` to front it with a Zero Trust tunnel; gate the hostname with Cloudflare Access. Empty token falls back to the IAP SSH tunnel in `outputs.tf`.
+- Runs on an OVH VPS as the `skies-api` systemd service against local Postgres, provisioned in `infra/`. Secrets in `/etc/skies/.env`: `SEED_HMAC_SECRET`, `DATABASE_URL`, `FRONTEND_ORIGIN`, `ANALYTICS_READER_PASSWORD`.
+- Public at `api.dyingskies.com` through a Cloudflare Tunnel; the Dagster UI shares it, gated with Cloudflare Access.

@@ -3,11 +3,12 @@
 Procedurally-generated "skies" as falling stars on a black field. Click a falling star to save it and open its sky, then traverse forever. Full concept: `.docs/plan.md`. The sky is the interface; UI is near-invisible.
 
 ## Repo layout
-Three independent pieces, each with its own tooling and its own `CLAUDE.md`. When working in a piece, read that piece's `CLAUDE.md` for its deltas; the standards below apply everywhere.
+Four pieces, each with its own tooling and its own `CLAUDE.md`. When working in a piece, read that piece's `CLAUDE.md` for its deltas; the standards below apply everywhere.
 
 - **`frontend/`**: Vite + React, Canvas 2D visual layer. Done; deployed on Cloudflare.
-- **`backend/`**: FastAPI + Postgres API. Done; live on GCP.
+- **`backend/`**: FastAPI + Postgres API. Done; live on an OVH VPS.
 - **`analytics/`**: Dagster + dbt + Observable Framework pipeline. In progress; dbt and Dagster done, the Observable site remains.
+- **`infra/`**: OpenTofu provisioning the OVH VPS that runs the backend and analytics.
 - **`.docs/`**: cross-cutting docs. Each piece keeps its own `.docs_<piece>/` folder.
 
 ## Standards (every piece, every request)
