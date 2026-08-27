@@ -33,6 +33,7 @@ Three independent pieces, each with its own tooling and its own `CLAUDE.md`. Whe
 
 **Config**
 - Secrets live in each piece's `.env`, never committed. A tracked `.env.sample` lists the keys with empty values.
+- Local `.env` and `.tfvars` files hold live secrets by design and are gitignored, not tracked. Do not flag them.
 
 **Git**
 - Agents may stage, commit; commit subjects stay under 12 words.

@@ -91,6 +91,7 @@ resource "google_cloud_run_v2_service" "api" {
 
   template {
     scaling {
+      min_instance_count = 1
       max_instance_count = 2
     }
 
@@ -106,6 +107,16 @@ resource "google_cloud_run_v2_service" "api" {
 
       ports {
         container_port = 8000
+      }
+
+      # Keep the warm instance genuinely hot; boost CPU during startup.
+      resources {
+        limits = {
+          cpu    = "1"
+          memory = "512Mi"
+        }
+        cpu_idle          = false
+        startup_cpu_boost = true
       }
 
       env {
