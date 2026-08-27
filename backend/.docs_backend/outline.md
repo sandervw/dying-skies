@@ -27,3 +27,4 @@ Sky rendering from a seed (frontend); the metrics pipeline that reads the analyt
 
 ## Deployment
 - GCP Cloud Run (API) + Cloud SQL Postgres, provisioned via OpenTofu. Secrets live in the environment: `SEED_HMAC_SECRET`, `DATABASE_URL`, `FRONTEND_ORIGIN`, `ANALYTICS_READER_PASSWORD`.
+- Dagster runs on a GCE VM bound to localhost:3000. Set `cloudflare_tunnel_token` to front it with a Zero Trust tunnel; gate the hostname with Cloudflare Access. Empty token falls back to the IAP SSH tunnel in `outputs.tf`.

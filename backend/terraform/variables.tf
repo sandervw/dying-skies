@@ -80,6 +80,13 @@ variable "cloudflare_api_token" {
   sensitive = true
 }
 
+# Connector token for the Dagster UI tunnel; empty skips cloudflared.
+variable "cloudflare_tunnel_token" {
+  type      = string
+  sensitive = true
+  default   = ""
+}
+
 variable "alert_from" {
   type    = string
   default = "alerts@dyingskies.com"

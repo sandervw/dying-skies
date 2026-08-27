@@ -45,6 +45,7 @@ read_secret() {
 
 ANALYTICS_DB_PASSWORD="$(read_secret ${analytics_reader_secret})"
 CLOUDFLARE_API_TOKEN="$(read_secret ${cloudflare_token_secret})"
+TUNNEL_TOKEN_SECRET="${tunnel_token_secret}"
 
 # Runtime env for dbt, the site deploy, and alerts.
 cat > $ENV_DIR/dagster.env <<EOF
@@ -135,3 +136,15 @@ systemctl daemon-reload
 systemctl reset-failed cloud-sql-proxy.service dagster-daemon.service dagster-webserver.service 2>/dev/null || true
 systemctl enable --now cloud-sql-proxy.service
 systemctl enable --now dagster-daemon.service dagster-webserver.service
+
+# Cloudflare Tunnel fronting the Dagster UI; skipped when no token.
+if [ -n "$TUNNEL_TOKEN_SECRET" ]; then
+  TUNNEL_TOKEN="$(read_secret $TUNNEL_TOKEN_SECRET)"
+  mkdir -p --mode=0755 /usr/share/keyrings
+  curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg > /usr/share/keyrings/cloudflare-main.gpg
+  echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main' > /etc/apt/sources.list.d/cloudflared.list
+  apt-get update
+  apt-get install -y cloudflared
+  cloudflared service uninstall || true
+  cloudflared service install "$TUNNEL_TOKEN"
+fi

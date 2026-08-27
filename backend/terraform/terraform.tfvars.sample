@@ -10,3 +10,6 @@ analytics_reader_password = ""
 # Analytics Dagster VM.
 cloudflare_account_id = ""
 cloudflare_api_token  = ""
+
+# Zero Trust tunnel connector token for the Dagster UI; empty skips it.
+cloudflare_tunnel_token = ""

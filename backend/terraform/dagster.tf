@@ -18,6 +18,28 @@ resource "google_secret_manager_secret_iam_member" "vm_reads_cloudflare_token" {
   member    = "serviceAccount:${local.runtime_service_account}"
 }
 
+# Cloudflare Tunnel connector token fronting the Dagster UI.
+resource "google_secret_manager_secret" "cloudflare_tunnel_token" {
+  count     = var.cloudflare_tunnel_token == "" ? 0 : 1
+  secret_id = "cloudflare-tunnel-token"
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret_version" "cloudflare_tunnel_token" {
+  count       = var.cloudflare_tunnel_token == "" ? 0 : 1
+  secret      = google_secret_manager_secret.cloudflare_tunnel_token[0].id
+  secret_data = var.cloudflare_tunnel_token
+}
+
+resource "google_secret_manager_secret_iam_member" "vm_reads_tunnel_token" {
+  count     = var.cloudflare_tunnel_token == "" ? 0 : 1
+  secret_id = google_secret_manager_secret.cloudflare_tunnel_token[0].id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${local.runtime_service_account}"
+}
+
 # Compute Engine API, required for the Dagster VM.
 resource "google_project_service" "compute" {
   service            = "compute.googleapis.com"
@@ -54,6 +76,7 @@ resource "google_compute_instance" "dagster" {
     analytics_reader_secret = google_secret_manager_secret.analytics_reader_password.secret_id
     cloudflare_token_secret = google_secret_manager_secret.cloudflare_api_token.secret_id
     cloudflare_account_id   = var.cloudflare_account_id
+    tunnel_token_secret     = var.cloudflare_tunnel_token == "" ? "" : google_secret_manager_secret.cloudflare_tunnel_token[0].secret_id
     alert_from              = var.alert_from
     alert_to                = var.alert_to
   })
@@ -63,5 +86,7 @@ resource "google_compute_instance" "dagster" {
     google_secret_manager_secret_version.analytics_reader_password,
     google_secret_manager_secret_version.cloudflare_api_token,
     google_secret_manager_secret_iam_member.vm_reads_cloudflare_token,
+    google_secret_manager_secret_version.cloudflare_tunnel_token,
+    google_secret_manager_secret_iam_member.vm_reads_tunnel_token,
   ]
 }
