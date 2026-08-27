@@ -5,7 +5,6 @@ import { Sky } from "./components/Sky";
 import { ButtonBox } from "./components/ButtonBox";
 import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
-import { AnalyticsView } from "./components/AnalyticsView";
 import { GalleryView } from "./components/GalleryView";
 import { AuthOverlay } from "./components/AuthOverlay";
 import { useImmersion } from "./hooks/useImmersion";
@@ -18,7 +17,6 @@ const App = (): ReactElement => {
     <div className={immersive ? "immersive" : undefined}>
       <Routes>
         <Route path="/gallery" element={<GalleryView />} />
-        <Route path="/analytics" element={<AnalyticsView />} />
         <Route path="*" element={<Sky />} />
       </Routes>
       <ButtonBox toggleImmersion={toggleImmersion} setOpen={setOpen} />

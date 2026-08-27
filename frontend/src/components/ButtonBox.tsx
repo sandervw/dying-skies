@@ -5,7 +5,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "./Icon";
 import { DestroyOverlay } from "./DestroyOverlay";
 import {
-  ANALYTICS_PATH,
+  ANALYTICS_URL,
   GALLERY_PATH,
   encodeSeed,
   isGalleryPath,
@@ -38,7 +38,7 @@ const ButtonBox = ({
 
   const handleAnalytics = (event: MouseEvent<HTMLButtonElement>): void => {
     event.preventDefault();
-    navigate(ANALYTICS_PATH);
+    window.location.href = ANALYTICS_URL;
   };
 
   const handleGallery = (event: MouseEvent<HTMLButtonElement>): void => {

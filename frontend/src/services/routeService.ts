@@ -74,8 +74,8 @@ const seedFromPath = (pathname: string): Seed => {
   return decodeSeed(match[1]) ?? ROOT_SEED;
 };
 
-/** the URL path for the analytics view. */
-const ANALYTICS_PATH = "/analytics/";
+/** external URL for the deployed analytics site. */
+const ANALYTICS_URL = "https://gufime.com/analytics/";
 
 // matches "/gallery" with an optional trailing slash.
 const GALLERY_PATH_PATTERN = /^\/gallery\/?$/;
@@ -89,7 +89,7 @@ const isGalleryPath = (pathname: string): boolean =>
 
 export {
   ROOT_SEED,
-  ANALYTICS_PATH,
+  ANALYTICS_URL,
   GALLERY_PATH,
   encodeSeed,
   decodeSeed,
