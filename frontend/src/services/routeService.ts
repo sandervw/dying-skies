@@ -75,7 +75,7 @@ const seedFromPath = (pathname: string): Seed => {
 };
 
 /** external URL for the deployed analytics site. */
-const ANALYTICS_URL = "https://gufime.com/analytics/";
+const ANALYTICS_URL = "https://dyingskies.com/analytics/";
 
 // matches "/gallery" with an optional trailing slash.
 const GALLERY_PATH_PATTERN = /^\/gallery\/?$/;
