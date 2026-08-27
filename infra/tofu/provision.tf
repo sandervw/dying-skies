@@ -3,7 +3,7 @@ locals {
   ssh_public_key  = trimspace(file("~/.ssh/dying-skies_rsa.pub"))
 }
 
-# Static IP of the hand-ordered box; drop once ovh_vps is imported.
+# Static IP of the hand-ordered box; set this by hand.
 variable "vps_ip" {
   type        = string
   description = "Public IPv4 of the box; provisioning targets this."

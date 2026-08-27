@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Non-interactive apt; suspend needrestart so it never hangs remote-exec.
+export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_SUSPEND=1
+export NEEDRESTART_MODE=a
+
 SKIES_KEY="${1:?ssh public key required}"
 
 apt-get update
@@ -51,14 +56,12 @@ if [ ! -d /code/skies/.git ]; then
   su - skies -c "git clone https://github.com/sandervw/dying-skies.git /code/skies"
 fi
 
-# Backend venv from requirements.txt; analytics via uv sync.
-su - skies -c "cd /code/skies/backend && ~/.local/bin/uv venv && ~/.local/bin/uv pip install -r requirements.txt" || true
-su - skies -c "cd /code/skies/analytics && ~/.local/bin/uv sync" || true
+# Backend venv, built once. Never rebuilt: the live API holds it open.
+if [ ! -d /code/skies/backend/.venv ]; then
+  su - skies -c "cd /code/skies/backend && ~/.local/bin/uv venv && ~/.local/bin/uv pip install -r requirements.txt" || true
+fi
 
-# Observable site deps; without these `npm run deploy` exits 127.
-su - skies -c "cd /code/skies/analytics/observable && npm ci" || true
-
-# Runtime secrets; fill by hand, services read this file.
+# Runtime secrets; seeded once, then filled in by hand.
 install -d -m 755 /etc/skies
 if [ ! -f /etc/skies/.env ]; then
   cat > /etc/skies/.env <<'EOF'
@@ -79,12 +82,10 @@ CLOUDFLARE_API_TOKEN=
 ALERT_FROM=alerts@dyingskies.com
 ALERT_TO=samvanwilligen@gmail.com
 EOF
-  chmod 640 /etc/skies/.env
-  chown root:skies /etc/skies/.env
 fi
 
-# Build the dbt manifest the Dagster code location loads.
-su - skies -c "set -a; . /etc/skies/.env; set +a; cd /code/skies/analytics && ~/.local/bin/uv run dbt parse --project-dir dbt --profiles-dir dbt" || true
+chmod 640 /etc/skies/.env
+chown root:skies /etc/skies/.env
 
 # 4 GB swap: the Observable build is memory-hungry.
 if [ ! -f /swapfile ]; then
