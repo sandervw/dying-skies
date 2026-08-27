@@ -1,0 +1,38 @@
+name: Deploy backend
+
+# On push touching backend/: sync the box, sync API deps, restart the API. Postgres untouched.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend.yml'
+  workflow_dispatch:
+
+# Shared with the other box deploys: they all reset the same /code/skies checkout.
+concurrency:
+  group: box-deploy
+  cancel-in-progress: false
+
+env:
+  BOX: skies@40.160.136.98
+  SSH_OPTS: -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i /home/runner/.ssh/skies_key
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install box SSH key
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.SKIES_SSH_KEY }}" | tr -d '\r' > ~/.ssh/skies_key
+          chmod 600 ~/.ssh/skies_key
+
+      - name: Sync code on the box
+        run: ssh $SSH_OPTS $BOX "cd /code/skies && git fetch origin && git checkout main && git reset --hard origin/main"
+
+      - name: Sync API dependencies
+        run: ssh $SSH_OPTS $BOX "cd /code/skies/backend && ~/.local/bin/uv pip install --python .venv/bin/python -r requirements.txt"
+
+      - name: Restart the API
+        run: ssh $SSH_OPTS $BOX "sudo systemctl restart skies-api.service"

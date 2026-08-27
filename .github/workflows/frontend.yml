@@ -1,0 +1,41 @@
+name: Deploy frontend
+
+# On push touching frontend/: build the SPA on the box, then wrangler-deploy it.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend.yml'
+  workflow_dispatch:
+
+# Shared with the other box deploys: they all reset the same /code/skies checkout.
+concurrency:
+  group: box-deploy
+  cancel-in-progress: false
+
+env:
+  BOX: skies@40.160.136.98
+  SSH_OPTS: -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -i /home/runner/.ssh/skies_key
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install box SSH key
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.SKIES_SSH_KEY }}" | tr -d '\r' > ~/.ssh/skies_key
+          chmod 600 ~/.ssh/skies_key
+
+      - name: Sync code on the box
+        run: ssh $SSH_OPTS $BOX "cd /code/skies && git fetch origin && git checkout main && git reset --hard origin/main"
+
+      - name: Build and deploy the SPA
+        run: |
+          ssh $SSH_OPTS $BOX 'set -euo pipefail
+            cd /code/skies/frontend
+            npm ci
+            VITE_API_BASE_URL=https://api.dyingskies.com npm run build
+            set -a; . /etc/skies/.env; set +a
+            npm run deploy'
