@@ -55,6 +55,9 @@ fi
 su - skies -c "cd /code/skies/backend && ~/.local/bin/uv venv && ~/.local/bin/uv pip install -r requirements.txt" || true
 su - skies -c "cd /code/skies/analytics && ~/.local/bin/uv sync" || true
 
+# Observable site deps; without these `npm run deploy` exits 127.
+su - skies -c "cd /code/skies/analytics/observable && npm ci" || true
+
 # Runtime secrets; fill by hand, services read this file.
 install -d -m 755 /etc/skies
 if [ ! -f /etc/skies/.env ]; then

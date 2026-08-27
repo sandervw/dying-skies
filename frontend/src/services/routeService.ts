@@ -75,7 +75,7 @@ const seedFromPath = (pathname: string): Seed => {
 };
 
 /** the URL path for the analytics view. */
-const ANALYTICS_PATH = "/analytics";
+const ANALYTICS_PATH = "/analytics/";
 
 // matches "/gallery" with an optional trailing slash.
 const GALLERY_PATH_PATTERN = /^\/gallery\/?$/;
