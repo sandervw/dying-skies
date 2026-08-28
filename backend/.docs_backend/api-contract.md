@@ -1,6 +1,6 @@
 # Backend API Contract
 
-Frozen contract for the FastAPI backend, matching the implementation as of Stage 6. Frontend integrates against this. Concept: `../../.docs/plan.md`.
+The HTTP contract for the FastAPI backend. The frontend integrates against this.
 
 ## Conventions
 - All request and response bodies are JSON.
@@ -62,6 +62,3 @@ Errors: 401 `invalid_credentials`.
 `GET /auth/me` - any session.
 200 `{id, username}`.
 Errors: 401 `not_authenticated`.
-
-## Out of scope
-`GET /sky/:seed` is not part of this contract. Sky rendering from a seed is a frontend concern; the backend serves only seeds and lifecycle state.

@@ -1,33 +1,23 @@
 # Data contract: backend Postgres
 
-Analytics reads the backend's Postgres tables directly as dbt sources. This note tracks what access exists and what is pending from backend.
+Analytics reads the backend's Postgres tables directly as dbt sources. `backend/app/db.py` is the source of truth for the schema and the access grant.
 
-## Confirmed against `backend/app/db.py`
+## Source tables and columns
 
-- `saved_stars.saved_at` is `TIMESTAMPTZ NOT NULL DEFAULT now()`. This drives historical save trends.
-- `saved_stars.seed` is the primary key, `BYTEA`.
-- `sessions` has `session_id` (`TEXT` primary key) and `counter` (`BIGINT NOT NULL DEFAULT 0`), a mutable running total.
-- `users` has `id` (`UUID` primary key), `username` (`TEXT UNIQUE NOT NULL`), `password_hash` (`TEXT NOT NULL`), and `created_at` (`TIMESTAMPTZ NOT NULL DEFAULT now()`). `password_hash` exists but is excluded from every staging model; it never leaves the backend.
-- `destroyed_stars.destroyed_at` is `TIMESTAMPTZ NOT NULL DEFAULT now()`. This drives historical destroy trends.
-- `destroyed_stars.seed` is the primary key, `BYTEA`.
+- `saved_stars`: `seed` (`BYTEA` primary key), `owner_id`, `saved_at` (`TIMESTAMPTZ NOT NULL DEFAULT now()`). `saved_at` drives historical save trends.
+- `destroyed_stars`: `seed` (`BYTEA` primary key), `owner_id`, `destroyed_at` (`TIMESTAMPTZ NOT NULL DEFAULT now()`). `destroyed_at` drives historical destroy trends.
+- `sessions`: `session_id` (`TEXT` primary key), `counter` (`BIGINT NOT NULL DEFAULT 0`, a mutable running total), `user_id`.
+- `users`: `id` (`UUID` primary key), `username` (`TEXT UNIQUE NOT NULL`), `password_hash` (`TEXT NOT NULL`), `created_at` (`TIMESTAMPTZ NOT NULL DEFAULT now()`). `password_hash` is excluded from every staging model and never leaves the backend.
 
-## Access granted
+## Access
 
-The backend's `ensure_analytics_role` defines a read-only role, `analytics_reader`, with `SELECT` only, scoped to exactly four tables:
+The backend defines a read-only role, `analytics_reader`, granted `SELECT` only, scoped to exactly four tables:
 
 - `sessions`
 - `saved_stars`
 - `users`
 - `destroyed_stars`
 
-It also creates an `analytics` schema owned by `analytics_reader`, where dbt materializes marts. dbt connects as `analytics_reader` and builds into that schema.
+It also creates an `analytics` schema, where dbt materializes staging views and marts. dbt connects as `analytics_reader` and builds into that schema. The role has no write access and no access to any other table.
 
-No write access anywhere else. No access to any other table.
-
-## Access pending
-
-None. A death event table does not exist; dead stays a computed total, not a trend.
-
-## Provisioning
-
-The backend provisions the role on startup: `ensure_analytics_role` in `backend/app/db.py` is the source-of-truth contract, reading the reader password from `ANALYTICS_READER_PASSWORD`. Sander sets that env var in the backend `.env` (local) or Terraform (deploy); no manual SQL run.
+Dead is a computed total (issued minus saved minus destroyed).

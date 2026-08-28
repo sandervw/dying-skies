@@ -1,39 +1,53 @@
 # Frontend Outline
 
-Vite + React SPA, Canvas 2D.
+Vite + React single-page app rendering procedural skies on a Canvas 2D layer.
 
-## Implementation
-- Seed-derived Canvas 2D sky: `SkySeedContext` holds the route seed and save/destroy; `Sky.tsx` paints constellation, palette, and falling stars via `useSkyCanvas`, `skyService`, and `starService`.
-- Routing: `/` (root sky), `/sky/<seed>`, `/gallery`, all through `routeService` and a catch-all route to `Sky`; the analytics button leaves the SPA to the external analytics site.
-- Session auth: `AuthContext` fetches the current user; `AuthOverlay` hosts `LoginForm`/`SignupForm`; gallery, save, and destroy actions are gated on login.
-- Save/destroy flow: backend issues seed/tag batches; `starApiService` calls `/stars/save` and `/stars/destroy`; `DestroyOverlay` confirms destruction.
-- Gallery view: fetches the user's saved seeds, renders a mini constellation and wagging star per tile, click opens that sky.
-- Counter tagline: `Footer` polls `GET /stats` every 15 seconds for saved, destroyed, and died totals.
-- Immersive/fullscreen toggle via `useImmersion`.
+## Layout (`src/`)
+- `components/`: `Sky` (the canvas view), `Header`, `Footer`, `ButtonBox`, `GalleryView`, `AuthOverlay` with `LoginForm`/`SignupForm`, `DestroyOverlay`, `Icon`.
+- `contexts/`: `SkySeedContext` (route seed plus save/destroy), `AuthContext` (current user).
+- `hooks/`: `useSkySeed`, `useSkyCanvas`, `useStats`, `useAuth`, `useImmersion`.
+- `services/`: `skyService`, `starService`, `paletteService`, `randomService` (pure seed-derived generators); `starApiService`, `authService` (backend calls); `routeService`, `iconService`, `manualEntryGuards`.
+- `types/`: `sky`, `star`, `palette`, `auth`.
+- `App.tsx`, `main.tsx`: app shell and mount.
 
-## Out of scope
-Seed issuance, persistence, auth (backend); the analytics pipeline (analytics).
+## Rendering
+- Seed-derived Canvas 2D sky. `Sky.tsx` paints the constellation, palette, and falling stars through `useSkyCanvas`, `skyService`, and `starService`.
+- All seed-derived logic (constellation, palette, trajectory, pixel arrangement) lives in pure generator functions; a seed renders the same static art each time.
 
-## Design Concept
+## Routing
+- `/` root sky; `/sky/<seed>` individual sky; `/gallery` saved skies. A catch-all route falls back to `Sky`, all resolved through `routeService`.
+- The analytics button leaves the SPA and links to the external analytics site.
 
-Screensaver aesthetic. Very minimal UI.
+## Auth
+- `AuthContext` fetches the current user via `authService`.
+- `AuthOverlay` hosts `LoginForm` and `SignupForm`.
+- Gallery, save, and destroy actions are gated on login.
 
-## Sky composition
+## Save and destroy
+- The backend issues seed/tag batches. `starApiService` calls `/stars/save` and `/stars/destroy`.
+- `DestroyOverlay` confirms destruction before the call.
+
+## Gallery
+- Fetches the user's saved seeds, renders a mini constellation and one wagging star per tile; clicking a tile opens that sky.
+
+## Counter
+- `Footer` polls `GET /stats` every 15 seconds and shows saved, destroyed, and died totals.
+
+## Design concept
+Screensaver aesthetic; the sky is the interface and UI stays near-invisible.
+
 - Pitch-black background.
-- Static per seed: a few scattered white dots; one connect-the-dots constellation (shape, position, star count); a color palette for falling stars.
+- Static per seed: a few scattered white dots; one connect-the-dots constellation (shape, position, star count); a falling-star color palette.
 - Dynamic per session: falling stars, each a fixed pixel arrangement colored from the palette.
-- A seed reopened shows the same static art with new falling stars.
+- Reopening a seed shows the same static art with fresh falling stars.
 
 ## Root sky
-- Fixed hardcoded seed (Sander picks it): the origin of the universe.
-- Anonymous visitors: view-only screensaver, nothing clickable.
-- Logged-in users: full interactive traversal and saving.
+- Fixed hardcoded seed: the origin of the universe.
+- Anonymous visitors get a view-only screensaver, nothing clickable.
+- Logged-in users get full interactive traversal and saving.
 
-## Routes
-- `/` root sky, with the global counter tagline.
-- `/sky/<seed>` individual sky; seed is base64url (~43 chars), shareable.
-- Analytics lives at its own deployed site; the button links out to it.
+## Seeds
+- A seed is an unpadded base64url string (~43 chars) and is shareable as a `/sky/<seed>` link.
 
-## Counter display
-- Homepage tagline shows saved, destroyed, and dead totals.
-- The client polls `GET /stats` at a short interval.
+## Boundaries
+Seed issuance, persistence, and auth are the backend's; the analytics pipeline is its own deployed site. The frontend integrates with the backend only through the HTTP API in `backend/.docs_backend/api-contract.md`.

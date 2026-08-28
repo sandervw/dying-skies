@@ -23,7 +23,7 @@
 - `Postgres 18` - the database; talked to via `asyncpg`, async driver, keeps a connection pool (reused DB connections) open
 - `Docker` + `Docker Compose` - runs everything in containers; wires two services together (api + db) and uses a healthcheck so the API waits until Postgres is actually ready
 - `Dockerfile` - recipe that builds the API image (python:3.12-slim base)
-- `Terraform` - infrastructure-as-code for the deploy
+- `OpenTofu` - infrastructure-as-code for the deploy
 
 **Frontend:**
 - `Seed` - single value that deterministically generates an entire sky (dots, constellation, palette, star motion). Same seed always yields the same art.
@@ -35,7 +35,7 @@
 ## Design
 
 **Backend:**
-`POST /seeds/batch` - hands the client a fresh batch of star "seeds" to fall across the screen; the endpoint:
+`POST /stars/batch` - hands the client a fresh batch of star "seeds" to fall across the screen; the endpoint:
 1. Identifies your session (via cookie, below)
 2. Reserves a range of counter numbers for you
 3. For each counter, computes a seed and a matching tag.
@@ -52,7 +52,7 @@
 `The flow:`
 1. First visit: browser sends no cookie. Server generates a random session_id, saves a row (session_id, counter=0), and replies with Set-Cookie: session_id=....
 2. Browser stores it and auto-sends it on every later request - you never handle it manually.
-3. /seeds/batch: server reads your session_id from the cookie, mints seeds/tags, returns them. They render as falling stars, each carrying its seed and tag in the client's memory.
+3. /stars/batch: server reads your session_id from the cookie, mints seeds/tags, returns them. They render as falling stars, each carrying its seed and tag in the client's memory.
 4. Save (future): client posts a star's {seed, tag}; server verifies via the tag.
 5. Our cookie is set httponly (JavaScript can't read it, blocking theft via injected scripts) and samesite=lax (limits it being sent from other sites, blocking a common forgery attack). secure means "only send over HTTPS."
 
