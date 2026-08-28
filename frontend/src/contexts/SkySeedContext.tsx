@@ -1,10 +1,16 @@
-import { createContext, useMemo } from "react";
+import { createContext, useEffect, useMemo } from "react";
 import type { ReactElement, ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { seedFromPath, ROOT_SEED } from "../services/routeService";
 import { saveStar, destroyStar, tagForSeed } from "../services/starApiService";
+import { deriveSeed } from "../services/randomService";
 import type { Seed } from "../services/randomService";
+import {
+  generatePalette,
+  toCssColor,
+  pickAccentColor,
+} from "../services/paletteService";
 
 /** the visible sky: its route-derived seed, save tag, and save/destroy actions. */
 const SkySeedContext = createContext<{
@@ -22,6 +28,13 @@ const SkySeedProvider = ({ children }: { children: ReactNode }): ReactElement =>
   // stable reference per path; re-renders must not restart the star loop.
   const seed = useMemo(() => seedFromPath(pathname), [pathname]);
   const tag = tagForSeed(seed);
+
+  // mirror the visible sky's median colour into the accent variable.
+  useEffect(() => {
+    const palette = generatePalette(deriveSeed(seed, "palette"));
+    const accent = toCssColor(pickAccentColor(palette));
+    document.documentElement.style.setProperty("--color-accent", accent);
+  }, [seed]);
 
   const saveMutation = useMutation({
     mutationFn: () => saveStar(seed, tag ?? ""),

@@ -66,4 +66,12 @@ const generatePalette = (seed: number): Palette => {
 const toCssColor = (color: PaletteColor): string =>
   `hsl(${color.hue}, ${color.saturation}%, ${color.lightness}%)`;
 
-export { generatePalette, toCssColor };
+/** the palette's median colour by lightness, used as the accent. */
+const pickAccentColor = (palette: Palette): PaletteColor => {
+  const byLightness = [...palette.colors].sort(
+    (first, second) => first.lightness - second.lightness,
+  );
+  return byLightness[Math.floor(byLightness.length / 2)];
+};
+
+export { generatePalette, toCssColor, pickAccentColor };
