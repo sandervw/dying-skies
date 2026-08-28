@@ -7,7 +7,8 @@ const sql = `select event_day, event_type, event_count
 
 let trends = [];
 try {
-  trends = await rows(sql);
+  const raw = await rows(sql);
+  trends = raw.map((row) => ({ ...row, event_count: Number(row.event_count) }));
 } catch (error) {
   process.stderr.write(`trends loader: database unavailable, emitting empty (${error.message})\n`);
 }

@@ -34,7 +34,7 @@ trends.length
       y: { label: null, grid: true, tickFormat: "d" },
       color: { domain: ["saved", "destroyed", "signup"], range: ["#ffffff", "#808080", "#b87333"] },
       marks: [
-        Plot.lineY(trends, { x: "event_day", y: "event_count", stroke: "event_type", curve: "step" }),
+        Plot.lineY(trends, { x: "event_day", y: "event_count", stroke: "event_type", z: "event_type", curve: "step" }),
         Plot.ruleY([0])
       ]
     })
