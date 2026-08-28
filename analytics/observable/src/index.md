@@ -10,7 +10,7 @@ starfield();
 ```js
 const metrics = FileAttachment("./data/metrics.json").json();
 const trends = (await FileAttachment("./data/trends.json").json())
-  .map((row) => ({ ...row, event_day: new Date(row.event_day) }));
+  .map((row) => ({ ...row, event_day: new Date(row.event_day), event_count: Number(row.event_count) }));
 ```
 
 <div class="hero">
