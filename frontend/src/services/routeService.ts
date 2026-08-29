@@ -5,10 +5,10 @@ import { SEED_BYTE_LENGTH, seedsEqual } from "./randomService";
 // SEED SPACE
 ////////////////////////////////////////////////////////////
 
-// old 32-bit root (12345) padded in; Sander may swap this.
+// root seed from token iNHDPRZrpIN9iTicT3adRBv4ytRCGKAxaeAZOomT4nM.
 const ROOT_SEED: Seed = [
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-  0, 0, 48, 57, 0, 0, 0,
+  136, 209, 195, 61, 22, 107, 164, 131, 125, 137, 56, 156, 79, 118, 157, 68,
+  27, 248, 202, 212, 66, 24, 160, 49, 105, 224, 25, 58, 137, 147, 226, 115,
 ];
 
 ////////////////////////////////////////////////////////////
