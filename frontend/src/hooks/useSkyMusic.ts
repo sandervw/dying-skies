@@ -6,6 +6,7 @@ import { useSkySeed } from "./useSkySeed";
 import type { Layer, Score } from "../types/music";
 
 const FADE_SECONDS = 2;
+const MASTER_VOLUME = 0.25; // default level; tweak to taste.
 const BEATS_PER_BAR = 4;
 
 interface MusicEvent {
@@ -46,11 +47,15 @@ const buildLayer = (layer: Layer, score: Score, group: Tone.Gain): LayerNodes =>
     oscillator: { type: layer.oscillator },
     envelope: { attack: layer.attack, decay: layer.decay, sustain: layer.sustain, release: layer.release },
   });
+  // 32 default steals long drone tails mid-release
+  synth.maxPolyphony = 64;
   const filter = new Tone.Filter(layer.cutoff, "lowpass");
   synth.connect(filter);
   filter.connect(group);
   const part = new Tone.Part<MusicEvent>((time, value) => {
-    synth.triggerAttackRelease(value.frequency, value.duration, time);
+    // jitter each hit ~5 cents; avoids same-pitch voice resets
+    const detune = 1 + (Math.random() - 0.5) * 0.006;
+    synth.triggerAttackRelease(value.frequency * detune, value.duration, time);
   }, buildEvents(layer, score));
   part.loop = true;
   part.loopEnd = `${layer.loopLengthBars}m`;
@@ -77,10 +82,15 @@ const useSkyMusic = (muted: boolean): void => {
     masterRef.current = master;
     Tone.getTransport().start();
     const resume = (): void => { void Tone.start(); };
+    resume(); // try now; a blocked context waits for the gesture below.
     window.addEventListener("pointerdown", resume, { once: true });
     return (): void => {
       window.removeEventListener("pointerdown", resume);
-      master.dispose();
+      // fade out fast, then dispose; instant disposal clicks
+      master.gain.rampTo(0, 0.1);
+      window.setTimeout((): void => {
+        master.dispose();
+      }, 150);
       masterRef.current = null;
     };
   }, []);
@@ -88,7 +98,7 @@ const useSkyMusic = (muted: boolean): void => {
   useEffect((): (() => void) => {
     const master = masterRef.current;
     if (master === null) {
-      return (): void => {};
+      return (): void => { };
     }
     const score = generateScore(deriveSeed(seed, "music"));
     Tone.getTransport().bpm.value = score.tempo;
@@ -109,7 +119,7 @@ const useSkyMusic = (muted: boolean): void => {
   }, [seed]);
 
   useEffect((): void => {
-    masterRef.current?.gain.rampTo(muted ? 0 : 1, FADE_SECONDS);
+    masterRef.current?.gain.rampTo(muted ? 0 : MASTER_VOLUME, FADE_SECONDS);
   }, [muted]);
 };
 

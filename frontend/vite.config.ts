@@ -6,11 +6,12 @@ import react from "@vitejs/plugin-react";
 const buildContentSecurityPolicy = (apiBaseUrl: string): string =>
   [
     "default-src 'self'",
-    "script-src 'self'",
+    "script-src 'self' https://static.cloudflareinsights.com",
+    "worker-src 'self' blob:",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data:",
     "font-src 'self'",
-    `connect-src 'self' ${apiBaseUrl}`.trim(),
+    `connect-src 'self' ${apiBaseUrl} https://cloudflareinsights.com`.trim(),
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

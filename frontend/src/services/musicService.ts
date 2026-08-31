@@ -140,7 +140,8 @@ const generateLayer = (
     loopLengthBars,
     octave: clamp(randomInteger(random, octaveBand[0], octaveBand[1]) + config.registerShift, 0, 7),
     density: randomInRange(random, density[0], density[1]) * config.densityScale,
-    attack: randomInRange(random, range.attack[0], range.attack[1]),
+    // floor attacks at 20ms; faster starts click
+    attack: Math.max(0.02, randomInRange(random, range.attack[0], range.attack[1])),
     decay: randomInRange(random, range.decay[0], range.decay[1]),
     sustain: randomInRange(random, range.sustain[0], range.sustain[1]),
     release: randomInRange(random, range.release[0], range.release[1]),
