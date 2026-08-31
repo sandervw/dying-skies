@@ -1,118 +1,197 @@
 import { useEffect, useRef } from "react";
-import * as Tone from "tone";
+import { renderChunk } from "../services/audioRenderService";
+import type { RenderedChunk } from "../services/audioRenderService";
+import { generateScore } from "../services/musicService";
 import { deriveSeed } from "../services/randomService";
-import { generateScore, midiToFrequency, MODE_OFFSETS } from "../services/musicService";
 import { useSkySeed } from "./useSkySeed";
-import type { Layer, Score } from "../types/music";
 
 const FADE_SECONDS = 2;
-const MASTER_VOLUME = 0.25; // default level; tweak to taste.
-const BEATS_PER_BAR = 4;
+const MONITOR_INTERVAL_MS = 100;
+const HANDOFF_LEAD_SECONDS = 0.2;
 
-interface MusicEvent {
-  readonly time: string;
-  readonly frequency: number;
-  readonly duration: string;
+/** one rendered chunk wired to a playing audio element. */
+interface LiveChunk {
+  readonly element: HTMLAudioElement;
+  readonly url: string;
 }
 
-interface LayerNodes {
-  readonly synth: Tone.PolySynth;
-  readonly filter: Tone.Filter;
-  readonly part: Tone.Part<MusicEvent>;
-}
+const fadeCancelers = new WeakMap<HTMLAudioElement, () => void>();
 
-// note hold time per archetype; envelopes add the tail.
-const holdFor = (layer: Layer): string =>
-  layer.archetype === "drone" ? "2m" : layer.archetype === "pad" ? "1m" : layer.archetype === "bell" ? "2n" : "4n";
-
-// scatter in-mode notes across the layer's prime-length loop, fresh each session.
-const buildEvents = (layer: Layer, score: Score): MusicEvent[] => {
-  const offsets = MODE_OFFSETS[score.mode];
-  const count = Math.max(1, Math.round(layer.density * layer.loopLengthBars));
-  const duration = holdFor(layer);
-  const events: MusicEvent[] = [];
-  for (let index = 0; index < count; index += 1) {
-    const bar = Math.floor(Math.random() * layer.loopLengthBars);
-    const beat = Math.floor(Math.random() * BEATS_PER_BAR);
-    const degree = offsets[Math.floor(Math.random() * offsets.length)];
-    const midi = (layer.octave + 1) * 12 + score.rootPitchClass + degree;
-    events.push({ time: `${bar}:${beat}:0`, frequency: midiToFrequency(midi), duration });
+/** ramp an element's volume toward a target, replacing any earlier ramp. */
+const fadeVolume = (element: HTMLAudioElement, target: number, seconds: number, onSettled?: () => void): void => {
+  fadeCancelers.get(element)?.();
+  const start = element.volume;
+  if (start === target) {
+    onSettled?.();
+    return;
   }
-  return events;
-};
-
-/** build one layer's synth, filter, and looping part into the group. */
-const buildLayer = (layer: Layer, score: Score, group: Tone.Gain): LayerNodes => {
-  const synth = new Tone.PolySynth(Tone.Synth, {
-    oscillator: { type: layer.oscillator },
-    envelope: { attack: layer.attack, decay: layer.decay, sustain: layer.sustain, release: layer.release },
+  const startedAt = performance.now();
+  const timer = window.setInterval((): void => {
+    const progress = Math.min(1, (performance.now() - startedAt) / (seconds * 1000));
+    element.volume = start + (target - start) * progress;
+    if (progress >= 1) {
+      window.clearInterval(timer);
+      fadeCancelers.delete(element);
+      onSettled?.();
+    }
+  }, 50);
+  fadeCancelers.set(element, (): void => {
+    window.clearInterval(timer);
   });
-  const filter = new Tone.Filter(layer.cutoff, "lowpass");
-  synth.connect(filter);
-  filter.connect(group);
-  const part = new Tone.Part<MusicEvent>((time, value) => {
-    synth.triggerAttackRelease(value.frequency, value.duration, time);
-  }, buildEvents(layer, score));
-  part.loop = true;
-  part.loopEnd = `${layer.loopLengthBars}m`;
-  part.start(0);
-  return { synth, filter, part };
 };
 
-/** stop and dispose one layer's Tone nodes. */
-const disposeLayer = (nodes: LayerNodes): void => {
-  nodes.part.stop();
-  nodes.part.dispose();
-  nodes.synth.dispose();
-  nodes.filter.dispose();
-};
-
-/** build and play the seed's score on a shared master, honoring the mute toggle. */
+/** play a score as endless offline-rendered wav chunks through audio elements. */
 const useSkyMusic = (muted: boolean): void => {
   const { seed } = useSkySeed();
-  const masterRef = useRef<Tone.Gain | null>(null);
+  const mutedRef = useRef(muted);
+  const blockedRef = useRef<HTMLAudioElement | null>(null);
+  const liveRef = useRef<LiveChunk[]>([]);
 
+  useEffect((): void => {
+    mutedRef.current = muted;
+    for (const chunk of liveRef.current) {
+      fadeVolume(chunk.element, muted ? 0 : 1, FADE_SECONDS);
+    }
+  }, [muted]);
+
+  // a blocked play() retries on the next pointer gesture, then fades in.
   useEffect((): (() => void) => {
-    const master = new Tone.Gain(0);
-    master.connect(Tone.getDestination());
-    masterRef.current = master;
-    Tone.getTransport().start();
-    const resume = (): void => { void Tone.start(); };
-    resume(); // try now; a blocked context waits for the gesture below.
-    window.addEventListener("pointerdown", resume, { once: true });
+    const retry = (): void => {
+      const element = blockedRef.current;
+      if (element === null) {
+        return;
+      }
+      void element
+        .play()
+        .then((): void => {
+          if (blockedRef.current === element) {
+            blockedRef.current = null;
+          }
+          if (!mutedRef.current && element.volume === 0) {
+            fadeVolume(element, 1, FADE_SECONDS);
+          }
+        })
+        .catch((): void => {
+          blockedRef.current = element;
+        });
+    };
+    window.addEventListener("pointerdown", retry);
     return (): void => {
-      window.removeEventListener("pointerdown", resume);
-      master.dispose();
-      masterRef.current = null;
+      window.removeEventListener("pointerdown", retry);
     };
   }, []);
 
   useEffect((): (() => void) => {
-    const master = masterRef.current;
-    if (master === null) {
-      return (): void => { };
-    }
     const score = generateScore(deriveSeed(seed, "music"));
-    Tone.getTransport().bpm.value = score.tempo;
-    const reverb = new Tone.Reverb({ decay: score.reverbDecay, wet: score.reverbWet });
-    const group = new Tone.Gain(0);
-    group.connect(reverb);
-    reverb.connect(master);
-    group.gain.rampTo(1, FADE_SECONDS);
-    const layers = score.layers.map((layer) => buildLayer(layer, score, group));
+    // fresh scatter per visit, like the old live Math.random placement.
+    const visitSalt = Math.floor(Math.random() * 4294967296);
+    let stopped = false;
+    let nextIndex = 1;
+    let activeElement: HTMLAudioElement | null = null;
+    let activeMusicSeconds = 0;
+    let advancing = false;
+    let nextChunk: Promise<RenderedChunk> | null = null;
+
+    const startPlaying = (rendered: RenderedChunk, isFirstChunk: boolean): void => {
+      const element = new Audio();
+      element.preload = "auto";
+      element.src = rendered.url;
+      element.volume = isFirstChunk || mutedRef.current ? 0 : 1;
+      activeElement = element;
+      activeMusicSeconds = rendered.musicSeconds;
+      const chunk: LiveChunk = { element, url: rendered.url };
+      liveRef.current = [...liveRef.current, chunk];
+      element.onended = (): void => {
+        liveRef.current = liveRef.current.filter((entry): boolean => entry !== chunk);
+        if (activeElement === element) {
+          activeElement = null;
+        }
+        URL.revokeObjectURL(chunk.url);
+      };
+      void element
+        .play()
+        .then((): void => {
+          if (blockedRef.current === element) {
+            blockedRef.current = null;
+          }
+          if (isFirstChunk) {
+            fadeVolume(element, mutedRef.current ? 0 : 1, FADE_SECONDS);
+          }
+        })
+        .catch((): void => {
+          blockedRef.current = element;
+        });
+    };
+
+    // swap in the pre-rendered next chunk when the active one's music ends.
+    const handoff = (): void => {
+      if (advancing) {
+        return;
+      }
+      advancing = true;
+      const upcoming = nextChunk ?? renderChunk(score, nextIndex, visitSalt);
+      nextChunk = null;
+      void upcoming.then(
+        (rendered): void => {
+          if (stopped) {
+            URL.revokeObjectURL(rendered.url);
+            return;
+          }
+          advancing = false;
+          nextIndex += 1;
+          nextChunk = renderChunk(score, nextIndex, visitSalt);
+          startPlaying(rendered, false);
+        },
+        (): void => {
+          advancing = false; // render failed; the monitor retries.
+        },
+      );
+    };
+
+    const monitor = window.setInterval((): void => {
+      if (activeElement !== null && activeElement.currentTime + HANDOFF_LEAD_SECONDS >= activeMusicSeconds) {
+        handoff();
+      }
+    }, MONITOR_INTERVAL_MS);
+
+    void renderChunk(score, 0, visitSalt).then(
+      (rendered): void => {
+        if (stopped) {
+          URL.revokeObjectURL(rendered.url);
+          return;
+        }
+        nextChunk = renderChunk(score, nextIndex, visitSalt);
+        startPlaying(rendered, true);
+      },
+      (): void => {
+        // a failed first render leaves the sky silent; nothing to clean up.
+      },
+    );
+
     return (): void => {
-      group.gain.rampTo(0, FADE_SECONDS);
-      window.setTimeout((): void => {
-        layers.forEach(disposeLayer);
-        group.dispose();
-        reverb.dispose();
-      }, FADE_SECONDS * 1000 + 300);
+      stopped = true;
+      window.clearInterval(monitor);
+      blockedRef.current = null;
+      nextChunk?.then(
+        (rendered): void => {
+          URL.revokeObjectURL(rendered.url);
+        },
+        (): void => {
+          // a rejected render needs no cleanup.
+        },
+      );
+      nextChunk = null;
+      for (const chunk of liveRef.current) {
+        const element = chunk.element;
+        element.onended = null;
+        fadeVolume(element, 0, FADE_SECONDS, (): void => {
+          element.pause();
+          URL.revokeObjectURL(chunk.url);
+        });
+      }
+      liveRef.current = [];
     };
   }, [seed]);
-
-  useEffect((): void => {
-    masterRef.current?.gain.rampTo(muted ? 0 : MASTER_VOLUME, FADE_SECONDS);
-  }, [muted]);
 };
 
-export { useSkyMusic, buildLayer, disposeLayer };
+export { useSkyMusic };

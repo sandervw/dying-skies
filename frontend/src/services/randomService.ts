@@ -46,6 +46,14 @@ const deriveSeed = (seed: Seed, domain: string): number => {
   return (hash ^ (hash >>> 16)) >>> 0;
 };
 
+/** independent 32-bit seed for one numbered chunk of a generated stream. */
+const deriveChunkSeed = (seed: number, chunkIndex: number): number => {
+  let hash = (seed ^ hashDomain(`chunk-${chunkIndex}`)) >>> 0;
+  hash = Math.imul(hash ^ (hash >>> 16), 0x45d9f3b) >>> 0;
+  hash = Math.imul(hash ^ (hash >>> 16), 0x45d9f3b) >>> 0;
+  return (hash ^ (hash >>> 16)) >>> 0;
+};
+
 /** draw a fresh 256-bit seed from a random stream. */
 const generateSeed = (random: RandomNumberGenerator): Seed => {
   const bytes: number[] = [];
@@ -69,4 +77,4 @@ const seedsEqual = (firstSeed: Seed, secondSeed: Seed): boolean => {
 };
 
 export type { RandomNumberGenerator, Seed };
-export { SEED_BYTE_LENGTH, createSeededRandom, deriveSeed, generateSeed, seedsEqual };
+export { SEED_BYTE_LENGTH, createSeededRandom, deriveChunkSeed, deriveSeed, generateSeed, seedsEqual };

@@ -4,7 +4,7 @@ Every click/pop fix applied in the 2026-08-31 debugging session, preserved here 
 
 ## Diagnosis
 
-AudioWorklet taps on each layer, the reverb, and the output found zero waveform discontinuities while pops were audible. The pops came from Chrome's WebAudio-over-Bluetooth output path, confirmed by a plain WebAudio tone generator crackling on the same headphones (Shokz, 50 Hz floor, bass-boost DSP). Clean on wired and hi-fi gear. Secondary finding: raw Tone oscillators default to 0 dB and sustained lows stress cheap amps (Tone.js issue 976). The planned Tone.Offline render plus `<audio>` playback route sidesteps the broken transport entirely.
+AudioWorklet taps on each layer, the reverb, and the output found zero waveform discontinuities while pops were audible. The pops came from Chrome's WebAudio-over-Bluetooth output path, confirmed by a plain WebAudio tone generator crackling on the same headphones (Shokz, 50 Hz floor, bass-boost DSP). Clean on wired and hi-fi gear. Secondary finding: raw Tone oscillators default to 0 dB and sustained lows stress cheap amps (Tone.js issue 976). The Tone.Offline render plus `<audio>` playback route (implemented in `audioRenderService` and `useSkyMusic`) sidesteps the broken transport entirely.
 
 ## Voice fixes, useSkyMusic.ts
 

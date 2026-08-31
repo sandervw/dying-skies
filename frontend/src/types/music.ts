@@ -24,12 +24,11 @@ type Archetype = "drone" | "pad" | "bell" | "pluck";
 /** oscillator waveforms shared across archetypes. */
 type OscillatorType = "sine" | "triangle" | "sawtooth";
 
-/** one playable layer: role, timbre, register, density, and its prime loop length. */
+/** one playable layer: role, timbre, register, and density. */
 interface Layer {
   readonly role: Role;
   readonly archetype: Archetype;
   readonly oscillator: OscillatorType;
-  readonly loopLengthBars: number;
   readonly octave: number;
   readonly density: number;
   readonly attack: number;

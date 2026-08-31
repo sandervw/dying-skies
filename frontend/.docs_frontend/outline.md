@@ -5,8 +5,8 @@ Vite + React single-page app rendering procedural skies on a Canvas 2D layer.
 ## Layout (`src/`)
 - `components/`: `Sky` (the canvas view), `Header`, `Footer`, `ButtonBox`, `GalleryView`, `AuthOverlay` with `LoginForm`/`SignupForm`, `DestroyOverlay`, `Icon`.
 - `contexts/`: `SkySeedContext` (route seed plus save/destroy), `AuthContext` (current user).
-- `hooks/`: `useSkySeed`, `useSkyCanvas`, `useStats`, `useAuth`, `useImmersion`.
-- `services/`: `skyService`, `starService`, `paletteService`, `randomService` (pure seed-derived generators); `starApiService`, `authService` (backend calls); `routeService`, `iconService`, `manualEntryGuards`.
+- `hooks/`: `useSkySeed`, `useSkyCanvas`, `useStats`, `useAuth`, `useImmersion`, `useSkyMusic`.
+- `services/`: `skyService`, `starService`, `paletteService`, `randomService` (pure seed-derived generators); `musicService` (seeded scores plus per-chunk note scatter); `audioRenderService` plus `audioEncodeService` (Tone.Offline chunk rendering to WAV); `starApiService`, `authService` (backend calls); `routeService`, `iconService`, `manualEntryGuards`.
 - `types/`: `sky`, `star`, `palette`, `auth`.
 - `App.tsx`, `main.tsx`: app shell and mount.
 
@@ -29,6 +29,11 @@ Vite + React single-page app rendering procedural skies on a Canvas 2D layer.
 
 ## Gallery
 - Fetches the user's saved seeds, renders a mini constellation and one wagging star per tile; clicking a tile opens that sky.
+
+## Music
+- `useSkyMusic` plays each seed's score as endless ~30 second chunks: `audioRenderService` renders each chunk offline via `Tone.Offline` with the reverb tail baked in, `audioEncodeService` turns it into a WAV blob url, and plain `<audio>` elements chain the chunks. This sidesteps Chrome's WebAudio-over-Bluetooth transport; the applied and reverted live fixes live in `webaudio-fixes-reference.md`.
+- Chunk scatter is seeded per score, visit, and chunk, so playback never repeats and every sky keeps its own score.
+- `labs/MusicLab` auditions scores through the same render pipeline, one chunk per play.
 
 ## Counter
 - `Footer` polls `GET /stats` every 15 seconds and shows saved, destroyed, and died totals.

@@ -1,9 +1,8 @@
 import { useRef, useState } from "react";
 import type { ChangeEvent, CSSProperties, ReactElement } from "react";
-import * as Tone from "tone";
+import { renderChunk } from "../services/audioRenderService";
 import { generateScore, DEFAULT_RANGES } from "../services/musicService";
 import type { ScoreRanges } from "../services/musicService";
-import { buildLayer, disposeLayer } from "../hooks/useSkyMusic";
 import type { Score } from "../types/music";
 
 const GRID_SEEDS = 8;
@@ -28,15 +27,35 @@ const KNOBS: readonly KnobDescriptor[] = [
   { key: "reverbDecayMaximum", label: "Reverb decay max", section: "Reverb", minimum: 1, maximum: 12, step: 0.5 },
 ];
 
-// build a fresh graph for one score, matching app playback; returns a stop function.
+// render one chunk matching app playback; returns a stop function.
 const startScore = (score: Score): () => void => {
-  const reverb = new Tone.Reverb({ decay: score.reverbDecay, wet: score.reverbWet }).toDestination();
-  const group = new Tone.Gain(1).connect(reverb);
-  const nodes = score.layers.map((layer) => buildLayer(layer, score, group));
-  Tone.getTransport().bpm.value = score.tempo;
-  void Tone.start();
-  Tone.getTransport().start();
-  return (): void => { nodes.forEach(disposeLayer); group.dispose(); reverb.dispose(); };
+  const visitSalt = Math.floor(Math.random() * 4294967296);
+  let stopped = false;
+  let element: HTMLAudioElement | null = null;
+  let url: string | null = null;
+  void renderChunk(score, 0, visitSalt).then(
+    (rendered): void => {
+      if (stopped) {
+        URL.revokeObjectURL(rendered.url);
+        return;
+      }
+      url = rendered.url;
+      element = new Audio(rendered.url);
+      void element.play().catch((): void => {
+        // the render outlasted the click's user activation; play stays blocked.
+      });
+    },
+    (): void => {
+      // a failed render leaves the lab silent.
+    },
+  );
+  return (): void => {
+    stopped = true;
+    element?.pause();
+    if (url !== null) {
+      URL.revokeObjectURL(url);
+    }
+  };
 };
 
 // throwaway inline styling, kept out of the shared stylesheet.

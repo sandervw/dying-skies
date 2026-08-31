@@ -1,4 +1,4 @@
-import { createSeededRandom } from "./randomService";
+import { createSeededRandom, deriveChunkSeed } from "./randomService";
 import type { RandomNumberGenerator } from "./randomService";
 import type {
   Archetype,
@@ -22,7 +22,6 @@ const MODE_OFFSETS: Record<Mode, readonly number[]> = {
 const MODES = Object.keys(MODE_OFFSETS) as Mode[];
 const BIOMES: Biome[] = ["glass", "warm-drift", "deep-drone", "haze", "chime-rain", "ember"];
 const RANKED_ROLES: Role[] = ["drone", "pad", "sparkle", "accent", "counter"];
-const PRIME_POOL = [5, 7, 11, 13, 17, 19, 23];
 
 interface ArchetypeRange {
   readonly oscillators: readonly OscillatorType[];
@@ -112,22 +111,11 @@ const pick = <Item>(random: RandomNumberGenerator, items: readonly Item[]): Item
 const clamp = (value: number, minimum: number, maximum: number): number =>
   Math.min(maximum, Math.max(minimum, value));
 
-// Fisher-Yates shuffle driven by the seeded stream.
-const shuffle = <Item>(random: RandomNumberGenerator, items: readonly Item[]): Item[] => {
-  const copy = [...items];
-  for (let index = copy.length - 1; index > 0; index -= 1) {
-    const swap = Math.floor(random() * (index + 1));
-    [copy[index], copy[swap]] = [copy[swap], copy[index]];
-  }
-  return copy;
-};
-
-// draw one layer from its role, biome archetype, and a distinct prime.
+// draw one layer from its role and biome archetype.
 const generateLayer = (
   random: RandomNumberGenerator,
   role: Role,
   config: BiomeConfig,
-  loopLengthBars: number,
 ): Layer => {
   const archetype = config.archetypeByRole[role];
   const range = ARCHETYPE_RANGES[archetype];
@@ -137,7 +125,6 @@ const generateLayer = (
     role,
     archetype,
     oscillator: pick(random, range.oscillators),
-    loopLengthBars,
     octave: clamp(randomInteger(random, octaveBand[0], octaveBand[1]) + config.registerShift, 0, 7),
     density: randomInRange(random, density[0], density[1]) * config.densityScale,
     attack: randomInRange(random, range.attack[0], range.attack[1]),
@@ -164,13 +151,58 @@ const generateScore = (seed: number, ranges: ScoreRanges = DEFAULT_RANGES): Scor
   );
   const layerCount = randomInteger(random, ranges.layerCountMinimum, ranges.layerCountMaximum);
   const roles = RANKED_ROLES.slice(0, layerCount);
-  const primes = shuffle(random, PRIME_POOL).slice(0, layerCount);
-  const layers = roles.map((role, index) => generateLayer(random, role, config, primes[index]));
+  const layers = roles.map((role) => generateLayer(random, role, config));
   return { seed, biome, mode, rootPitchClass, tempo, reverbWet, reverbDecay, layers };
 };
 
 /** convert a MIDI note number into a frequency in Hz. */
 const midiToFrequency = (midi: number): number => 440 * Math.pow(2, (midi - 69) / 12);
 
-export { generateScore, midiToFrequency, MODE_OFFSETS, DEFAULT_RANGES };
-export type { ScoreRanges };
+const BEATS_PER_BAR = 4;
+const CHUNK_TARGET_SECONDS = 30;
+
+/** one scheduled note inside a rendered chunk. */
+interface ChunkEvent {
+  readonly timeSeconds: number;
+  readonly frequency: number;
+  readonly holdSeconds: number;
+}
+
+// note hold length in beats per archetype; envelopes add the tail.
+const HOLD_BEATS: Record<Archetype, number> = { drone: 8, pad: 4, bell: 2, pluck: 1 };
+
+/** bars of music per chunk; each chunk runs roughly thirty seconds. */
+const chunkBars = (score: Score): number =>
+  Math.max(4, Math.round((CHUNK_TARGET_SECONDS * score.tempo) / (BEATS_PER_BAR * 60)));
+
+/** seconds of music in one chunk, before the baked-in reverb tail. */
+const chunkSeconds = (score: Score): number => (chunkBars(score) * BEATS_PER_BAR * 60) / score.tempo;
+
+/** scatter one layer's notes across a chunk; reseeded per chunk. */
+const buildChunkEvents = (
+  layer: Layer,
+  score: Score,
+  chunkIndex: number,
+  bars: number,
+  visitSalt: number,
+): ChunkEvent[] => {
+  const random = createSeededRandom(deriveChunkSeed(score.seed ^ visitSalt, chunkIndex));
+  const offsets = MODE_OFFSETS[score.mode];
+  const secondsPerBeat = 60 / score.tempo;
+  const count = Math.max(1, Math.round(layer.density * bars));
+  const events: ChunkEvent[] = [];
+  for (let index = 0; index < count; index += 1) {
+    const beat = Math.floor(random() * bars * BEATS_PER_BAR);
+    const degree = offsets[Math.floor(random() * offsets.length)];
+    const midi = (layer.octave + 1) * 12 + score.rootPitchClass + degree;
+    events.push({
+      timeSeconds: beat * secondsPerBeat,
+      frequency: midiToFrequency(midi),
+      holdSeconds: HOLD_BEATS[layer.archetype] * secondsPerBeat,
+    });
+  }
+  return events;
+};
+
+export { generateScore, DEFAULT_RANGES, chunkBars, chunkSeconds, buildChunkEvents };
+export type { ScoreRanges, ChunkEvent };

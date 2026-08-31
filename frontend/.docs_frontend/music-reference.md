@@ -39,7 +39,7 @@ Oscillator plus ADSR in seconds plus low-pass cutoff in Hz.
 
 - Tempo: 50-75 BPM.
 - Reverb: wet 0.3-0.7, decay 4-8s.
-- Loop lengths: distinct primes drawn from `{5, 7, 11, 13, 17, 19, 23}` bars, one per layer.
+- Chunks: about thirty seconds of music each, with the reverb tail baked in.
 - Density (events per bar): drone ~0.25, pad 0.5-1, sparkle 1-2, accent ~0.5.
 
 ## Biomes
