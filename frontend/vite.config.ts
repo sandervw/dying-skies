@@ -8,6 +8,7 @@ const buildContentSecurityPolicy = (apiBaseUrl: string): string =>
     "default-src 'self'",
     "script-src 'self' https://static.cloudflareinsights.com",
     "worker-src 'self' blob:",
+    "media-src 'self' blob:",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data:",
     "font-src 'self'",
