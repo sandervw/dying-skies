@@ -12,14 +12,20 @@ import { useImmersion } from "./hooks/useImmersion";
 const App = (): ReactElement => {
   const { immersive, toggleImmersion } = useImmersion();
   const [open, setOpen] = useState<boolean>(false);
+  const [muted, setMuted] = useState<boolean>(false);
 
   return (
     <div className={immersive ? "immersive" : undefined}>
       <Routes>
         <Route path="/gallery" element={<GalleryView />} />
-        <Route path="*" element={<Sky />} />
+        <Route path="*" element={<Sky muted={muted} />} />
       </Routes>
-      <ButtonBox toggleImmersion={toggleImmersion} setOpen={setOpen} />
+      <ButtonBox
+        toggleImmersion={toggleImmersion}
+        setOpen={setOpen}
+        muted={muted}
+        toggleMusic={() => setMuted((previous) => !previous)}
+      />
       <div className="ui">
         <Header />
         <Footer />

@@ -17,12 +17,16 @@ import { useAuth } from "../hooks/useAuth";
 interface ButtonBoxProps {
   readonly toggleImmersion: () => void;
   readonly setOpen: (open: boolean) => void;
+  readonly muted: boolean;
+  readonly toggleMusic: () => void;
 }
 
-/** the floating control cluster: immersion, gallery, save, destroy, account. */
+/** the floating control cluster: music, immersion, gallery, save, destroy, account. */
 const ButtonBox = ({
   toggleImmersion,
   setOpen,
+  muted,
+  toggleMusic,
 }: ButtonBoxProps): ReactElement => {
   const navigate = useNavigate();
   const onGallery = isGalleryPath(useLocation().pathname);
@@ -52,6 +56,13 @@ const ButtonBox = ({
 
   return (
     <div className="controls">
+      <button
+        className="icon link"
+        onClick={toggleMusic}
+        aria-label={muted ? "Unmute music" : "Mute music"}
+      >
+        <Icon name={muted ? "no_sound" : "music_note_2"} />
+      </button>
       <button
         className="icon link"
         onClick={toggleImmersion}

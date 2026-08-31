@@ -24,7 +24,7 @@ Layers are role-differentiated by register. Five roles are ranked; the seed pick
 
 ## Seed to music mapping
 
-`deriveSeed(seed, "music")` yields an independent music stream. From it the seed sets: biome; mode and root; tempo; layer count; and per layer the role, loop length (a distinct prime), octave range, density, and a timbre archetype (oscillator, ADSR, filter cutoff, reverb wet) jittered within the archetype's range.
+`deriveSeed(seed, "music")` yields an independent music stream. From it the seed sets: biome; mode and root; tempo; reverb; layer count; and per layer the role, loop length (a distinct prime), octave range, density, and a timbre archetype (oscillator, ADSR, filter cutoff) jittered within the archetype's range.
 
 ## Static and dynamic split
 
@@ -38,8 +38,8 @@ The score is static per seed: biome, mode, root, tempo, loop lengths, per-layer 
 
 ## Constraints
 
-- Autoplay: the graph initializes on page load, but browsers keep the audio context suspended until a gesture. Traversal clicks resume it; root and screensaver stay silent until first interaction while the toggle reads un-muted.
-- Performance: keep voice count and node graph small; share one master and reverb.
+- Autoplay: the graph initializes on page load, but browsers keep the audio context suspended until a gesture. Any click resumes it; until then every sky is silent while the toggle reads un-muted.
+- Performance: keep voice count and node graph small; layers share one master gain, each sky its own reverb.
 - UI: the toggle is the only new visible element.
 
 ## Implementation
@@ -52,7 +52,7 @@ The score is static per seed: biome, mode, root, tempo, loop lengths, per-layer 
 
 ## Start and stop
 
-Build the Tone graph and start the score on page load; the audio context stays suspended until the first gesture resumes it. On sky change, fade-release the old score and start the new over the shared master and reverb graph. Silence in the gallery and root; the mute toggle gates everything.
+Build the Tone graph and start the score on page load; the audio context stays suspended until the first gesture resumes it. On sky change, fade-release the old score and start the new over the shared master gain. Music plays on every sky, including the root screensaver; only the gallery is silent. The mute toggle gates everything.
 
 ## Testing
 
