@@ -47,15 +47,11 @@ const buildLayer = (layer: Layer, score: Score, group: Tone.Gain): LayerNodes =>
     oscillator: { type: layer.oscillator },
     envelope: { attack: layer.attack, decay: layer.decay, sustain: layer.sustain, release: layer.release },
   });
-  // 32 default steals long drone tails mid-release
-  synth.maxPolyphony = 64;
   const filter = new Tone.Filter(layer.cutoff, "lowpass");
   synth.connect(filter);
   filter.connect(group);
   const part = new Tone.Part<MusicEvent>((time, value) => {
-    // jitter each hit ~5 cents; avoids same-pitch voice resets
-    const detune = 1 + (Math.random() - 0.5) * 0.006;
-    synth.triggerAttackRelease(value.frequency * detune, value.duration, time);
+    synth.triggerAttackRelease(value.frequency, value.duration, time);
   }, buildEvents(layer, score));
   part.loop = true;
   part.loopEnd = `${layer.loopLengthBars}m`;
@@ -86,11 +82,7 @@ const useSkyMusic = (muted: boolean): void => {
     window.addEventListener("pointerdown", resume, { once: true });
     return (): void => {
       window.removeEventListener("pointerdown", resume);
-      // fade out fast, then dispose; instant disposal clicks
-      master.gain.rampTo(0, 0.1);
-      window.setTimeout((): void => {
-        master.dispose();
-      }, 150);
+      master.dispose();
       masterRef.current = null;
     };
   }, []);

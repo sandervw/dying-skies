@@ -1,4 +1,3 @@
-import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
@@ -16,15 +15,13 @@ if (container === null) {
 const queryClient = new QueryClient();
 
 createRoot(container).render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <BrowserRouter>
-          <SkySeedProvider>
-            <App />
-          </SkySeedProvider>
-        </BrowserRouter>
-      </AuthProvider>
-    </QueryClientProvider>
-  </StrictMode>,
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
+      <BrowserRouter>
+        <SkySeedProvider>
+          <App />
+        </SkySeedProvider>
+      </BrowserRouter>
+    </AuthProvider>
+  </QueryClientProvider>,
 );
