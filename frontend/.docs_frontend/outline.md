@@ -33,7 +33,6 @@ Vite + React single-page app rendering procedural skies on a Canvas 2D layer.
 ## Music
 - `useSkyMusic` plays each seed's score as endless ~30 second chunks: `audioRenderService` renders each chunk offline via `Tone.Offline` with the reverb tail baked in, `audioEncodeService` turns it into a WAV blob url, and plain `<audio>` elements chain the chunks. This sidesteps Chrome's WebAudio-over-Bluetooth transport; the applied and reverted live fixes live in `webaudio-fixes-reference.md`.
 - Chunk scatter is seeded per score, visit, and chunk, so playback never repeats and every sky keeps its own score.
-- `labs/MusicLab` auditions scores through the same render pipeline, one chunk per play.
 
 ## Counter
 - `Footer` polls `GET /stats` every 15 seconds and shows saved, destroyed, and died totals.

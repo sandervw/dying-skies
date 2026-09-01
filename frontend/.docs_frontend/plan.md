@@ -49,12 +49,7 @@ The score is static per seed: biome, mode, root, tempo, per-layer timbre. Each v
 - `services/audioRenderService.ts` plus `audioEncodeService.ts`: render one chunk offline and encode it to a WAV blob url.
 - `hooks/useSkyMusic.ts`: chains rendered chunks on `<audio>` elements, fades between skies, honors the mute toggle and first-gesture unlock.
 - Existing files: wire the hook into the sky view; the toggle already exists.
-- `labs/MusicLab.tsx`: grid of seeds, each a play and stop button showing its score JSON, with knob sliders like `PaletteLab`. Doubles as the autoplay-unlock check.
 
 ## Start and stop
 
 Render chunk zero on page load and hand it to an audio element; further chunks render ahead and chain as each one's music ends. On sky change, fade out and revoke the old chunks, then fade in the new score's chunk zero. Music plays on every sky, including the root screensaver; only the gallery is silent. The mute toggle gates everything.
-
-## Testing
-
-Tests target the generator: same seed yields an identical score; every note lies in the mode; every parameter sits in range. `MusicLab` covers listening by ear.

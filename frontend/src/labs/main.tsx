@@ -2,7 +2,6 @@ import { StrictMode, useState } from "react";
 import type { CSSProperties, ReactElement } from "react";
 import { createRoot } from "react-dom/client";
 import { PaletteLab } from "./PaletteLab";
-import { MusicLab } from "./MusicLab";
 
 const container = document.getElementById("root");
 
@@ -33,14 +32,22 @@ const Labs = (): ReactElement => {
   return (
     <>
       <nav style={switcher}>
-        <button type="button" style={tab(lab === "palette")} onClick={(): void => setLab("palette")}>
+        <button
+          type="button"
+          style={tab(lab === "palette")}
+          onClick={(): void => setLab("palette")}
+        >
           Palette
         </button>
-        <button type="button" style={tab(lab === "music")} onClick={(): void => setLab("music")}>
+        <button
+          type="button"
+          style={tab(lab === "music")}
+          onClick={(): void => setLab("music")}
+        >
           Music
         </button>
       </nav>
-      {lab === "palette" ? <PaletteLab /> : <MusicLab />}
+      <PaletteLab />
     </>
   );
 };
