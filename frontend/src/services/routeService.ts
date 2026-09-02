@@ -5,10 +5,10 @@ import { SEED_BYTE_LENGTH, seedsEqual } from "./randomService";
 // SEED SPACE
 ////////////////////////////////////////////////////////////
 
-// root seed from token iNHDPRZrpIN9iTicT3adRBv4ytRCGKAxaeAZOomT4nM.
+// root seed from token n7sm761g8pjCwYFVN3ooIk2JhOdlUY1Xj9O5xniQVQY.
 const ROOT_SEED: Seed = [
-  136, 209, 195, 61, 22, 107, 164, 131, 125, 137, 56, 156, 79, 118, 157, 68,
-  27, 248, 202, 212, 66, 24, 160, 49, 105, 224, 25, 58, 137, 147, 226, 115,
+  159, 187, 38, 239, 173, 96, 242, 152, 194, 193, 129, 85, 55, 122, 40, 34,
+  77, 137, 132, 231, 101, 81, 141, 87, 143, 211, 185, 198, 120, 144, 85, 6,
 ];
 
 ////////////////////////////////////////////////////////////
