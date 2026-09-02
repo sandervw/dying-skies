@@ -19,7 +19,7 @@ router = APIRouter()
 class StarsBatchRequest(BaseModel):
     """Request body for a star batch issuance."""
 
-    count: int = Field(gt=0, le=100)
+    count: int = Field(gt=0, le=105)
 
 
 class StarTag(BaseModel):

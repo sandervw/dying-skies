@@ -17,7 +17,7 @@ The HTTP contract for the FastAPI backend. The frontend integrates against this.
 
 ## Stars
 `POST /stars/batch` - anonymous; issues a session cookie if absent.
-Body `{count: integer, 1-100}`.
+Body `{count: integer, 1-105}`.
 200 `{stars: [{seed, tag}, ...]}`.
 
 `POST /stars/save` - requires login.

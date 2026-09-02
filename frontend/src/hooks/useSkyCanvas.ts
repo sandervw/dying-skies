@@ -15,8 +15,14 @@ import {
 } from "../services/starService";
 import type { StarFieldState } from "../types/star";
 
-// stars requested per batch call; the backend caps a batch at 100.
-const BATCH_SIZE = 100;
+// stars requested per batch call; the backend caps a batch at 105.
+const BATCH_SIZE_MINIMUM = 95;
+const BATCH_SIZE_MAXIMUM = 105;
+
+/** pick a jittered batch size so issuance volume varies naturally. */
+const pickBatchSize = (): number =>
+  BATCH_SIZE_MINIMUM +
+  Math.floor(Math.random() * (BATCH_SIZE_MAXIMUM - BATCH_SIZE_MINIMUM + 1));
 // refill once the issuance queue drops below this many stars.
 const REFILL_THRESHOLD = 20;
 // wait this long before retrying a failed or empty batch call.
@@ -134,7 +140,7 @@ const useSkyCanvas = (onSelectStar?: (starSeed: Seed) => void): SkyHandle => {
       }
       isRefilling = true;
       refillAfterMs = Date.now() + RETRY_DELAY_MS;
-      void fetchStarBatch(BATCH_SIZE)
+      void fetchStarBatch(pickBatchSize())
         .then((batch): void => {
           issuedQueue.push(...batch);
         })
