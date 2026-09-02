@@ -40,6 +40,21 @@ const fadeVolume = (element: HTMLAudioElement, target: number, seconds: number, 
   });
 };
 
+// reused across seeds: an element unlocked once needs no further gesture.
+const audioElements: HTMLAudioElement[] = [];
+
+// any paused element is free; a fresh one only when all are still sounding.
+const takeAudioElement = (): HTMLAudioElement => {
+  const idle = audioElements.find((element): boolean => element.paused);
+  if (idle !== undefined) {
+    return idle;
+  }
+  const created = new Audio();
+  created.preload = "auto";
+  audioElements.push(created);
+  return created;
+};
+
 /** play a score as endless offline-rendered wav chunks through audio elements. */
 const useSkyMusic = (muted: boolean): void => {
   const { seed } = useSkySeed();
@@ -93,8 +108,7 @@ const useSkyMusic = (muted: boolean): void => {
     let nextChunk: Promise<RenderedChunk> | null = null;
 
     const startPlaying = (rendered: RenderedChunk, isFirstChunk: boolean): void => {
-      const element = new Audio();
-      element.preload = "auto";
+      const element = takeAudioElement();
       element.src = rendered.url;
       element.volume = isFirstChunk || mutedRef.current ? 0 : 1;
       activeElement = element;
