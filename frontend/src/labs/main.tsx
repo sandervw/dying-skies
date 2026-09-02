@@ -2,6 +2,7 @@ import { StrictMode, useState } from "react";
 import type { CSSProperties, ReactElement } from "react";
 import { createRoot } from "react-dom/client";
 import { PaletteLab } from "./PaletteLab";
+import { MusicLab } from "./MusicLab";
 
 const container = document.getElementById("root");
 
@@ -47,7 +48,7 @@ const Labs = (): ReactElement => {
           Music
         </button>
       </nav>
-      <PaletteLab />
+      {lab === "palette" ? <PaletteLab /> : <MusicLab />}
     </>
   );
 };
