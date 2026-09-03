@@ -47,6 +47,5 @@ jobs:
           ssh $SSH_OPTS $BOX 'set -euo pipefail
             cd /code/skies/analytics/observable
             npm ci
-            rm -rf src/.observablehq/cache
             set -a; . /etc/skies/.env; set +a
             npm run deploy'

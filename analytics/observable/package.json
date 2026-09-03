@@ -6,7 +6,7 @@
     "clean": "rimraf src/.observablehq/cache dist",
     "dev": "observable preview",
     "build": "observable build",
-    "deploy": "observable build && wrangler deploy",
+    "deploy": "rimraf src/.observablehq/cache/data && observable build && wrangler deploy",
     "observable": "observable"
   },
   "dependencies": {
