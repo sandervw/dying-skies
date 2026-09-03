@@ -75,4 +75,4 @@ Events per bar, per biome, per role. Fixed values, no jitter.
 
 - Root pitch class: 0 to 11, picked per seed.
 - Chunks: about thirty seconds of music each, plus a computed tail.
-- Master gain: 0.25, into a limiter.
+- Master gain: none; each score is RMS-normalized after render, into a limiter at -3 dBFS.

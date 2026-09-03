@@ -7,6 +7,7 @@ import { useSkySeed } from "./useSkySeed";
 const FADE_SECONDS = 2;
 const MONITOR_INTERVAL_MS = 100;
 const HANDOFF_LEAD_SECONDS = 0.2;
+const PRERENDER_AT_SECONDS = 3;
 
 /** one rendered chunk wired to a playing audio element. */
 interface LiveChunk {
@@ -152,7 +153,6 @@ const useSkyMusic = (muted: boolean): void => {
           }
           advancing = false;
           nextIndex += 1;
-          nextChunk = renderChunk(score, nextIndex, visitSalt);
           startPlaying(rendered, false);
         },
         (): void => {
@@ -161,9 +161,15 @@ const useSkyMusic = (muted: boolean): void => {
       );
     };
 
+    // a render stalls the main thread, so prerender mid-chunk, never at the handoff.
     const monitor = window.setInterval((): void => {
-      if (activeElement !== null && activeElement.currentTime + HANDOFF_LEAD_SECONDS >= activeMusicSeconds) {
+      if (activeElement === null) {
+        return;
+      }
+      if (activeElement.currentTime + HANDOFF_LEAD_SECONDS >= activeMusicSeconds) {
         handoff();
+      } else if (nextChunk === null && !advancing && activeElement.currentTime > PRERENDER_AT_SECONDS) {
+        nextChunk = renderChunk(score, nextIndex, visitSalt);
       }
     }, MONITOR_INTERVAL_MS);
 
@@ -173,7 +179,6 @@ const useSkyMusic = (muted: boolean): void => {
           URL.revokeObjectURL(rendered.url);
           return;
         }
-        nextChunk = renderChunk(score, nextIndex, visitSalt);
         startPlaying(rendered, true);
       },
       (): void => {

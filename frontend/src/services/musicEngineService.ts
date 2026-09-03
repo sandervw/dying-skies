@@ -100,8 +100,8 @@ const writeAscii = (view: DataView, offset: number, text: string): void => {
   }
 };
 
-/** encode an AudioBuffer as a 16-bit PCM WAV blob url. */
-const encodeWavUrl = (buffer: AudioBuffer): string => {
+/** encode an AudioBuffer as a 16-bit PCM WAV blob url, scaling every sample. */
+const encodeWavUrl = (buffer: AudioBuffer, scale: number): string => {
   const channelCount = buffer.numberOfChannels;
   const blockAlign = channelCount * BYTES_PER_SAMPLE;
   const dataSize = buffer.length * blockAlign;
@@ -126,7 +126,7 @@ const encodeWavUrl = (buffer: AudioBuffer): string => {
   let offset = HEADER_BYTES;
   for (let frame = 0; frame < buffer.length; frame += 1) {
     for (let channel = 0; channel < channelCount; channel += 1) {
-      const sample = Math.max(-1, Math.min(1, channels[channel][frame]));
+      const sample = Math.max(-1, Math.min(1, channels[channel][frame] * scale));
       view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
       offset += BYTES_PER_SAMPLE;
     }
@@ -134,12 +134,15 @@ const encodeWavUrl = (buffer: AudioBuffer): string => {
   return URL.createObjectURL(new Blob([view.buffer], { type: "audio/wav" }));
 };
 
-const MASTER_VOLUME = 0.25;
+const TARGET_RMS = 0.06;
+const TARGET_PEAK = 0.7;
 const HIGHPASS_HZ = 35;
-const LIMITER_THRESHOLD_DB = -1;
+const LIMITER_THRESHOLD_DB = -3;
 const TAIL_MARGIN_SECONDS = 2;
-const SAMPLE_RATE = 22050;
+const SAMPLE_RATE = 44100;
 const CHANNEL_COUNT = 2;
+const impulses = new Map<number, Tone.ToneAudioBuffer>();
+const gains = new Map<number, number>();
 
 /** one rendered chunk: a wav blob url plus its music length. */
 interface RenderedChunk {
@@ -201,13 +204,20 @@ const renderChunk = async (score: Score, chunkIndex: number, visitSalt: number):
     ...events.flat().map((event) => event.timeSeconds + event.holdSeconds),
   );
   const renderSeconds = Math.max(musicSeconds, ringEnd + biome.reverbDecay + TAIL_MARGIN_SECONDS);
-  const buffer = await Tone.Offline(async (): Promise<void> => {
+  // cached: Tone.Reverb regenerates its impulse per chunk, nested inside our render.
+  let impulse = impulses.get(biome.reverbDecay);
+  if (impulse === undefined) {
+    impulse = await Tone.Offline((): void => {
+      new Tone.NoiseSynth({ envelope: { attack: 0.01, decay: biome.reverbDecay, sustain: 0 } }).toDestination().triggerAttack(0);
+    }, biome.reverbDecay, CHANNEL_COUNT, SAMPLE_RATE);
+    impulses.set(biome.reverbDecay, impulse);
+  }
+  const buffer = await Tone.Offline((): void => {
     const limiter = new Tone.Limiter(LIMITER_THRESHOLD_DB).toDestination();
     // sub-audible rumble only speakers choke on; nothing plays this low.
     const highpass = new Tone.Filter({ type: "highpass", frequency: HIGHPASS_HZ, rolloff: -24 }).connect(limiter);
-    const bus = new Tone.Gain(MASTER_VOLUME).connect(highpass);
-    const reverb = new Tone.Reverb({ decay: biome.reverbDecay, wet: 1 });
-    await reverb.ready;
+    const bus = new Tone.Gain().connect(highpass);
+    const reverb = new Tone.Convolver({ url: impulse });
     reverb.connect(new Tone.Gain(biome.reverbWet).connect(bus));
     specs.forEach((spec, index): void => {
       const [synth, output] = buildInstrument(spec, events[index][0].holdSeconds);
@@ -226,7 +236,20 @@ const renderChunk = async (score: Score, chunkIndex: number, visitSalt: number):
   if (raw === undefined) {
     throw new Error("offline render produced no buffer");
   }
-  return { url: encodeWavUrl(raw), musicSeconds };
+  // his gain.json, measured here instead: average level per score, peak-clamped.
+  let gain = gains.get(score.seed);
+  if (gain === undefined) {
+    const samples = raw.getChannelData(0);
+    let sum = 0;
+    let peak = 0;
+    for (const sample of samples) {
+      sum += sample * sample;
+      peak = Math.max(peak, Math.abs(sample));
+    }
+    gain = Math.min(TARGET_PEAK / (peak || 1), TARGET_RMS / (Math.sqrt(sum / samples.length) || 1));
+    gains.set(score.seed, gain);
+  }
+  return { url: encodeWavUrl(raw, gain), musicSeconds };
 };
 
 export { generateScore, renderChunk };
