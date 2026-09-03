@@ -1,5 +1,5 @@
 import type { ReactElement } from "react";
-import { generateScore } from "../services/musicService";
+import { generateScore } from "../services/musicEngineService";
 import { deriveSeed } from "../services/randomService";
 import { useSkySeed } from "../hooks/useSkySeed";
 

@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
-import { renderChunk } from "../services/audioRenderService";
-import type { RenderedChunk } from "../services/audioRenderService";
-import { generateScore } from "../services/musicService";
+import { generateScore, renderChunk } from "../services/musicEngineService";
+import type { RenderedChunk } from "../services/musicEngineService";
 import { deriveSeed } from "../services/randomService";
 import { useSkySeed } from "./useSkySeed";
 

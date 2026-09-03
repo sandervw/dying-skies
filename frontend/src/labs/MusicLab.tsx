@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import type { CSSProperties, ReactElement } from "react";
-import { renderChunk } from "../services/audioRenderService";
-import { BIOMES, generateScore } from "../services/musicService";
-import { INSTRUMENT_SETS } from "../services/instrumentSets";
+import { generateScore, renderChunk } from "../services/musicEngineService";
+import { BIOMES, INSTRUMENT_SETS } from "../services/musicSoundService";
 import type { Biome, InstrumentSetName, Mode, Role, Score } from "../types/music";
 
 const MODES: readonly Mode[] = [
