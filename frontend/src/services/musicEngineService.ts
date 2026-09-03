@@ -1,4 +1,4 @@
-/** turns a seed into audio: scoring, scheduling, rendering, encoding. */
+/** turns a seed into audio: scoring, instrument baking, and live scheduling. */
 
 import * as Tone from "tone";
 import { createSeededRandom, hashDomain } from "./randomService";
@@ -46,11 +46,10 @@ const JITTER_SECONDS = 0.025;
 const CHUNK_TARGET_SECONDS = 30;
 const FIRST_CHUNK_TARGET_SECONDS = 10;
 
-/** one scheduled note inside a rendered chunk. */
+/** one scheduled note inside a chunk. */
 interface ChunkEvent {
   readonly timeSeconds: number;
   readonly frequency: number;
-  readonly holdSeconds: number;
 }
 
 /** bars per chunk; chunk zero is short so sound starts sooner. */
@@ -59,7 +58,7 @@ const chunkBars = (score: Score, chunkIndex: number): number => {
   return Math.max(2, Math.round((target * BIOMES[score.biome].tempo) / (BEATS_PER_BAR * 60)));
 };
 
-/** seconds of music in one chunk, before the baked-in tail. */
+/** seconds of music in one chunk, before the last notes ring out. */
 const chunkSeconds = (score: Score, chunkIndex: number): number =>
   (chunkBars(score, chunkIndex) * BEATS_PER_BAR * 60) / BIOMES[score.biome].tempo;
 
@@ -84,71 +83,24 @@ const buildChunkEvents = (
     const jitter = (random() - 0.5) * 2 * JITTER_SECONDS;
     const degree = offsets[Math.floor(random() * offsets.length)];
     const midi = (spec.register + config.registerShift + 1) * 12 + score.rootPitchClass + degree;
-    const timeSeconds = Math.max(0, beat * secondsPerBeat + jitter);
-    events.push({ timeSeconds, frequency: midiToFrequency(midi), holdSeconds: spec.hold * secondsPerBeat });
+    events.push({ timeSeconds: Math.max(0, beat * secondsPerBeat + jitter), frequency: midiToFrequency(midi) });
   }
   events.sort((first, second) => first.timeSeconds - second.timeSeconds);
   return events;
 };
 
-const HEADER_BYTES = 44;
-const BYTES_PER_SAMPLE = 2;
-
-const writeAscii = (view: DataView, offset: number, text: string): void => {
-  for (let index = 0; index < text.length; index += 1) {
-    view.setUint8(offset + index, text.charCodeAt(index));
-  }
-};
-
-/** encode an AudioBuffer as a 16-bit PCM WAV blob url, scaling every sample. */
-const encodeWavUrl = (buffer: AudioBuffer, scale: number): string => {
-  const channelCount = buffer.numberOfChannels;
-  const blockAlign = channelCount * BYTES_PER_SAMPLE;
-  const dataSize = buffer.length * blockAlign;
-  const view = new DataView(new ArrayBuffer(HEADER_BYTES + dataSize));
-  writeAscii(view, 0, "RIFF");
-  view.setUint32(4, 36 + dataSize, true);
-  writeAscii(view, 8, "WAVE");
-  writeAscii(view, 12, "fmt ");
-  view.setUint32(16, 16, true);
-  view.setUint16(20, 1, true);
-  view.setUint16(22, channelCount, true);
-  view.setUint32(24, buffer.sampleRate, true);
-  view.setUint32(28, buffer.sampleRate * blockAlign, true);
-  view.setUint16(32, blockAlign, true);
-  view.setUint16(34, 16, true);
-  writeAscii(view, 36, "data");
-  view.setUint32(40, dataSize, true);
-  const channels = Array.from(
-    { length: channelCount },
-    (_unused, channel): Float32Array => buffer.getChannelData(channel),
-  );
-  let offset = HEADER_BYTES;
-  for (let frame = 0; frame < buffer.length; frame += 1) {
-    for (let channel = 0; channel < channelCount; channel += 1) {
-      const sample = Math.max(-1, Math.min(1, channels[channel][frame] * scale));
-      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true);
-      offset += BYTES_PER_SAMPLE;
-    }
-  }
-  return URL.createObjectURL(new Blob([view.buffer], { type: "audio/wav" }));
-};
-
-const TARGET_RMS = 0.06;
 const TARGET_PEAK = 0.7;
-const HIGHPASS_HZ = 35;
-const LIMITER_THRESHOLD_DB = -3;
 const TAIL_MARGIN_SECONDS = 2;
-const SAMPLE_RATE = 44100;
 const CHANNEL_COUNT = 2;
 const impulses = new Map<number, Tone.ToneAudioBuffer>();
-const gains = new Map<number, number>();
 
-/** one rendered chunk: a wav blob url plus its music length. */
-interface RenderedChunk {
-  readonly url: string;
-  readonly musicSeconds: number;
+/** one wet one-shot per role, in role order, plus the level they mix at. */
+interface BakedScore {
+  readonly voices: readonly { readonly buffer: Tone.ToneAudioBuffer; readonly frequency: number }[];
+  readonly gain: number;
 }
+
+const bakes = new Map<string, BakedScore>();
 
 // decay reaches silence before release fires; release is inert.
 const shapeVoice = (voice: Record<string, unknown>, holdSeconds: number): Record<string, unknown> => {
@@ -192,65 +144,76 @@ const buildInstrument = (spec: InstrumentSpec, holdSeconds: number): [Tone.ToneA
   return [synth, output];
 };
 
-/** render one chunk of a score offline into a wav blob url, tail included. */
-const renderChunk = async (score: Score, chunkIndex: number, visitSalt: number): Promise<RenderedChunk> => {
-  const bars = chunkBars(score, chunkIndex);
-  const musicSeconds = chunkSeconds(score, chunkIndex);
+/** bake one wet note per role offline, at its middle degree; cached per score. */
+const bakeScore = async (score: Score): Promise<BakedScore> => {
+  const key = JSON.stringify(score);
+  const cached = bakes.get(key);
+  if (cached !== undefined) {
+    return cached;
+  }
   const biome = BIOMES[score.biome];
-  const specs = score.roles.map((role) => INSTRUMENT_SETS[score.instrumentSet][role]);
-  const events = score.roles.map((role) => buildChunkEvents(role, score, chunkIndex, bars, visitSalt));
-  // the last note's ring, then the reverb decaying after it.
-  const ringEnd = Math.max(
-    ...events.flat().map((event) => event.timeSeconds + event.holdSeconds),
-  );
-  const renderSeconds = Math.max(musicSeconds, ringEnd + biome.reverbDecay + TAIL_MARGIN_SECONDS);
-  // cached: Tone.Reverb regenerates its impulse per chunk, nested inside our render.
+  const offsets = MODES[score.mode];
+  const sampleRate = Tone.getContext().sampleRate;
+  // cached: Tone.Reverb regenerates its impulse per render, nested inside ours.
   let impulse = impulses.get(biome.reverbDecay);
   if (impulse === undefined) {
     impulse = await Tone.Offline((): void => {
       new Tone.NoiseSynth({ envelope: { attack: 0.01, decay: biome.reverbDecay, sustain: 0 } }).toDestination().triggerAttack(0);
-    }, biome.reverbDecay, CHANNEL_COUNT, SAMPLE_RATE);
+    }, biome.reverbDecay, CHANNEL_COUNT, sampleRate);
     impulses.set(biome.reverbDecay, impulse);
   }
-  const buffer = await Tone.Offline((): void => {
-    const limiter = new Tone.Limiter(LIMITER_THRESHOLD_DB).toDestination();
-    // sub-audible rumble only speakers choke on; nothing plays this low.
-    const highpass = new Tone.Filter({ type: "highpass", frequency: HIGHPASS_HZ, rolloff: -24 }).connect(limiter);
-    const bus = new Tone.Gain().connect(highpass);
-    const reverb = new Tone.Convolver({ url: impulse });
-    reverb.connect(new Tone.Gain(biome.reverbWet).connect(bus));
-    specs.forEach((spec, index): void => {
-      const [synth, output] = buildInstrument(spec, events[index][0].holdSeconds);
-      output.connect(new Tone.Gain(spec.gain).connect(bus));
+  const voices: { buffer: Tone.ToneAudioBuffer; frequency: number }[] = [];
+  let peakSum = 0;
+  for (const role of score.roles) {
+    const spec = INSTRUMENT_SETS[score.instrumentSet][role];
+    const holdSeconds = (spec.hold * 60) / biome.tempo;
+    const midi = (spec.register + biome.registerShift + 1) * 12 + score.rootPitchClass + offsets[Math.floor(offsets.length / 2)];
+    const frequency = midiToFrequency(midi);
+    const buffer = await Tone.Offline((): void => {
+      const [synth, output] = buildInstrument(spec, holdSeconds);
+      const reverb = new Tone.Convolver({ url: impulse }).connect(new Tone.Gain(biome.reverbWet).toDestination());
+      output.connect(new Tone.Gain(spec.gain).toDestination());
       output.connect(new Tone.Gain(spec.send).connect(reverb));
-      for (const event of events[index]) {
-        if (synth instanceof Tone.NoiseSynth) {
-          synth.triggerAttackRelease(event.holdSeconds, event.timeSeconds);
-        } else {
-          (synth as Tone.PolySynth).triggerAttackRelease(event.frequency, event.holdSeconds, event.timeSeconds);
-        }
+      if (synth instanceof Tone.NoiseSynth) {
+        synth.triggerAttackRelease(holdSeconds, 0);
+      } else {
+        (synth as Tone.PolySynth).triggerAttackRelease(frequency, holdSeconds, 0);
       }
-    });
-  }, renderSeconds, CHANNEL_COUNT, SAMPLE_RATE);
-  const raw = buffer.get();
-  if (raw === undefined) {
-    throw new Error("offline render produced no buffer");
-  }
-  // his gain.json, measured here instead: average level per score, peak-clamped.
-  let gain = gains.get(score.seed);
-  if (gain === undefined) {
-    const samples = raw.getChannelData(0);
-    let sum = 0;
+    }, holdSeconds + biome.reverbDecay + TAIL_MARGIN_SECONDS, CHANNEL_COUNT, sampleRate);
     let peak = 0;
-    for (const sample of samples) {
-      sum += sample * sample;
+    for (const sample of buffer.getChannelData(0)) {
       peak = Math.max(peak, Math.abs(sample));
     }
-    gain = Math.min(TARGET_PEAK / (peak || 1), TARGET_RMS / (Math.sqrt(sum / samples.length) || 1));
-    gains.set(score.seed, gain);
+    peakSum += peak;
+    voices.push({ buffer, frequency });
   }
-  return { url: encodeWavUrl(raw, gain), musicSeconds };
+  // his gain.json, computed here: every role at once must not clip the master.
+  const baked: BakedScore = { voices, gain: Math.min(1, TARGET_PEAK / (peakSum || 1)) };
+  bakes.set(key, baked);
+  return baked;
 };
 
-export { generateScore, renderChunk };
-export type { RenderedChunk };
+/** start one chunk of notes on the live graph; returns its music length. */
+const scheduleChunk = (
+  score: Score,
+  chunkIndex: number,
+  visitSalt: number,
+  baked: BakedScore,
+  destination: Tone.ToneAudioNode,
+  startTime: number,
+): number => {
+  const bars = chunkBars(score, chunkIndex);
+  score.roles.forEach((role, index): void => {
+    const voice = baked.voices[index];
+    for (const event of buildChunkEvents(role, score, chunkIndex, bars, visitSalt)) {
+      // an online one-shot disposes itself once it stops sounding.
+      new Tone.ToneBufferSource({ url: voice.buffer, playbackRate: event.frequency / voice.frequency })
+        .connect(destination)
+        .start(startTime + event.timeSeconds);
+    }
+  });
+  return chunkSeconds(score, chunkIndex);
+};
+
+export { bakeScore, generateScore, scheduleChunk };
+export type { BakedScore };

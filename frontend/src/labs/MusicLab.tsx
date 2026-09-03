@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactElement } from "react";
-import { generateScore, renderChunk } from "../services/musicEngineService";
+import * as Tone from "tone";
+import { bakeScore, generateScore, scheduleChunk } from "../services/musicEngineService";
 import { BIOMES, INSTRUMENT_SETS } from "../services/musicSoundService";
 import type { Biome, InstrumentSetName, Mode, Role, Score } from "../types/music";
 
@@ -15,41 +16,14 @@ const BIOME_NAMES = Object.keys(BIOMES) as Biome[];
 const SET_NAMES = Object.keys(INSTRUMENT_SETS) as InstrumentSetName[];
 const ROLES: readonly Role[] = ["drone", "pad", "sparkle", "lead", "counter"];
 const PITCH_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-const WAV_HEADER_BYTES = 44;
 
-// one rendered chunk plus the numbers the balance pass needs.
+// one baked score plus the numbers the balance pass needs.
 interface LabRender {
-  readonly url: string;
+  readonly bakeMilliseconds: number;
   readonly musicSeconds: number;
-  readonly totalSeconds: number;
-  readonly renderMilliseconds: number;
-  readonly peak: number;
-  readonly rms: number;
+  readonly gain: number;
+  readonly voiceCount: number;
 }
-
-// peak and rms of a rendered wav, read straight from the pcm.
-const analyseWav = async (url: string): Promise<{ peak: number; rms: number; totalSeconds: number }> => {
-  const view = new DataView(await (await fetch(url)).arrayBuffer());
-  const channelCount = view.getUint16(22, true);
-  const sampleRate = view.getUint32(24, true);
-  const sampleCount = (view.byteLength - WAV_HEADER_BYTES) / 2;
-  let peak = 0;
-  let sumOfSquares = 0;
-  for (let index = 0; index < sampleCount; index += 1) {
-    const sample = view.getInt16(WAV_HEADER_BYTES + index * 2, true) / 32768;
-    peak = Math.max(peak, Math.abs(sample));
-    sumOfSquares += sample * sample;
-  }
-  return {
-    peak,
-    rms: Math.sqrt(sumOfSquares / sampleCount),
-    totalSeconds: sampleCount / channelCount / sampleRate,
-  };
-};
-
-// linear amplitude as dBFS, floored so silence stays printable.
-const toDecibels = (amplitude: number): string =>
-  amplitude <= 0 ? "-inf" : (20 * Math.log10(amplitude)).toFixed(1);
 
 // throwaway inline styling; deliberately kept out of the shared stylesheet.
 const styles: Record<string, CSSProperties> = {
@@ -65,7 +39,6 @@ const styles: Record<string, CSSProperties> = {
   code: { fontSize: 11, background: "#141414", padding: 8, whiteSpace: "pre-wrap", overflowX: "auto" },
   main: { flex: 1, padding: 24, overflow: "auto" },
   heading: { fontSize: 15, margin: "0 0 12px" },
-  audio: { width: "100%", maxWidth: 640, marginBottom: 20 },
   table: { fontSize: 12, borderCollapse: "collapse" },
   cell: { padding: "3px 14px 3px 0", color: "#bbb" },
   muted: { fontSize: 13, color: "#888" },
@@ -81,8 +54,9 @@ const MusicLab = (): ReactElement => {
   const [chunkIndex, setChunkIndex] = useState<number>(0);
   const [visitSalt, setVisitSalt] = useState<number>(1);
   const [seedInput, setSeedInput] = useState<string>("1234");
-  const [rendering, setRendering] = useState<boolean>(false);
+  const [playing, setPlaying] = useState<boolean>(false);
   const [result, setResult] = useState<LabRender | null>(null);
+  const output = useRef<Tone.Gain | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
 
   // a biome change resets the arrangement to every role it allows.
@@ -97,27 +71,26 @@ const MusicLab = (): ReactElement => {
     );
   };
 
-  // render the current controls as one chunk and measure it.
-  const render = async (): Promise<void> => {
-    if (roles.length === 0 || rendering) {
+  // bake the current controls and play one chunk of them live.
+  const play = async (): Promise<void> => {
+    if (roles.length === 0 || playing) {
       return;
     }
-    setRendering(true);
+    setPlaying(true);
     setFailure(null);
     const score: Score = { seed: Number(seedInput) || 0, mode, rootPitchClass, biome, instrumentSet, roles };
     const startedAt = performance.now();
     try {
-      const chunk = await renderChunk(score, chunkIndex, visitSalt);
-      const renderMilliseconds = Math.round(performance.now() - startedAt);
-      const measured = await analyseWav(chunk.url);
-      if (result !== null) {
-        URL.revokeObjectURL(result.url);
-      }
-      setResult({ url: chunk.url, musicSeconds: chunk.musicSeconds, renderMilliseconds, ...measured });
+      await Tone.start();
+      const baked = await bakeScore(score);
+      output.current?.dispose();
+      output.current = new Tone.Gain(baked.gain).toDestination();
+      const musicSeconds = scheduleChunk(score, chunkIndex, visitSalt, baked, output.current, Tone.now() + 0.2);
+      setResult({ bakeMilliseconds: Math.round(performance.now() - startedAt), musicSeconds, gain: baked.gain, voiceCount: baked.voices.length });
     } catch (error) {
       setFailure(error instanceof Error ? error.message : String(error));
     }
-    setRendering(false);
+    setPlaying(false);
   };
 
   // pull mode, biome, set, root, and roles from a real seed.
@@ -189,8 +162,8 @@ const MusicLab = (): ReactElement => {
         </label>
 
         <div style={styles.buttonRow}>
-          <button type="button" style={styles.button} disabled={rendering || roles.length === 0} onClick={(): void => void render()}>
-            {rendering ? "Rendering..." : "Render"}
+          <button type="button" style={styles.button} disabled={playing || roles.length === 0} onClick={(): void => void play()}>
+            {playing ? "Baking..." : "Play"}
           </button>
           <button type="button" style={styles.button} onClick={(): void => setVisitSalt((previous) => previous + 1)}>
             Reshuffle
@@ -199,6 +172,9 @@ const MusicLab = (): ReactElement => {
         <div style={styles.buttonRow}>
           <button type="button" style={styles.button} onClick={loadFromSeed}>
             Load from seed
+          </button>
+          <button type="button" style={styles.button} onClick={(): void => void output.current?.dispose()}>
+            Stop
           </button>
         </div>
 
@@ -214,22 +190,18 @@ const MusicLab = (): ReactElement => {
         {failure === null ? null : <p style={{ color: "#ff6b6b", fontSize: 13 }}>{failure}</p>}
         {roles.length === 0 ? <p style={styles.muted}>Pick at least one role.</p> : null}
         {result === null ? (
-          <p style={styles.muted}>Press Render to hear this combination.</p>
+          <p style={styles.muted}>Press Play to hear this combination.</p>
         ) : (
-          <>
-            <audio style={styles.audio} src={result.url} controls loop autoPlay />
-            <table style={styles.table}>
-              <tbody>
-                <tr><td style={styles.cell}>render time</td><td>{result.renderMilliseconds} ms</td></tr>
-                <tr><td style={styles.cell}>music</td><td>{result.musicSeconds.toFixed(1)} s</td></tr>
-                <tr><td style={styles.cell}>with tail</td><td>{result.totalSeconds.toFixed(1)} s</td></tr>
-                <tr><td style={styles.cell}>peak</td><td>{result.peak.toFixed(3)} ({toDecibels(result.peak)} dBFS)</td></tr>
-                <tr><td style={styles.cell}>rms</td><td>{result.rms.toFixed(4)} ({toDecibels(result.rms)} dBFS)</td></tr>
-                <tr><td style={styles.cell}>tempo</td><td>{config.tempo} bpm</td></tr>
-                <tr><td style={styles.cell}>reverb</td><td>{config.reverbDecay}s decay, {config.reverbWet} wet</td></tr>
-              </tbody>
-            </table>
-          </>
+          <table style={styles.table}>
+            <tbody>
+              <tr><td style={styles.cell}>bake time</td><td>{result.bakeMilliseconds} ms</td></tr>
+              <tr><td style={styles.cell}>music</td><td>{result.musicSeconds.toFixed(1)} s</td></tr>
+              <tr><td style={styles.cell}>voices</td><td>{result.voiceCount}</td></tr>
+              <tr><td style={styles.cell}>master gain</td><td>{result.gain.toFixed(3)}</td></tr>
+              <tr><td style={styles.cell}>tempo</td><td>{config.tempo} bpm</td></tr>
+              <tr><td style={styles.cell}>reverb</td><td>{config.reverbDecay}s decay, {config.reverbWet} wet</td></tr>
+            </tbody>
+          </table>
         )}
       </main>
     </div>
