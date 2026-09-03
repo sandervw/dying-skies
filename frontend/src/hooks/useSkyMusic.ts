@@ -42,12 +42,12 @@ const useSkyMusic = (muted: boolean): void => {
         if (stopped) {
           return;
         }
-        const limiter = new Tone.Limiter(-3).toDestination();
+        const compressor = new Tone.Compressor({ threshold: -12, ratio: 4, attack: 0.05, release: 0.5 }).toDestination();
         // sub-audible rumble only speakers choke on; nothing plays this low.
-        const highpass = new Tone.Filter({ type: "highpass", frequency: 35, rolloff: -24 }).connect(limiter);
+        const highpass = new Tone.Filter({ type: "highpass", frequency: 35, rolloff: -24 }).connect(compressor);
         fade = new Tone.Gain(0).connect(highpass);
         const level = new Tone.Gain(baked.gain).connect(fade);
-        chain = [limiter, highpass, fade, level];
+        chain = [compressor, highpass, fade, level];
         fadeRef.current = fade;
         fade.gain.rampTo(mutedRef.current ? 0 : 1, FADE_SECONDS);
         let startTime = 0;
@@ -74,13 +74,13 @@ const useSkyMusic = (muted: boolean): void => {
       window.clearTimeout(timer);
       fadeRef.current = null;
       fade?.gain.rampTo(0, FADE_SECONDS);
-      // notes already scheduled ring on until the faded chain goes away.
+      // dispose past the ramp; Tone.now() leads the clock by lookAhead.
       const dying = chain;
       window.setTimeout((): void => {
         for (const node of dying) {
           node.dispose();
         }
-      }, FADE_SECONDS * 1000);
+      }, (FADE_SECONDS + 0.5) * 1000);
     };
   }, [seed]);
 };

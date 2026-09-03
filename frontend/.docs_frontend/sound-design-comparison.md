@@ -14,33 +14,33 @@ We bake each role once, at the middle degree of the mode, and reach every other 
 
 ## 3. Reverb architecture
 
-He bakes reverb into the sample buffers offline, once, per instrument (`Freeverb {roomSize: 0.7, dampening: 6000}`, `Reverb(15)`, `Reverb(30)`), then plays wet buffers, so tails never collide in a shared tank. We bake reverb the same way, one `Tone.Convolver` per role inside its offline render, fed by an impulse rendered once per decay. Tails sum independently for us too.
+He bakes reverb into the sample buffers offline, once, per instrument (`Freeverb {roomSize: 0.7, dampening: 6000}`, `Reverb(15)`, `Reverb(30)`), then plays wet buffers. We bake reverb the same way, one `Tone.Convolver` per role inside its offline render, fed by an impulse rendered once per decay. Tails sum independently for us too.
 
-Two consequences remain: our decays are far shorter (2.5 to 12s vs his 15 to 30s), and we have no HF damping in the tail, so ours stays as bright as the source while his darkens like a real space.
+Our decays run 2.5 to 12s against his 15 to 30s, and our tails carry no HF damping.
 
 ## 4. Modulation over time
 
 `timbral-oscillations` drives `chorus.wet`, `pitchShift.wet` and tremolo depth from independent LFOs at `rng()/100` Hz, periods of minutes, mutually incommensurate. `above-the-rain` sweeps an `AutoFilter(rng()/100 + 0.01, 100, 4)`, four octaves.
 
-Our effects are constructed with fixed constants and baked into each one-shot, so `AutoPanner` and `AutoFilter` become one fixed gesture repeated identically by every note of that role. Nothing in our timbre evolves within a note, a chunk, or a sky.
+Our effects are constructed with fixed constants and baked into each one-shot, so `AutoPanner` and `AutoFilter` become one fixed gesture repeated identically by every note of that role.
 
 ## 5. Envelopes
 
-He avoids ADSR on sources, using `fadeIn` / `fadeOut` with explicit `curve: 'linear'` (4 to 5 second linear fades). Our `shapeVoice` forces `sustain: 0, decayCurve: "linear", release: 0.01`, which converges on the same idea. The length is fixed per role by `spec.hold`, then stretched or squeezed by the playback rate of each note. Portamento in a spec is inert; a one-shot cannot glide.
+He avoids ADSR on sources, using `fadeIn` / `fadeOut` with explicit `curve: 'linear'` (4 to 5 second linear fades). Our `shapeVoice` forces `sustain: 0, decayCurve: "linear", release: 0.01`. The length is fixed per role by `spec.hold`, then stretched or squeezed by the playback rate of each note. Portamento in a spec is inert.
 
 ## 6. Loudness
 
 `wrapActivate` puts a `Tone.Compressor` on every piece, fed by a measured per-piece gain from `gain.json` (0.875 to 19.5, found by a 60 second metered binary search targeting -2 to -1 dBFS). Per-instrument trims are in decibels (`Volume(-5)`, `volume.value = -8`).
 
-We measure the peak of each baked voice and set one master gain per score, so all roles sounding at once stay under 0.7. Per-role gains are still linear and chosen by ear, and we run `Limiter(-3)` with no compressor.
+We measure each baked voice's peak, weight it by the square root of that role's average note overlap, and set one master gain per score so the sum stays under 0.7. Per-role gains are linear and chosen by ear. Our bus compressor is `-12 dBFS, 4:1, 0.05s attack, 0.5s release`.
 
 ## 7. Output fidelity
 
-He renders at context rate and ships ogg. We bake at context rate and keep raw buffers in memory, so nothing is encoded and nothing is compressed.
+He renders at context rate and ships ogg. We bake at context rate and keep raw uncompressed buffers in memory.
 
 ## 8. What we do that he does not
 
-Static per-voice filters with stated rolloff and Q; per-note `filterEnvelope` on Mono and Duo synths; FM and AM timbre by `harmonicity` and `modulationIndex`; unison detune via `fatsawtooth` spread; a 35 Hz master highpass; a true limiter; and a fully seeded score (his `window.generativeMusic.rng` defaults to `Math.random`).
+Static per-voice filters with stated rolloff and Q; per-note `filterEnvelope` on Mono and Duo synths; FM and AM timbre by `harmonicity` and `modulationIndex`; unison detune via `fatsawtooth` spread; a 35 Hz master highpass; and a fully seeded score (his `window.generativeMusic.rng` defaults to `Math.random`).
 
 ## 9. Note supply
 

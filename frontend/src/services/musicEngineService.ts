@@ -167,6 +167,7 @@ const bakeScore = async (score: Score): Promise<BakedScore> => {
   for (const role of score.roles) {
     const spec = INSTRUMENT_SETS[score.instrumentSet][role];
     const holdSeconds = (spec.hold * 60) / biome.tempo;
+    const duration = holdSeconds + biome.reverbDecay + TAIL_MARGIN_SECONDS;
     const midi = (spec.register + biome.registerShift + 1) * 12 + score.rootPitchClass + offsets[Math.floor(offsets.length / 2)];
     const frequency = midiToFrequency(midi);
     const buffer = await Tone.Offline((): void => {
@@ -179,12 +180,13 @@ const bakeScore = async (score: Score): Promise<BakedScore> => {
       } else {
         (synth as Tone.PolySynth).triggerAttackRelease(frequency, holdSeconds, 0);
       }
-    }, holdSeconds + biome.reverbDecay + TAIL_MARGIN_SECONDS, CHANNEL_COUNT, sampleRate);
+    }, duration, CHANNEL_COUNT, sampleRate);
     let peak = 0;
     for (const sample of buffer.getChannelData(0)) {
       peak = Math.max(peak, Math.abs(sample));
     }
-    peakSum += peak;
+    // notes of a role overlap; uncorrelated peaks sum as their root.
+    peakSum += peak * Math.sqrt(Math.max(1, (biome.density[role] * duration * biome.tempo) / 240));
     voices.push({ buffer, frequency });
   }
   // his gain.json, computed here: every role at once must not clip the master.
