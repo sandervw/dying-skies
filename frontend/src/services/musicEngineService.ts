@@ -90,9 +90,7 @@ const buildChunkEvents = (
 };
 
 const TARGET_PEAK = 0.7;
-const TAIL_MARGIN_SECONDS = 2;
 const CHANNEL_COUNT = 2;
-const impulses = new Map<number, Tone.ToneAudioBuffer>();
 
 /** one wet one-shot per role, in role order, plus the level they mix at. */
 interface BakedScore {
@@ -100,37 +98,12 @@ interface BakedScore {
   readonly gain: number;
 }
 
-const bakes = new Map<string, BakedScore>();
-
-// decay reaches silence before release fires; release is inert.
-const shapeVoice = (voice: Record<string, unknown>, holdSeconds: number): Record<string, unknown> => {
-  const envelope = (voice.envelope ?? {}) as { attack?: number };
-  const attack = envelope.attack ?? 0;
-  return {
-    ...voice,
-    envelope: { ...envelope, decay: Math.max(0.01, holdSeconds - attack), sustain: 0, decayCurve: "linear", release: 0.01 },
-  };
-};
-
-/** shape the one voice, or both voices of a DuoSynth. */
-const shapeOptions = (options: object, holdSeconds: number): object => {
-  const record = options as Record<string, unknown>;
-  return record.voice0 === undefined
-    ? shapeVoice(record, holdSeconds)
-    : {
-        ...record,
-        voice0: shapeVoice(record.voice0 as Record<string, unknown>, holdSeconds),
-        voice1: shapeVoice(record.voice1 as Record<string, unknown>, holdSeconds),
-      };
-};
-
 // one voice, optional filter, then effects; returns the synth and chain end.
-const buildInstrument = (spec: InstrumentSpec, holdSeconds: number): [Tone.ToneAudioNode, Tone.ToneAudioNode] => {
-  const options = shapeOptions(spec.options, holdSeconds);
+const buildInstrument = (spec: InstrumentSpec): [Tone.ToneAudioNode, Tone.ToneAudioNode] => {
   const synth =
     spec.polyphony === undefined
-      ? new spec.synth(options)
-      : new Tone.PolySynth({ maxPolyphony: spec.polyphony, voice: spec.synth as never, options: options as never });
+      ? new spec.synth(spec.options)
+      : new Tone.PolySynth({ maxPolyphony: spec.polyphony, voice: spec.synth as never, options: spec.options as never });
   const nodes: Tone.ToneAudioNode[] = spec.filter === undefined ? [] : [new Tone.Filter(spec.filter)];
   for (const [Effect, effectOptions] of spec.effects) {
     const effect = new Effect(effectOptions);
@@ -144,34 +117,24 @@ const buildInstrument = (spec: InstrumentSpec, holdSeconds: number): [Tone.ToneA
   return [synth, output];
 };
 
-/** bake one wet note per role offline, at its middle degree; cached per score. */
+/** bake one wet note per role offline, at its middle degree. */
 const bakeScore = async (score: Score): Promise<BakedScore> => {
-  const key = JSON.stringify(score);
-  const cached = bakes.get(key);
-  if (cached !== undefined) {
-    return cached;
-  }
   const biome = BIOMES[score.biome];
   const offsets = MODES[score.mode];
   const sampleRate = Tone.getContext().sampleRate;
-  // cached: Tone.Reverb regenerates its impulse per render, nested inside ours.
-  let impulse = impulses.get(biome.reverbDecay);
-  if (impulse === undefined) {
-    impulse = await Tone.Offline((): void => {
-      new Tone.NoiseSynth({ envelope: { attack: 0.01, decay: biome.reverbDecay, sustain: 0 } }).toDestination().triggerAttack(0);
-    }, biome.reverbDecay, CHANNEL_COUNT, sampleRate);
-    impulses.set(biome.reverbDecay, impulse);
-  }
+  const impulse = await Tone.Offline((): void => {
+    new Tone.NoiseSynth({ envelope: { attack: 0.01, decay: biome.reverbDecay, sustain: 0 } }).toDestination().triggerAttack(0);
+  }, biome.reverbDecay, CHANNEL_COUNT, sampleRate);
   const voices: { buffer: Tone.ToneAudioBuffer; frequency: number }[] = [];
   let peakSum = 0;
   for (const role of score.roles) {
     const spec = INSTRUMENT_SETS[score.instrumentSet][role];
     const holdSeconds = (spec.hold * 60) / biome.tempo;
-    const duration = holdSeconds + biome.reverbDecay + TAIL_MARGIN_SECONDS;
+    const duration = holdSeconds + biome.reverbDecay;
     const midi = (spec.register + biome.registerShift + 1) * 12 + score.rootPitchClass + offsets[Math.floor(offsets.length / 2)];
     const frequency = midiToFrequency(midi);
     const buffer = await Tone.Offline((): void => {
-      const [synth, output] = buildInstrument(spec, holdSeconds);
+      const [synth, output] = buildInstrument(spec);
       const reverb = new Tone.Convolver({ url: impulse }).connect(new Tone.Gain(biome.reverbWet).toDestination());
       output.connect(new Tone.Gain(spec.gain).toDestination());
       output.connect(new Tone.Gain(spec.send).connect(reverb));
@@ -190,9 +153,7 @@ const bakeScore = async (score: Score): Promise<BakedScore> => {
     voices.push({ buffer, frequency });
   }
   // his gain.json, computed here: every role at once must not clip the master.
-  const baked: BakedScore = { voices, gain: Math.min(1, TARGET_PEAK / (peakSum || 1)) };
-  bakes.set(key, baked);
-  return baked;
+  return { voices, gain: Math.min(1, TARGET_PEAK / (peakSum || 1)) };
 };
 
 /** start one chunk of notes on the live graph; returns its music length. */

@@ -24,24 +24,20 @@ Our decays run 2.5 to 12s against his 15 to 30s, and our tails carry no HF dampi
 
 Our effects are constructed with fixed constants and baked into each one-shot, so `AutoPanner` and `AutoFilter` become one fixed gesture repeated identically by every note of that role.
 
-## 5. Envelopes
-
-He avoids ADSR on sources, using `fadeIn` / `fadeOut` with explicit `curve: 'linear'` (4 to 5 second linear fades). Our `shapeVoice` forces `sustain: 0, decayCurve: "linear", release: 0.01`. The length is fixed per role by `spec.hold`, then stretched or squeezed by the playback rate of each note. Portamento in a spec is inert.
-
-## 6. Loudness
+## 5. Loudness
 
 `wrapActivate` puts a `Tone.Compressor` on every piece, fed by a measured per-piece gain from `gain.json` (0.875 to 19.5, found by a 60 second metered binary search targeting -2 to -1 dBFS). Per-instrument trims are in decibels (`Volume(-5)`, `volume.value = -8`).
 
 We measure each baked voice's peak, weight it by the square root of that role's average note overlap, and set one master gain per score so the sum stays under 0.7. Per-role gains are linear and chosen by ear. Our bus compressor is `-12 dBFS, 4:1, 0.05s attack, 0.5s release`.
 
-## 7. Output fidelity
+## 6. Output fidelity
 
 He renders at context rate and ships ogg. We bake at context rate and keep raw uncompressed buffers in memory.
 
-## 8. What we do that he does not
+## 7. What we do that he does not
 
-Static per-voice filters with stated rolloff and Q; per-note `filterEnvelope` on Mono and Duo synths; FM and AM timbre by `harmonicity` and `modulationIndex`; unison detune via `fatsawtooth` spread; a 35 Hz master highpass; and a fully seeded score (his `window.generativeMusic.rng` defaults to `Math.random`).
+Static per-voice filters with stated rolloff and Q; per-note `filterEnvelope` on Mono and Duo synths; FM and AM timbre by `harmonicity` and `modulationIndex`; unison detune via `fatsawtooth` spread; and a fully seeded score (his `window.generativeMusic.rng` defaults to `Math.random`).
 
-## 9. Note supply
+## 8. Note supply
 
 He tosses diatonic seven-note collections across three or four octaves and moves by step (`MAX_STEP_DISTANCE` 2 to 3), reusing one phrase across instruments. We draw uniformly from five or six note pentatonic and whole-tone pools per role, per event, so vertical intervals between roles are arbitrary.

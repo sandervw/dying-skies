@@ -43,11 +43,9 @@ const useSkyMusic = (muted: boolean): void => {
           return;
         }
         const compressor = new Tone.Compressor({ threshold: -12, ratio: 4, attack: 0.05, release: 0.5 }).toDestination();
-        // sub-audible rumble only speakers choke on; nothing plays this low.
-        const highpass = new Tone.Filter({ type: "highpass", frequency: 35, rolloff: -24 }).connect(compressor);
-        fade = new Tone.Gain(0).connect(highpass);
+        fade = new Tone.Gain(0).connect(compressor);
         const level = new Tone.Gain(baked.gain).connect(fade);
-        chain = [compressor, highpass, fade, level];
+        chain = [compressor, fade, level];
         fadeRef.current = fade;
         fade.gain.rampTo(mutedRef.current ? 0 : 1, FADE_SECONDS);
         let startTime = 0;

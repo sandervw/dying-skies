@@ -28,23 +28,15 @@ We are the inverse: mulberry32 seeded per domain, then per chunk and per role, w
 
 We have no guard. A sky change during a bake leaves the abandoned `bakeScore` rendering while the new one starts, and `Tone.Offline` swaps the global context under both.
 
-## 5. Caching
+## 5. Fades and gain staging
 
-He persists rendered buffers via `sampleLibrary.save()`. We cache baked voices in memory, keyed by the serialized score, and impulse responses keyed by decay, for the session only.
+|       | His                                                                                                                       | Ours                                                                                                                                              |
+| ----- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fade  | 0.1s `linearRampToValueAtTime` on a per-schedule `Gain`, with `cancelScheduledValues` then `setValueAtTime` pinning first | 2s `rampTo` on a master `Gain`, for fade in, mute, and teardown                                                                                   |
+| Bus   | `Gain(pieceGain) -> Compressor -> destination`                                                                            | `Gain(level) -> Gain(fade) -> Compressor(-12, 4:1)`                                                               |
+| Level | measured per piece by binary search until 60s peak lands in [-2,-1] dBFS, baked into `gain.json`                          | summed peaks of the baked voices, each weighted by the square root of its expected overlap (`density * duration * tempo / 240`), summed under 0.7 |
 
-## 6. Fades and gain staging
-
-| | His | Ours |
-|---|---|---|
-| Fade | 0.1s `linearRampToValueAtTime` on a per-schedule `Gain`, with `cancelScheduledValues` then `setValueAtTime` pinning first | 2s `rampTo` on a master `Gain`, for fade in, mute, and teardown |
-| Bus | `Gain(pieceGain) -> Compressor -> destination` | `Gain(level) -> Gain(fade) -> Filter(highpass 35Hz, -24) -> Compressor(-12, 4:1)` |
-| Level | measured per piece by binary search until 60s peak lands in [-2,-1] dBFS, baked into `gain.json` | summed peaks of the baked voices, each weighted by the square root of its expected overlap (`density * duration * tempo / 240`), summed under 0.7 |
-
-## 7. Settings only we have
-
-a 35Hz master highpass, a -12 dBFS 4:1 compressor, `JITTER_SECONDS` 0.025, `CHUNK_TARGET_SECONDS` 30 with a 10s first chunk, a 0.2s scheduling lead, the next chunk queued one second early, `TAIL_MARGIN_SECONDS` 2 on top of `reverbDecay`, and envelope reshaping (`decay = hold - attack`, `sustain 0`).
-
-## 8. Settings only he has
+## 6. Settings only he has
 
 `onProgress` threaded through every render path; per-piece gain constants; the serial queue; `wrapMethodWithDisposeError` guarding use-after-dispose; explicit disposal of every intermediate buffer.
 
