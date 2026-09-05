@@ -60,7 +60,7 @@ Events per bar, per biome, per role. Fixed values, no jitter.
 
 | Set         | Character                                                         |
 | ----------- | ----------------------------------------------------------------- |
-| morrowind   | cinematic, swelling saw pads, high whistle, glass chime           |
+| morrowind   | cinematic, swelling saw pads, cello lead, bell music box         |
 | kingsfield  | cold and subterranean, metallic FM pad, formant horn, hiss        |
 | majorasmask | acoustic and dry, bowed strings, celesta, ocarina, koto           |
 | deusex      | synthetic, supersaw bed, FM strikes, reedy lead, noise shimmer    |
