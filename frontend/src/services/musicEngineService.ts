@@ -117,44 +117,55 @@ const buildInstrument = (spec: InstrumentSpec): [Tone.ToneAudioNode, Tone.ToneAu
   return [synth, output];
 };
 
-/** bake one wet note per role offline, at its middle degree. */
-const bakeScore = async (score: Score): Promise<BakedScore> => {
-  const biome = BIOMES[score.biome];
-  const offsets = MODES[score.mode];
-  const sampleRate = Tone.getContext().sampleRate;
-  const impulse = await Tone.Offline((): void => {
-    new Tone.NoiseSynth({ envelope: { attack: 0.01, decay: biome.reverbDecay, sustain: 0 } }).toDestination().triggerAttack(0);
-  }, biome.reverbDecay, CHANNEL_COUNT, sampleRate);
-  const voices: { buffer: Tone.ToneAudioBuffer; frequency: number }[] = [];
-  let peakSum = 0;
-  for (const role of score.roles) {
-    const spec = INSTRUMENT_SETS[score.instrumentSet][role];
-    const holdSeconds = (spec.hold * 60) / biome.tempo;
-    const duration = holdSeconds + biome.reverbDecay;
-    const midi = (spec.register + biome.registerShift + 1) * 12 + score.rootPitchClass + offsets[Math.floor(offsets.length / 2)];
-    const frequency = midiToFrequency(midi);
-    const buffer = await Tone.Offline((): void => {
-      const [synth, output] = buildInstrument(spec);
-      const reverb = new Tone.Convolver({ url: impulse }).connect(new Tone.Gain(biome.reverbWet).toDestination());
-      output.connect(new Tone.Gain(spec.gain).toDestination());
-      output.connect(new Tone.Gain(spec.send).connect(reverb));
-      if (synth instanceof Tone.NoiseSynth) {
-        synth.triggerAttackRelease(holdSeconds, 0);
-      } else {
-        (synth as Tone.PolySynth).triggerAttackRelease(frequency, holdSeconds, 0);
-      }
-    }, duration, CHANNEL_COUNT, sampleRate);
-    let peak = 0;
-    for (const sample of buffer.getChannelData(0)) {
-      peak = Math.max(peak, Math.abs(sample));
-    }
-    // notes of a role overlap; uncorrelated peaks sum as their root.
-    peakSum += peak * Math.sqrt(Math.max(1, (biome.density[role] * duration * biome.tempo) / 240));
-    voices.push({ buffer, frequency });
-  }
-  // his gain.json, computed here: every role at once must not clip the master.
-  return { voices, gain: Math.min(1, TARGET_PEAK / (peakSum || 1)) };
+// serial queue for Tone.Offline renders, matching Alex's createPrerenderedBuffer.
+let renderQueue = Promise.resolve();
+const runOffline = <T>(fn: () => Promise<T>): Promise<T> => {
+  const next = renderQueue.then(fn, fn);
+  renderQueue = next.then(() => {}, () => {});
+  return next;
 };
+
+/** bake one wet note per role offline, at its middle degree. */
+const bakeScore = (score: Score, onProgress?: (progress: number) => void): Promise<BakedScore> =>
+  runOffline(async (): Promise<BakedScore> => {
+    const biome = BIOMES[score.biome];
+    const offsets = MODES[score.mode];
+    const sampleRate = Tone.getContext().sampleRate;
+    const impulse = await Tone.Offline((): void => {
+      new Tone.NoiseSynth({ envelope: { attack: 0.01, decay: biome.reverbDecay, sustain: 0 } }).toDestination().triggerAttack(0);
+    }, biome.reverbDecay, CHANNEL_COUNT, sampleRate);
+    const voices: { buffer: Tone.ToneAudioBuffer; frequency: number }[] = [];
+    let peakSum = 0;
+    for (let index = 0; index < score.roles.length; index += 1) {
+      const role = score.roles[index];
+      const spec = INSTRUMENT_SETS[score.instrumentSet][role];
+      const holdSeconds = (spec.hold * 60) / biome.tempo;
+      const duration = holdSeconds + biome.reverbDecay;
+      const midi = (spec.register + biome.registerShift + 1) * 12 + score.rootPitchClass + offsets[Math.floor(offsets.length / 2)];
+      const frequency = midiToFrequency(midi);
+      const buffer = await Tone.Offline((): void => {
+        const [synth, output] = buildInstrument(spec);
+        const reverb = new Tone.Convolver({ url: impulse }).connect(new Tone.Gain(biome.reverbWet).toDestination());
+        output.connect(new Tone.Gain(spec.gain).toDestination());
+        output.connect(new Tone.Gain(spec.send).connect(reverb));
+        if (synth instanceof Tone.NoiseSynth) {
+          synth.triggerAttackRelease(holdSeconds, 0);
+        } else {
+          (synth as Tone.PolySynth).triggerAttackRelease(frequency, holdSeconds, 0);
+        }
+      }, duration, CHANNEL_COUNT, sampleRate);
+      let peak = 0;
+      for (const sample of buffer.getChannelData(0)) {
+        peak = Math.max(peak, Math.abs(sample));
+      }
+      // notes of a role overlap; uncorrelated peaks sum as their root.
+      peakSum += peak * Math.sqrt(Math.max(1, (biome.density[role] * duration * biome.tempo) / 240));
+      voices.push({ buffer, frequency });
+      onProgress?.((index + 1) / score.roles.length);
+    }
+    // his gain.json, computed here: every role at once must not clip the master.
+    return { voices, gain: Math.min(1, TARGET_PEAK / (peakSum || 1)) };
+  });
 
 /** start one chunk of notes on the live graph; returns its music length. */
 const scheduleChunk = (

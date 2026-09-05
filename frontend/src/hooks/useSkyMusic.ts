@@ -42,7 +42,7 @@ const useSkyMusic = (muted: boolean): void => {
         if (stopped) {
           return;
         }
-        const compressor = new Tone.Compressor({ threshold: -12, ratio: 4, attack: 0.05, release: 0.5 }).toDestination();
+        const compressor = new Tone.Compressor().toDestination();
         fade = new Tone.Gain(0).connect(compressor);
         const level = new Tone.Gain(baked.gain).connect(fade);
         chain = [compressor, fade, level];

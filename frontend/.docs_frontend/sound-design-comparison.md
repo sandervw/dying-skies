@@ -1,5 +1,7 @@
 # Sound design: generativefm vs Dying Skies
 
+*Sourced from: https://github.com/generativefm/generators*
+
 Pure sound and note quality only. Scheduling, ordering and playback are out of scope. Sources: `generativefm/generators` utilities and four piece sources, against `musicSoundService.ts`, `musicEngineService.ts`.
 
 ## 1. Source material
@@ -30,14 +32,10 @@ Our effects are constructed with fixed constants and baked into each one-shot, s
 
 We measure each baked voice's peak, weight it by the square root of that role's average note overlap, and set one master gain per score so the sum stays under 0.7. Per-role gains are linear and chosen by ear. Our bus compressor is `-12 dBFS, 4:1, 0.05s attack, 0.5s release`.
 
-## 6. Output fidelity
-
-He renders at context rate and ships ogg. We bake at context rate and keep raw uncompressed buffers in memory.
-
-## 7. What we do that he does not
+## 6. What we do that he does not
 
 Static per-voice filters with stated rolloff and Q; per-note `filterEnvelope` on Mono and Duo synths; FM and AM timbre by `harmonicity` and `modulationIndex`; unison detune via `fatsawtooth` spread; and a fully seeded score (his `window.generativeMusic.rng` defaults to `Math.random`).
 
-## 8. Note supply
+## 7. Note supply
 
 He tosses diatonic seven-note collections across three or four octaves and moves by step (`MAX_STEP_DISTANCE` 2 to 3), reusing one phrase across instruments. We draw uniformly from five or six note pentatonic and whole-tone pools per role, per event, so vertical intervals between roles are arbitrary.
