@@ -43,11 +43,12 @@ const useSkyMusic = (muted: boolean): void => {
           return;
         }
         const compressor = new Tone.Compressor().toDestination();
-        fade = new Tone.Gain(0).connect(compressor);
-        const level = new Tone.Gain(baked.gain).connect(fade);
-        chain = [compressor, fade, level];
-        fadeRef.current = fade;
-        fade.gain.rampTo(mutedRef.current ? 0 : 1, FADE_SECONDS);
+        const level = new Tone.Gain(baked.gain).connect(compressor);
+        const activeFade = new Tone.Gain(0).connect(level);
+        fade = activeFade;
+        chain = [compressor, level, activeFade];
+        fadeRef.current = activeFade;
+        activeFade.gain.rampTo(mutedRef.current ? 0 : 1, FADE_SECONDS);
         let startTime = 0;
         const queue = (index: number): void => {
           // a suspended context freezes the clock; wait rather than stack chunks.
@@ -56,7 +57,7 @@ const useSkyMusic = (muted: boolean): void => {
             return;
           }
           startTime = Math.max(startTime, Tone.now() + 0.2);
-          startTime += scheduleChunk(score, index, visitSalt, baked, level, startTime);
+          startTime += scheduleChunk(score, index, visitSalt, baked, activeFade, startTime);
           // queue the next chunk a second before this one runs out.
           timer = window.setTimeout((): void => queue(index + 1), (startTime - Tone.now() - 1) * 1000);
         };

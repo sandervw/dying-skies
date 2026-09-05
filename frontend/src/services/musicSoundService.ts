@@ -76,7 +76,7 @@ const morrowind: Record<Role, InstrumentSpec> = {
     register: 5, hold: 4, gain: 0.4, send: 0.6,
     filter: { type: "bandpass", frequency: 1800, rolloff: -12 },
     effects: [[Tone.FeedbackDelay, { delayTime: "4n", feedback: 0.4, wet: 0.35 }],
-      [Tone.AutoPanner, { frequency: 0.15, depth: 0.4, wet: 1.0 }]],
+      [Tone.StereoWidener, { width: 0.8, wet: 0.5 }]],
   },
 };
 
@@ -123,7 +123,7 @@ const kingsfield: Record<Role, InstrumentSpec> = {
     register: 0, hold: 6, gain: 0.25, send: 0.7,
     filter: { type: "bandpass", frequency: 2200, rolloff: -24, Q: 6 },
     effects: [[Tone.PingPongDelay, { delayTime: "8n", feedback: 0.45, wet: 0.4 }],
-      [Tone.AutoPanner, { frequency: 0.15, depth: 0.7, wet: 1.0 }]],
+      [Tone.StereoWidener, { width: 0.7, wet: 0.6 }]],
   },
 };
 
@@ -263,7 +263,7 @@ const aom: Record<Role, InstrumentSpec> = {
     options: { oscillator: { type: "fatsawtooth", count: 3, spread: 25 },
       envelope: { attack: 1.8 } },
     register: 2, hold: 6, gain: 0.45, send: 0.65,
-    effects: [[Tone.AutoFilter, { frequency: 0.15, baseFrequency: 500, octaves: 2, wet: 0.7 }]],
+    effects: [[Tone.Chorus, { frequency: 0.8, delayTime: 4.0, depth: 0.7, wet: 0.4 }]],
   },
 };
 
@@ -308,7 +308,7 @@ const zoombinis: Record<Role, InstrumentSpec> = {
     options: { noise: { type: "pink" }, envelope: { attack: 2.2 } },
     register: 0, hold: 8, gain: 0.25, send: 0.7,
     filter: { type: "bandpass", frequency: 2200, rolloff: -12 },
-    effects: [[Tone.AutoPanner, { frequency: 0.15, depth: 0.8, wet: 1.0 }]],
+    effects: [[Tone.StereoWidener, { width: 0.8, wet: 0.8 }]],
   },
 };
 

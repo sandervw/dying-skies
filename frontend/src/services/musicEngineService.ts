@@ -37,9 +37,6 @@ const deriveChunkSeed = (seed: number, chunkIndex: number): number => {
   return (hash ^ (hash >>> 16)) >>> 0;
 };
 
-/** convert a MIDI note number into a frequency in Hz. */
-const midiToFrequency = (midi: number): number => 440 * Math.pow(2, (midi - 69) / 12);
-
 const BEATS_PER_BAR = 4;
 /** wander off the beat; identical start times stack into one transient. */
 const JITTER_SECONDS = 0.025;
@@ -49,7 +46,7 @@ const FIRST_CHUNK_TARGET_SECONDS = 10;
 /** one scheduled note inside a chunk. */
 interface ChunkEvent {
   readonly timeSeconds: number;
-  readonly frequency: number;
+  readonly interval: number;
 }
 
 /** bars per chunk; chunk zero is short so sound starts sooner. */
@@ -73,8 +70,8 @@ const buildChunkEvents = (
   const roleIndex = score.roles.indexOf(role);
   const random = createSeededRandom(deriveChunkSeed(score.seed ^ visitSalt ^ roleIndex, chunkIndex));
   const config = BIOMES[score.biome];
-  const spec = INSTRUMENT_SETS[score.instrumentSet][role];
   const offsets = MODES[score.mode];
+  const middleDegree = offsets[Math.floor(offsets.length / 2)];
   const secondsPerBeat = 60 / config.tempo;
   const count = Math.max(1, Math.round(config.density[role] * bars));
   const events: ChunkEvent[] = [];
@@ -82,8 +79,7 @@ const buildChunkEvents = (
     const beat = Math.floor(random() * bars * BEATS_PER_BAR);
     const jitter = (random() - 0.5) * 2 * JITTER_SECONDS;
     const degree = offsets[Math.floor(random() * offsets.length)];
-    const midi = (spec.register + config.registerShift + 1) * 12 + score.rootPitchClass + degree;
-    events.push({ timeSeconds: Math.max(0, beat * secondsPerBeat + jitter), frequency: midiToFrequency(midi) });
+    events.push({ timeSeconds: Math.max(0, beat * secondsPerBeat + jitter), interval: degree - middleDegree });
   }
   events.sort((first, second) => first.timeSeconds - second.timeSeconds);
   return events;
@@ -94,7 +90,7 @@ const CHANNEL_COUNT = 2;
 
 /** one wet one-shot per role, in role order, plus the level they mix at. */
 interface BakedScore {
-  readonly voices: readonly { readonly buffer: Tone.ToneAudioBuffer; readonly frequency: number }[];
+  readonly voices: readonly Tone.ToneAudioBuffer[];
   readonly gain: number;
 }
 
@@ -106,9 +102,7 @@ const buildInstrument = (spec: InstrumentSpec): [Tone.ToneAudioNode, Tone.ToneAu
       : new Tone.PolySynth({ maxPolyphony: spec.polyphony, voice: spec.synth as never, options: spec.options as never });
   const nodes: Tone.ToneAudioNode[] = spec.filter === undefined ? [] : [new Tone.Filter(spec.filter)];
   for (const [Effect, effectOptions] of spec.effects) {
-    const effect = new Effect(effectOptions);
-    effect.start?.();
-    nodes.push(effect);
+    nodes.push(new Effect(effectOptions));
   }
   const output = nodes.reduce<Tone.ToneAudioNode>((previous, node) => {
     previous.connect(node);
@@ -131,10 +125,7 @@ const bakeScore = (score: Score, onProgress?: (progress: number) => void): Promi
     const biome = BIOMES[score.biome];
     const offsets = MODES[score.mode];
     const sampleRate = Tone.getContext().sampleRate;
-    const impulse = await Tone.Offline((): void => {
-      new Tone.NoiseSynth({ envelope: { attack: 0.01, decay: biome.reverbDecay, sustain: 0 } }).toDestination().triggerAttack(0);
-    }, biome.reverbDecay, CHANNEL_COUNT, sampleRate);
-    const voices: { buffer: Tone.ToneAudioBuffer; frequency: number }[] = [];
+    const voices: Tone.ToneAudioBuffer[] = [];
     let peakSum = 0;
     for (let index = 0; index < score.roles.length; index += 1) {
       const role = score.roles[index];
@@ -142,16 +133,17 @@ const bakeScore = (score: Score, onProgress?: (progress: number) => void): Promi
       const holdSeconds = (spec.hold * 60) / biome.tempo;
       const duration = holdSeconds + biome.reverbDecay;
       const midi = (spec.register + biome.registerShift + 1) * 12 + score.rootPitchClass + offsets[Math.floor(offsets.length / 2)];
-      const frequency = midiToFrequency(midi);
-      const buffer = await Tone.Offline((): void => {
+      const pitch = Tone.Frequency(midi, "midi").toFrequency();
+      const buffer = await Tone.Offline(async (): Promise<void> => {
         const [synth, output] = buildInstrument(spec);
-        const reverb = new Tone.Convolver({ url: impulse }).connect(new Tone.Gain(biome.reverbWet).toDestination());
+        const reverb = await new Tone.Reverb(biome.reverbDecay).generate();
+        reverb.wet.value = biome.reverbWet;
         output.connect(new Tone.Gain(spec.gain).toDestination());
-        output.connect(new Tone.Gain(spec.send).connect(reverb));
+        output.connect(new Tone.Gain(spec.send).connect(reverb.toDestination()));
         if (synth instanceof Tone.NoiseSynth) {
           synth.triggerAttackRelease(holdSeconds, 0);
         } else {
-          (synth as Tone.PolySynth).triggerAttackRelease(frequency, holdSeconds, 0);
+          (synth as Tone.PolySynth).triggerAttackRelease(pitch, holdSeconds, 0);
         }
       }, duration, CHANNEL_COUNT, sampleRate);
       let peak = 0;
@@ -160,7 +152,7 @@ const bakeScore = (score: Score, onProgress?: (progress: number) => void): Promi
       }
       // notes of a role overlap; uncorrelated peaks sum as their root.
       peakSum += peak * Math.sqrt(Math.max(1, (biome.density[role] * duration * biome.tempo) / 240));
-      voices.push({ buffer, frequency });
+      voices.push(buffer);
       onProgress?.((index + 1) / score.roles.length);
     }
     // his gain.json, computed here: every role at once must not clip the master.
@@ -178,10 +170,10 @@ const scheduleChunk = (
 ): number => {
   const bars = chunkBars(score, chunkIndex);
   score.roles.forEach((role, index): void => {
-    const voice = baked.voices[index];
+    const buffer = baked.voices[index];
     for (const event of buildChunkEvents(role, score, chunkIndex, bars, visitSalt)) {
       // an online one-shot disposes itself once it stops sounding.
-      new Tone.ToneBufferSource({ url: voice.buffer, playbackRate: event.frequency / voice.frequency })
+      new Tone.ToneBufferSource({ url: buffer, playbackRate: Tone.intervalToFrequencyRatio(event.interval) })
         .connect(destination)
         .start(startTime + event.timeSeconds);
     }
