@@ -40,7 +40,7 @@ const morrowind: Record<Role, InstrumentSpec> = {
       filterEnvelope: { attack: 1.0, decay: 1.5, sustain: 0.8, release: 2.0, octaves: 0.5 },
       envelope: { attack: 1.2 } },
     register: 1, hold: 8, gain: 0.9, send: 0.15,
-    filter: { type: "lowpass", frequency: 140, rolloff: -24 },
+    filter: { type: "lowpass", frequency: 200, rolloff: -24 },
     effects: [],
   },
   pad: {
@@ -95,7 +95,7 @@ const kingsfield: Record<Role, InstrumentSpec> = {
     options: { oscillator: { type: "fatsawtooth", count: 3, spread: 18 }, modulation: { type: "sine" },
       harmonicity: 1.5, modulationIndex: 3.0,
       envelope: { attack: 2.2 } },
-    register: 2, hold: 6, gain: 0.5, send: 0.55,
+    register: 3, hold: 6, gain: 0.5, send: 0.55,
     filter: { type: "lowpass", frequency: 450, rolloff: -12 },
     effects: [[Tone.Chorus, { frequency: 0.5, delayTime: 3.5, depth: 0.7, wet: 0.4 }],
       [Tone.FeedbackDelay, { delayTime: "4n.", feedback: 0.35, wet: 0.25 }]],
@@ -177,7 +177,7 @@ const deusex: Record<Role, InstrumentSpec> = {
       filterEnvelope: { attack: 2.0, decay: 1.0, sustain: 0.7, release: 3.0, octaves: 0.8 },
       envelope: { attack: 2.0 } },
     register: 1, hold: 8, gain: 0.85, send: 0.35,
-    filter: { type: "lowpass", frequency: 110, rolloff: -24 },
+    filter: { type: "lowpass", frequency: 200, rolloff: -24 },
     effects: [],
   },
   pad: {
@@ -223,7 +223,7 @@ const aom: Record<Role, InstrumentSpec> = {
       filterEnvelope: { attack: 0.01, decay: 0.2, sustain: 0.6, release: 0.3, octaves: 1.0 },
       envelope: { attack: 0.01 } },
     register: 1, hold: 8, gain: 0.9, send: 0.15,
-    filter: { type: "lowpass", frequency: 180, rolloff: -24 },
+    filter: { type: "lowpass", frequency: 200, rolloff: -24 },
     effects: [[Tone.Distortion, { distortion: 0.08, wet: 0.15 }]],
   },
   pad: {
@@ -258,7 +258,7 @@ const aom: Record<Role, InstrumentSpec> = {
     synth: Tone.Synth, polyphony: 4,
     options: { oscillator: { type: "fatsawtooth", count: 3, spread: 25 },
       envelope: { attack: 1.8 } },
-    register: 2, hold: 6, gain: 0.45, send: 0.65,
+    register: 3, hold: 6, gain: 0.45, send: 0.65,
     effects: [[Tone.Chorus, { frequency: 0.8, delayTime: 4.0, depth: 0.7, wet: 0.4 }]],
   },
 };
@@ -270,7 +270,7 @@ const zoombinis: Record<Role, InstrumentSpec> = {
       filterEnvelope: { attack: 0.02, decay: 0.4, sustain: 0.2, release: 0.6, octaves: 1.5 },
       envelope: { attack: 0.04 } },
     register: 1, hold: 8, gain: 0.85, send: 0.1,
-    filter: { type: "lowpass", frequency: 180, rolloff: -24 },
+    filter: { type: "lowpass", frequency: 200, rolloff: -24 },
     effects: [[Tone.Distortion, { distortion: 0.1, wet: 0.15 }]],
   },
   pad: {
