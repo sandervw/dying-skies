@@ -1,16 +1,5 @@
 import type * as Tone from "tone";
 
-/** the six spaces; each fixes tempo, reverb, register, and arrangement. */
-type Biome = "cavern" | "chamber" | "expanse" | "veil" | "scatter" | "undertow";
-
-/** the five consonance modes; each is a small pool of in-key notes. */
-type Mode =
-  | "major-pentatonic"
-  | "minor-pentatonic"
-  | "dorian-pentatonic"
-  | "lydian-pentatonic"
-  | "whole-tone";
-
 /** the five instrument slots every set fills. */
 type Role = "drone" | "pad" | "sparkle" | "lead" | "counter";
 
@@ -33,18 +22,8 @@ interface InstrumentSpec {
   readonly register: number;
   readonly hold: number;
   readonly gain: number;
-  readonly send: number;
   readonly filter?: Partial<Tone.FilterOptions>;
   readonly effects: readonly EffectEntry[];
 }
 
-/** the seed's three picks, plus fixed root and biome roles. */
-interface Score {
-  readonly mode: Mode;
-  readonly rootPitchClass: number;
-  readonly biome: Biome;
-  readonly instrumentSet: InstrumentSetName;
-  readonly roles: readonly Role[];
-}
-
-export type { Biome, Mode, Role, InstrumentSetName, SynthClass, EffectEntry, InstrumentSpec, Score };
+export type { Role, InstrumentSetName, SynthClass, EffectEntry, InstrumentSpec };
