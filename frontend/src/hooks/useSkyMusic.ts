@@ -29,8 +29,6 @@ const useSkyMusic = (muted: boolean): void => {
 
   useEffect((): (() => void) => {
     const score = generateScore(deriveSeed(seed, "music"));
-    // fresh scatter per visit, like the old live Math.random placement.
-    const visitSalt = Math.floor(Math.random() * 4294967296);
     let stopped = false;
     let timer = 0;
     let fade: Tone.Gain | null = null;
@@ -54,7 +52,7 @@ const useSkyMusic = (muted: boolean): void => {
             return;
           }
           startTime = Math.max(startTime, Tone.now() + 0.2);
-          startTime += scheduleChunk(score, index, visitSalt, baked, master.input, startTime);
+          startTime += scheduleChunk(score, index, baked, master.input, startTime);
           // queue the next chunk a second before this one runs out.
           timer = window.setTimeout((): void => queue(index + 1), (startTime - Tone.now() - 1) * 1000);
         };

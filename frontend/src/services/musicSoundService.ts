@@ -18,19 +18,18 @@ interface BiomeConfig {
   readonly reverbDecay: number;
   readonly reverbWet: number;
   readonly registerShift: number;
-  readonly required: readonly Role[];
-  readonly optional: readonly Role[];
+  readonly roles: readonly Role[];
   readonly density: Record<Role, number>;
 }
 
 /** the six biomes; density is events per bar per role. */
 const BIOMES: Record<Biome, BiomeConfig> = {
-  cavern: { tempo: 48, reverbDecay: 9, reverbWet: 0.65, registerShift: -1, required: ["drone", "pad"], optional: ["sparkle", "counter"], density: { drone: 0.15, pad: 0.4, sparkle: 0.8, lead: 0.3, counter: 0.3 } },
-  chamber: { tempo: 72, reverbDecay: 2.5, reverbWet: 0.3, registerShift: 0, required: ["pad", "sparkle", "lead"], optional: ["drone", "counter"], density: { drone: 0.25, pad: 0.8, sparkle: 1.6, lead: 0.8, counter: 0.6 } },
-  expanse: { tempo: 58, reverbDecay: 6, reverbWet: 0.5, registerShift: 0, required: ["drone", "pad", "lead"], optional: ["sparkle", "counter"], density: { drone: 0.2, pad: 0.6, sparkle: 1, lead: 0.5, counter: 0.4 } },
-  veil: { tempo: 44, reverbDecay: 12, reverbWet: 0.75, registerShift: 1, required: ["pad", "counter"], optional: ["sparkle"], density: { drone: 0.1, pad: 0.3, sparkle: 0.5, lead: 0.2, counter: 0.25 } },
-  scatter: { tempo: 84, reverbDecay: 4, reverbWet: 0.45, registerShift: 1, required: ["sparkle", "lead"], optional: ["pad", "counter"], density: { drone: 0.25, pad: 0.8, sparkle: 2.2, lead: 1.2, counter: 0.5 } },
-  undertow: { tempo: 52, reverbDecay: 7, reverbWet: 0.55, registerShift: -1, required: ["drone", "pad", "counter"], optional: ["lead"], density: { drone: 0.2, pad: 0.5, sparkle: 0.6, lead: 0.35, counter: 0.4 } },
+  cavern: { tempo: 48, reverbDecay: 9, reverbWet: 0.65, registerShift: -1, roles: ["drone", "pad", "sparkle", "counter"], density: { drone: 0.15, pad: 0.4, sparkle: 0.8, lead: 0.3, counter: 0.3 } },
+  chamber: { tempo: 72, reverbDecay: 2.5, reverbWet: 0.3, registerShift: 0, roles: ["pad", "sparkle", "lead", "drone", "counter"], density: { drone: 0.25, pad: 0.8, sparkle: 1.6, lead: 0.8, counter: 0.6 } },
+  expanse: { tempo: 58, reverbDecay: 6, reverbWet: 0.5, registerShift: 0, roles: ["drone", "pad", "lead", "sparkle", "counter"], density: { drone: 0.2, pad: 0.6, sparkle: 1, lead: 0.5, counter: 0.4 } },
+  veil: { tempo: 44, reverbDecay: 12, reverbWet: 0.75, registerShift: 1, roles: ["pad", "counter", "sparkle"], density: { drone: 0.1, pad: 0.3, sparkle: 0.5, lead: 0.2, counter: 0.25 } },
+  scatter: { tempo: 84, reverbDecay: 4, reverbWet: 0.45, registerShift: 1, roles: ["sparkle", "lead", "pad", "counter"], density: { drone: 0.25, pad: 0.8, sparkle: 2.2, lead: 1.2, counter: 0.5 } },
+  undertow: { tempo: 52, reverbDecay: 7, reverbWet: 0.55, registerShift: -1, roles: ["drone", "pad", "counter", "lead"], density: { drone: 0.2, pad: 0.5, sparkle: 0.6, lead: 0.35, counter: 0.4 } },
 };
 
 const morrowind: Record<Role, InstrumentSpec> = {
@@ -309,8 +308,6 @@ const INSTRUMENT_SETS: Record<InstrumentSetName, Record<Role, InstrumentSpec>> =
 };
 
 const BEATS_PER_BAR = 4;
-/** wander off the beat; identical start times stack into one transient. */
-const JITTER_SECONDS = 0.025;
 const TARGET_PEAK = 0.7;
 const TAIL_MARGIN_SECONDS = 2;
 const TAIL_FADE_SECONDS = 0.08;
@@ -433,5 +430,5 @@ const buildMasterChain = (gain: number): { input: Tone.Gain; fade: Tone.Gain; no
   return { input, fade, nodes: [limiter, highpass, fade, input] };
 };
 
-export { MODES, BIOMES, INSTRUMENT_SETS, BEATS_PER_BAR, JITTER_SECONDS, FADE_SECONDS, bakeScore, buildMasterChain };
+export { MODES, BIOMES, INSTRUMENT_SETS, BEATS_PER_BAR, FADE_SECONDS, bakeScore, buildMasterChain };
 export type { BakedScore };

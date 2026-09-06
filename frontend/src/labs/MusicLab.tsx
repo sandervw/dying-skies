@@ -50,9 +50,8 @@ const MusicLab = (): ReactElement => {
   const [biome, setBiome] = useState<Biome>("chamber");
   const [instrumentSet, setInstrumentSet] = useState<InstrumentSetName>("morrowind");
   const [rootPitchClass, setRootPitchClass] = useState<number>(0);
-  const [roles, setRoles] = useState<readonly Role[]>(BIOMES.chamber.required);
+  const [roles, setRoles] = useState<readonly Role[]>(BIOMES.chamber.roles);
   const [chunkIndex, setChunkIndex] = useState<number>(0);
-  const [visitSalt, setVisitSalt] = useState<number>(1);
   const [seedInput, setSeedInput] = useState<string>("1234");
   const [playing, setPlaying] = useState<boolean>(false);
   const [result, setResult] = useState<LabRender | null>(null);
@@ -68,8 +67,7 @@ const MusicLab = (): ReactElement => {
 
   // a biome change resets the arrangement to every role it allows.
   useEffect((): void => {
-    const config = BIOMES[biome];
-    setRoles([...config.required, ...config.optional]);
+    setRoles(BIOMES[biome].roles);
   }, [biome]);
 
   const toggleRole = (role: Role): void => {
@@ -85,7 +83,7 @@ const MusicLab = (): ReactElement => {
     }
     setPlaying(true);
     setFailure(null);
-    const score: Score = { seed: Number(seedInput) || 0, mode, rootPitchClass, biome, instrumentSet, roles };
+    const score: Score = { mode, rootPitchClass, biome, instrumentSet, roles };
     const startedAt = performance.now();
     try {
       await Tone.start();
@@ -93,7 +91,7 @@ const MusicLab = (): ReactElement => {
       stopOutput();
       output.current = buildMasterChain(baked.gain);
       output.current.fade.gain.value = 1;
-      const musicSeconds = scheduleChunk(score, chunkIndex, visitSalt, baked, output.current.input, Tone.now() + 0.2);
+      const musicSeconds = scheduleChunk(score, chunkIndex, baked, output.current.input, Tone.now() + 0.2);
       setResult({ bakeMilliseconds: Math.round(performance.now() - startedAt), musicSeconds, gain: baked.gain, voiceCount: baked.voices.length });
     } catch (error) {
       setFailure(error instanceof Error ? error.message : String(error));
@@ -125,7 +123,7 @@ const MusicLab = (): ReactElement => {
     setSoloing(true);
     setFailure(null);
     soloStop.current = false;
-    const score: Score = { seed: Number(seedInput) || 0, mode, rootPitchClass, biome, instrumentSet, roles: [soloRole] };
+    const score: Score = { mode, rootPitchClass, biome, instrumentSet, roles: [soloRole] };
     try {
       await Tone.start();
       const baked = await bakeScore(score);
@@ -133,7 +131,7 @@ const MusicLab = (): ReactElement => {
       output.current = buildMasterChain(baked.gain);
       output.current.fade.gain.value = 1;
       while (!soloStop.current) {
-        const musicSeconds = scheduleChunk(score, chunkIndex, visitSalt, baked, output.current.input, Tone.now() + 0.2);
+        const musicSeconds = scheduleChunk(score, chunkIndex, baked, output.current.input, Tone.now() + 0.2);
         await new Promise((resolve): void => { window.setTimeout(resolve, (musicSeconds + 1) * 1000); });
       }
     } catch (error) {
@@ -185,7 +183,7 @@ const MusicLab = (): ReactElement => {
               {role}
               <span style={{ color: "#777" }}>
                 {" "}
-                {config.required.includes(role) ? "required" : config.optional.includes(role) ? "optional" : "off-biome"}
+                {config.roles.includes(role) ? "in-biome" : "off-biome"}
               </span>
             </span>
           </label>
@@ -206,9 +204,6 @@ const MusicLab = (): ReactElement => {
         <div style={styles.buttonRow}>
           <button type="button" style={styles.button} disabled={playing || roles.length === 0} onClick={(): void => void play()}>
             {playing ? "Baking..." : "Play"}
-          </button>
-          <button type="button" style={styles.button} onClick={(): void => setVisitSalt((previous) => previous + 1)}>
-            Reshuffle
           </button>
         </div>
         <div style={styles.buttonRow}>
@@ -237,7 +232,7 @@ const MusicLab = (): ReactElement => {
         </div>
 
         <pre style={styles.code}>
-          {JSON.stringify({ mode, biome, instrumentSet, rootPitchClass, roles, chunkIndex, visitSalt }, null, 2)}
+          {JSON.stringify({ mode, biome, instrumentSet, rootPitchClass, roles, chunkIndex }, null, 2)}
         </pre>
       </aside>
 

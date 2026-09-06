@@ -38,9 +38,8 @@ interface InstrumentSpec {
   readonly effects: readonly EffectEntry[];
 }
 
-/** the seed's three picks plus root and sounding roles; constants follow. */
+/** the seed's three picks, plus fixed root and biome roles. */
 interface Score {
-  readonly seed: number;
   readonly mode: Mode;
   readonly rootPitchClass: number;
   readonly biome: Biome;
