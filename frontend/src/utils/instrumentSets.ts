@@ -3,7 +3,7 @@ import type { InstrumentSetName, InstrumentSpec, Role } from "../types/music";
 
 const morrowind: Record<Role, InstrumentSpec> = {
   drone: {
-    synth: Tone.Synth,
+    synth: Tone.MonoSynth,
     options: {
       oscillator: { type: "sawtooth" },
       filterEnvelope: { attack: 1.0, decay: 1.5, sustain: 0.8, release: 2.0, octaves: 0.5 },
@@ -57,7 +57,7 @@ const morrowind: Record<Role, InstrumentSpec> = {
 
 const kingsfield: Record<Role, InstrumentSpec> = {
   drone: {
-    synth: Tone.Synth,
+    synth: Tone.MonoSynth,
     options: {
       oscillator: { type: "sawtooth" },
       filterEnvelope: { attack: 0.8, decay: 1.0, sustain: 1.0, release: 2.0, octaves: 0.5 },
@@ -110,7 +110,7 @@ const kingsfield: Record<Role, InstrumentSpec> = {
 
 const majorasmask: Record<Role, InstrumentSpec> = {
   drone: {
-    synth: Tone.Synth,
+    synth: Tone.MonoSynth,
     options: {
       oscillator: { type: "sawtooth" },
       filterEnvelope: { attack: 0.8, decay: 1.5, sustain: 0.6, release: 2.0, octaves: 1.5 },
@@ -166,7 +166,7 @@ const majorasmask: Record<Role, InstrumentSpec> = {
 
 const deusex: Record<Role, InstrumentSpec> = {
   drone: {
-    synth: Tone.Synth,
+    synth: Tone.MonoSynth,
     options: {
       oscillator: { type: "fatsawtooth", count: 3, spread: 15 },
       filterEnvelope: { attack: 2.0, decay: 1.0, sustain: 0.7, release: 3.0, octaves: 0.8 },
@@ -224,7 +224,7 @@ const deusex: Record<Role, InstrumentSpec> = {
 
 const aom: Record<Role, InstrumentSpec> = {
   drone: {
-    synth: Tone.Synth,
+    synth: Tone.MonoSynth,
     options: {
       oscillator: { type: "sawtooth" },
       filterEnvelope: { attack: 0.2, decay: 0.2, sustain: 0.6, release: 0.3, octaves: 1.0 },
@@ -279,7 +279,7 @@ const aom: Record<Role, InstrumentSpec> = {
 
 const zoombinis: Record<Role, InstrumentSpec> = {
   drone: {
-    synth: Tone.Synth,
+    synth: Tone.MonoSynth,
     options: {
       oscillator: { type: "sawtooth" },
       filterEnvelope: { attack: 0.2, decay: 0.4, sustain: 0.2, release: 0.6, octaves: 1.5 },

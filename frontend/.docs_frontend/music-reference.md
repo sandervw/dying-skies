@@ -67,10 +67,6 @@ Events per bar, per biome, per role. Fixed values, no jitter.
 | aom         | world and ritual, kalimba, oud, formant choir, filtered floor     |
 | zoombinis   | bright and buoyant, music box, soft flute, chord pad, misty swell |
 
-## Blacklist
-
-`EXCLUDED_PAIRINGS` holds `[Biome, InstrumentSet]` pairs the seed may not pick. The array is empty by default.
-
 ## Global values
 
 - Root pitch class: 0 to 11, picked per seed.

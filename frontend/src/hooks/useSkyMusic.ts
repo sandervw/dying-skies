@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import * as Tone from "tone";
 import { INSTRUMENT_SETS } from "../utils/instrumentSets";
 import { createSeededRandom, deriveSeed } from "../services/randomService";
@@ -7,7 +7,6 @@ import { useSkySeed } from "./useSkySeed";
 
 const TEMPO = 56;
 const LOOP_BARS = 8;
-const FADE_SECONDS = 2;
 
 /** semitones above the root for each scale step. */
 const SCALE = [0, 3, 5, 7, 10, 12];
@@ -28,11 +27,12 @@ const pickInstrumentSet = (seed: Parameters<typeof deriveSeed>[0]): InstrumentSe
   SET_NAMES[Math.floor(createSeededRandom(deriveSeed(seed, "music"))() * SET_NAMES.length)];
 
 // synth, optional filter, effects, level; last node feeds the output.
-const buildVoice = (spec: InstrumentSpec, output: Tone.ToneAudioNode): Tone.ToneAudioNode[] => {
+const buildVoice = (spec: InstrumentSpec): Tone.ToneAudioNode[] => {
+  const nodes: Tone.ToneAudioNode[] = [];
   const synth = spec.polyphony === undefined
     ? new spec.synth(spec.options)
     : new Tone.PolySynth({ maxPolyphony: spec.polyphony, voice: spec.synth as never, options: spec.options as never });
-  const nodes: Tone.ToneAudioNode[] = [synth];
+  nodes.push(synth);
   if (spec.filter !== undefined) {
     nodes.push(new Tone.Filter(spec.filter));
   }
@@ -45,28 +45,28 @@ const buildVoice = (spec: InstrumentSpec, output: Tone.ToneAudioNode): Tone.Tone
   nodes.reduce((previous, node): Tone.ToneAudioNode => {
     previous.connect(node);
     return node;
-  }).connect(output);
+  }).toDestination();
   return nodes;
 };
 
 // loop the static score on one instrument set.
-const playInstrumentSet = (name: InstrumentSetName): { fade: Tone.Gain; stop: () => void; } => {
-  const limiter = new Tone.Limiter(-1).toDestination();
-  const fade = new Tone.Gain(0).connect(limiter);
-  const nodes: Tone.ToneAudioNode[] = [limiter, fade];
+const playInstrumentSet = (name: InstrumentSetName): { stop: () => void; } => {
+  const nodes: Tone.ToneAudioNode[] = [];
   const parts: Tone.Part[] = [];
 
   for (const role of Object.keys(SCORE) as Role[]) {
     const spec = INSTRUMENT_SETS[name][role];
-    const voice = buildVoice(spec, fade);
+    const voice = buildVoice(spec);
     const synth = voice[0];
     const seconds = (spec.hold * 60) / TEMPO;
     const part = new Tone.Part((time, step: number): void => {
-      const midi = (spec.register + 1) * 12 + SCALE[step];
       if (synth instanceof Tone.NoiseSynth) {
+        // for Pink Noise (noise = no pitch = no note argument); kingsfield/deusex/zommbinis counters
         synth.triggerAttackRelease(seconds, time);
       } else {
-        (synth as Tone.PolySynth).triggerAttackRelease(440 * Math.pow(2, (midi - 69) / 12), seconds, time);
+        // `register` gets the C key of a given register; `scale` adds semitones; converted to frequency
+        const note = Tone.Frequency(`C${spec.register}`).transpose(SCALE[step]).toFrequency();
+        (synth as Tone.PolySynth).triggerAttackRelease(note, seconds, time);
       }
     }, SCORE[role].map(([bar, beat, step]): [string, number] => [`${bar}:${beat}:0`, step]));
     part.loop = true;
@@ -77,37 +77,29 @@ const playInstrumentSet = (name: InstrumentSetName): { fade: Tone.Gain; stop: ()
   }
 
   const transport = Tone.getTransport();
+  // rest and start
   transport.stop();
   transport.position = 0;
   transport.bpm.value = TEMPO;
   transport.start();
 
-  // dispose past the fade; the ramp still needs the graph.
+  // tear down parts, nodes, and transport.
   const stop = (): void => {
-    fade.gain.rampTo(0, FADE_SECONDS);
-    window.setTimeout((): void => {
-      transport.stop();
-      for (const part of parts) {
-        part.dispose();
-      }
-      for (const node of nodes) {
-        node.dispose();
-      }
-    }, (FADE_SECONDS + 0.5) * 1000);
+    for (const part of parts) {
+      part.dispose();
+    }
+    for (const node of nodes) {
+      node.dispose();
+    }
+    transport.stop();
   };
-  return { fade, stop };
+
+  return { stop };
 };
 
 /** play the current sky's instrument set on a loop. */
 const useSkyMusic = (muted: boolean): void => {
   const { seed } = useSkySeed();
-  const mutedRef = useRef(muted);
-  const fadeRef = useRef<Tone.Gain | null>(null);
-
-  useEffect((): void => {
-    mutedRef.current = muted;
-    fadeRef.current?.gain.rampTo(muted ? 0 : 1, FADE_SECONDS);
-  }, [muted]);
 
   // the context stays suspended until a gesture; every click retries it.
   useEffect((): (() => void) => {
@@ -120,15 +112,14 @@ const useSkyMusic = (muted: boolean): void => {
     };
   }, []);
 
-  useEffect((): (() => void) => {
-    const { fade, stop } = playInstrumentSet(pickInstrumentSet(seed));
-    fadeRef.current = fade;
-    fade.gain.rampTo(mutedRef.current ? 0 : 1, FADE_SECONDS);
-    return (): void => {
-      fadeRef.current = null;
-      stop();
-    };
-  }, [seed]);
+  // the play effect; runs after render, or when `seed` or `muted` changes
+  useEffect((): (() => void) | undefined => {
+    if (muted) {
+      return undefined;
+    }
+    const { stop } = playInstrumentSet(pickInstrumentSet(seed));
+    return stop;
+  }, [seed, muted]);
 };
 
 export { useSkyMusic };
