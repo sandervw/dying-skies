@@ -1,4 +1,6 @@
-/** turns a seed into a score and scheduled notes; all sound lives in musicSoundService. */
+/**
+ * ANYTHING RELATED TO THE SCHEDULING/ORGANIZING OF THE MUSIC MUST GO IN THIS FILE. NO EXCEPTIONS.
+*/
 
 import * as Tone from "tone";
 import { createSeededRandom } from "./randomService";
@@ -11,7 +13,7 @@ import type { Biome, InstrumentSetName, Mode, Role, Score } from "../types/music
 const ROOT_PITCH_CLASS = 0;
 
 /** fixed phrase per role: beat offset, first degree, and step through the mode. */
-const ROLE_PATTERNS: Record<Role, { readonly phase: number; readonly start: number; readonly step: number }> = {
+const ROLE_PATTERNS: Record<Role, { readonly phase: number; readonly start: number; readonly step: number; }> = {
   drone: { phase: 0, start: 0, step: 0 },
   pad: { phase: 0.5, start: 0, step: 2 },
   sparkle: { phase: 0.25, start: 2, step: 3 },
@@ -41,7 +43,7 @@ const buildChunkEvents = (
   score: Score,
   chunkIndex: number,
   bars: number,
-): { timeSeconds: number; degreeIndex: number }[] => {
+): { timeSeconds: number; degreeIndex: number; }[] => {
   const config = BIOMES[score.biome];
   const pattern = ROLE_PATTERNS[role];
   const degreeCount = MODES[score.mode].length;

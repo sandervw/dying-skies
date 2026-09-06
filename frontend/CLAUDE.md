@@ -27,3 +27,6 @@ Vite + React single-page app; Canvas 2D visual layer. Standards and system conve
 
 ## Prose
 Soft-wrap paragraphs (one physical line each). No em-dashes.
+
+## Music
+Assume the user has ZERO MUSIC KNOWLEDGE; you must explain music in laymans terms.
