@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactElement } from "react";
 import * as Tone from "tone";
-import { bakeScore, generateScore, scheduleChunk } from "../services/musicEngineService";
-import { BIOMES, INSTRUMENT_SETS } from "../services/musicSoundService";
+import { generateScore, scheduleChunk } from "../services/musicEngineService";
+import { BIOMES, INSTRUMENT_SETS, bakeScore, buildMasterChain } from "../services/musicSoundService";
 import type { Biome, InstrumentSetName, Mode, Role, Score } from "../types/music";
 
 const MODES: readonly Mode[] = [
@@ -56,7 +56,14 @@ const MusicLab = (): ReactElement => {
   const [seedInput, setSeedInput] = useState<string>("1234");
   const [playing, setPlaying] = useState<boolean>(false);
   const [result, setResult] = useState<LabRender | null>(null);
-  const output = useRef<Tone.Gain | null>(null);
+  const output = useRef<ReturnType<typeof buildMasterChain> | null>(null);
+
+  const stopOutput = (): void => {
+    output.current?.nodes.forEach((node): void => {
+      node.dispose();
+    });
+    output.current = null;
+  };
   const [failure, setFailure] = useState<string | null>(null);
 
   // a biome change resets the arrangement to every role it allows.
@@ -83,9 +90,10 @@ const MusicLab = (): ReactElement => {
     try {
       await Tone.start();
       const baked = await bakeScore(score);
-      output.current?.dispose();
-      output.current = new Tone.Gain(baked.gain).toDestination();
-      const musicSeconds = scheduleChunk(score, chunkIndex, visitSalt, baked, output.current, Tone.now() + 0.2);
+      stopOutput();
+      output.current = buildMasterChain(baked.gain);
+      output.current.fade.gain.value = 1;
+      const musicSeconds = scheduleChunk(score, chunkIndex, visitSalt, baked, output.current.input, Tone.now() + 0.2);
       setResult({ bakeMilliseconds: Math.round(performance.now() - startedAt), musicSeconds, gain: baked.gain, voiceCount: baked.voices.length });
     } catch (error) {
       setFailure(error instanceof Error ? error.message : String(error));
@@ -104,6 +112,40 @@ const MusicLab = (): ReactElement => {
   };
 
   const config = BIOMES[biome];
+
+  // solo loop: one instrument's chunk, repeated, until stopped.
+  const [soloing, setSoloing] = useState<boolean>(false);
+  const [soloRole, setSoloRole] = useState<Role>("sparkle");
+  const soloStop = useRef<boolean>(false);
+
+  const playSolo = async (): Promise<void> => {
+    if (soloing) {
+      return;
+    }
+    setSoloing(true);
+    setFailure(null);
+    soloStop.current = false;
+    const score: Score = { seed: Number(seedInput) || 0, mode, rootPitchClass, biome, instrumentSet, roles: [soloRole] };
+    try {
+      await Tone.start();
+      const baked = await bakeScore(score);
+      stopOutput();
+      output.current = buildMasterChain(baked.gain);
+      output.current.fade.gain.value = 1;
+      while (!soloStop.current) {
+        const musicSeconds = scheduleChunk(score, chunkIndex, visitSalt, baked, output.current.input, Tone.now() + 0.2);
+        await new Promise((resolve): void => { window.setTimeout(resolve, (musicSeconds + 1) * 1000); });
+      }
+    } catch (error) {
+      setFailure(error instanceof Error ? error.message : String(error));
+    }
+    setSoloing(false);
+  };
+
+  const stopSolo = (): void => {
+    soloStop.current = true;
+    stopOutput();
+  };
 
   return (
     <div style={styles.page}>
@@ -173,8 +215,24 @@ const MusicLab = (): ReactElement => {
           <button type="button" style={styles.button} onClick={loadFromSeed}>
             Load from seed
           </button>
-          <button type="button" style={styles.button} onClick={(): void => void output.current?.dispose()}>
+          <button type="button" style={styles.button} onClick={stopOutput}>
             Stop
+          </button>
+        </div>
+
+        <h2 style={styles.section}>Solo loop</h2>
+        <label style={styles.label}>
+          <span>Instrument</span>
+          <select style={styles.select} value={soloRole} onChange={(event): void => setSoloRole(event.target.value as Role)}>
+            {ROLES.map((entry): ReactElement => <option key={entry} value={entry}>{entry}</option>)}
+          </select>
+        </label>
+        <div style={styles.buttonRow}>
+          <button type="button" style={styles.button} disabled={soloing} onClick={(): void => void playSolo()}>
+            {soloing ? "Looping..." : "Loop"}
+          </button>
+          <button type="button" style={styles.button} onClick={stopSolo}>
+            Stop loop
           </button>
         </div>
 
