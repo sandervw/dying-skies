@@ -42,13 +42,14 @@ const useSkyMusic = (muted: boolean): void => {
         if (stopped) {
           return;
         }
-        const compressor = new Tone.Compressor().toDestination();
-        const level = new Tone.Gain(baked.gain).connect(compressor);
-        const activeFade = new Tone.Gain(0).connect(level);
-        fade = activeFade;
-        chain = [compressor, level, activeFade];
-        fadeRef.current = activeFade;
-        activeFade.gain.rampTo(mutedRef.current ? 0 : 1, FADE_SECONDS);
+        const compressor = new Tone.Compressor({ threshold: -12, ratio: 4, attack: 0.05, release: 0.5 }).toDestination();
+        // sub-audible rumble only speakers choke on; nothing plays this low.
+        const highpass = new Tone.Filter({ type: "highpass", frequency: 35, rolloff: -24 }).connect(compressor);
+        fade = new Tone.Gain(0).connect(highpass);
+        const level = new Tone.Gain(baked.gain).connect(fade);
+        chain = [compressor, highpass, fade, level];
+        fadeRef.current = fade;
+        fade.gain.rampTo(mutedRef.current ? 0 : 1, FADE_SECONDS);
         let startTime = 0;
         const queue = (index: number): void => {
           // a suspended context freezes the clock; wait rather than stack chunks.
@@ -57,7 +58,7 @@ const useSkyMusic = (muted: boolean): void => {
             return;
           }
           startTime = Math.max(startTime, Tone.now() + 0.2);
-          startTime += scheduleChunk(score, index, visitSalt, baked, activeFade, startTime);
+          startTime += scheduleChunk(score, index, visitSalt, baked, level, startTime);
           // queue the next chunk a second before this one runs out.
           timer = window.setTimeout((): void => queue(index + 1), (startTime - Tone.now() - 1) * 1000);
         };
