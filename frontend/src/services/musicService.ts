@@ -130,6 +130,16 @@ const toWavUrl = (buffer: AudioBuffer, loopFrames: number): string => {
   return URL.createObjectURL(new Blob([view], { type: "audio/wav" }));
 };
 
+/** name the instrument set, mode, and biome a seed plays. */
+const describeSky = (seed: Seed): { set: InstrumentSetName; mode: string; biome: string } => {
+  // mirrors playSky's first three picks; keep this order.
+  const random = createSeededRandom(deriveSeed(seed, "music"));
+  const set = pick(random, SET_NAMES);
+  const biome = pick(random, BIOME_NAMES);
+  const mode = pick(random, MODE_NAMES);
+  return { set, mode, biome };
+};
+
 /** loop this sky's music; the returned call tears it down. */
 const playSky = (seed: Seed): (() => void) => {
   const random = createSeededRandom(deriveSeed(seed, "music"));
@@ -171,4 +181,4 @@ const playSky = (seed: Seed): (() => void) => {
   };
 };
 
-export { playSky };
+export { describeSky, playSky };
