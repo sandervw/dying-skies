@@ -32,8 +32,8 @@ const chainInto = (nodes: Tone.ToneAudioNode[], output: Tone.ToneAudioNode): voi
 // the shared final gate: space, then glue, then ceiling.
 const buildMaster = (): Tone.ToneAudioNode[] => {
   const nodes = [
-    new Tone.Gain(0.8),
-    new Tone.Filter({ type: "lowpass", frequency: 11000, rolloff: -12 }),
+    new Tone.Gain(0.5),
+    new Tone.Filter({ type: "lowpass", frequency: 7000, rolloff: -12 }),
     new Tone.Reverb({ decay: 6.0, preDelay: 0.04, wet: 0.35 }),
     new Tone.Compressor({ threshold: -20, ratio: 3, attack: 0.05, release: 0.3 }),
     new Tone.Limiter(-1),
@@ -75,41 +75,71 @@ const buildPart = (spec: InstrumentSpec, role: Role, synth: Tone.ToneAudioNode):
       (synth as Tone.PolySynth).triggerAttackRelease(note, seconds, time);
     }
   }, SCORE[role].map(([bar, beat, step]): [string, number] => [`${bar}:${beat}:0`, step]));
-  part.loop = true;
-  part.loopEnd = `${LOOP_BARS}m`;
   part.start(0);
   return part;
+};
+
+// wrap the reverb tail into the head, then encode wav.
+const toWavUrl = (buffer: AudioBuffer, loopFrames: number): string => {
+  const channels = buffer.numberOfChannels;
+  const view = new DataView(new ArrayBuffer(44 + loopFrames * channels * 2));
+  const writeText = (at: number, text: string): void => {
+    for (let index = 0; index < text.length; index++) view.setUint8(at + index, text.charCodeAt(index));
+  };
+  writeText(0, "RIFF");
+  view.setUint32(4, view.byteLength - 8, true);
+  writeText(8, "WAVEfmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, channels, true);
+  view.setUint32(24, buffer.sampleRate, true);
+  view.setUint32(28, buffer.sampleRate * channels * 2, true);
+  view.setUint16(32, channels * 2, true);
+  view.setUint16(34, 16, true);
+  writeText(36, "data");
+  view.setUint32(40, view.byteLength - 44, true);
+  let position = 44;
+  for (let frame = 0; frame < loopFrames; frame++) {
+    for (let channel = 0; channel < channels; channel++) {
+      const data = buffer.getChannelData(channel);
+      const tail = frame + loopFrames < buffer.length ? data[frame + loopFrames] : 0;
+      const sample = Math.max(-1, Math.min(1, data[frame] + tail));
+      view.setInt16(position, sample * 0x7fff, true);
+      position += 2;
+    }
+  }
+  return URL.createObjectURL(new Blob([view], { type: "audio/wav" }));
 };
 
 /** loop this sky's instrument set; the returned call tears it down. */
 const playSky = (seed: Seed): (() => void) => {
   const random = createSeededRandom(deriveSeed(seed, "music"));
   const set = INSTRUMENT_SETS[SET_NAMES[Math.floor(random() * SET_NAMES.length)]];
-  const master = buildMaster();
-  const nodes: Tone.ToneAudioNode[] = [...master];
-  const parts: Tone.Part[] = [];
+  const loopSeconds = (LOOP_BARS * 4 * 60) / TEMPO;
+  const audio = new Audio();
+  audio.loop = true;
+  let stopped = false;
 
-  for (const role of Object.keys(SCORE) as Role[]) {
-    const voice = buildVoice(set[role], master[0]);
-    parts.push(buildPart(set[role], role, voice[0]));
-    nodes.push(...voice);
-  }
-
-  const transport = Tone.getTransport();
-  // reset and start
-  transport.stop();
-  transport.position = 0;
-  transport.bpm.value = TEMPO;
-  transport.start();
+  // render loop plus tail offline for a seamless wrap
+  void Tone.Offline(({ transport }) => {
+    const master = buildMaster();
+    for (const role of Object.keys(SCORE) as Role[]) {
+      buildPart(set[role], role, buildVoice(set[role], master[0])[0]);
+    }
+    transport.bpm.value = TEMPO;
+    transport.start();
+    return (master.find((node) => node instanceof Tone.Reverb) as Tone.Reverb).ready;
+  }, loopSeconds + 6).then((buffer): void => {
+    if (stopped) return;
+    const rendered = buffer.get() as AudioBuffer;
+    audio.src = toWavUrl(rendered, Math.round(loopSeconds * rendered.sampleRate));
+    void audio.play();
+  });
 
   return (): void => {
-    for (const part of parts) {
-      part.dispose();
-    }
-    for (const node of nodes) {
-      node.dispose();
-    }
-    transport.stop();
+    stopped = true;
+    audio.pause();
+    if (audio.src) URL.revokeObjectURL(audio.src);
   };
 };
 
