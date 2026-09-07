@@ -14,6 +14,7 @@ Procedurally-generated "skies" as falling stars on a black field. Click a fallin
 - Comments stay under 12 words.
 - Every exported function or object used outside its file carries a javadoc-style comment where the language allows.
 - Full descriptive names; the only short forms are `id`, `url`, `api`.
+- **NEVER, EVER, EVER, EVER, EVER ADD FEATURES, FUNCTIONS, METHODS, OR FILES, WITHOUT EXPLICIT PERMISSION**
 
 **Config**
 - Secrets live in each piece's `.env`, never committed. A tracked `.env.sample` lists the keys with empty values.

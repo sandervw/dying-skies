@@ -19,7 +19,7 @@ interface InstrumentSpec {
   readonly synth: SynthClass;
   readonly options: object;
   readonly polyphony?: number;
-  readonly register: number;
+  readonly register?: number;
   readonly hold: number;
   readonly gain: number;
   readonly filter?: Partial<Tone.FilterOptions>;

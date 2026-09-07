@@ -215,7 +215,7 @@ const deusex: Record<Role, InstrumentSpec> = {
       noise: { type: "pink" },
       envelope: { attack: 4.0, decay: 2.5, sustain: 0.6, release: 5.0 },
     },
-    register: 5, hold: 8, gain: 0.3,
+    hold: 8, gain: 0.3,
     filter: { type: "bandpass", frequency: 3200, rolloff: -12 },
     effects: [
       [Tone.StereoWidener, { width: 0.9, wet: 1.0 }],
@@ -328,7 +328,7 @@ const aom: Record<Role, InstrumentSpec> = {
     synth: Tone.MonoSynth,
     options: {
       oscillator: { type: "sawtooth" },
-      filterEnvelope: { attack: 0.1, decay: 0.4, sustain: 0.7, release: 0.6, octaves: 1.5 },
+      filterEnvelope: { attack: 0.1, decay: 0.4, sustain: 0.7, release: 0.6, baseFrequency: 700, octaves: 1.5 },
       envelope: { attack: 0.08, decay: 0.3, sustain: 0.85, release: 0.6 },
       portamento: 0.06,
     },
@@ -369,14 +369,18 @@ const zoombinis: Record<Role, InstrumentSpec> = {
     effects: [[Tone.Distortion, { distortion: 0.1, wet: 0.15 }]],
   },
   pad: {
-    synth: Tone.Synth, polyphony: 6,
+    synth: Tone.MonoSynth, polyphony: 6,
     options: {
       oscillator: { type: "fatsawtooth", count: 3, spread: 15 },
       envelope: { attack: 0.8, decay: 1.5, sustain: 0.75, release: 2.2 },
+      filter: { type: "lowpass", rolloff: -24 },
+      filterEnvelope: { attack: 0.8, decay: 1.2, sustain: 0.6, release: 2.0, baseFrequency: 1100, octaves: 1.2 },
     },
     register: 3, hold: 6, gain: 0.5,
-    filter: { type: "lowpass", frequency: 1100, rolloff: -24 },
-    effects: [[Tone.Chorus, { frequency: 0.8, delayTime: 4.0, depth: 0.7, wet: 0.4 }]],
+    effects: [
+      [Tone.Vibrato, { frequency: 0.5, depth: 0.01 }],
+      [Tone.Chorus, { frequency: 0.8, delayTime: 4.0, depth: 0.7, wet: 0.4 }],
+    ],
   },
   sparkle: {
     synth: Tone.FMSynth, polyphony: 4,
@@ -392,7 +396,7 @@ const zoombinis: Record<Role, InstrumentSpec> = {
     synth: Tone.MonoSynth,
     options: {
       oscillator: { type: "sine" },
-      filterEnvelope: { attack: 0.08, decay: 0.2, sustain: 0.7, release: 0.5, octaves: 1.0 },
+      filterEnvelope: { attack: 0.08, decay: 0.2, sustain: 0.7, release: 0.5, baseFrequency: 1000, octaves: 1.0 },
       envelope: { attack: 0.08, decay: 0.3, sustain: 0.75, release: 0.6 },
       portamento: 0.06,
     },
@@ -409,7 +413,7 @@ const zoombinis: Record<Role, InstrumentSpec> = {
       noise: { type: "pink" },
       envelope: { attack: 2.2, decay: 3.0, sustain: 0.3, release: 3.5 },
     },
-    register: 2, hold: 8, gain: 0.25,
+    hold: 8, gain: 0.25,
     filter: { type: "bandpass", frequency: 2200, rolloff: -12 },
     effects: [[Tone.AutoPanner, { frequency: 0.15, depth: 0.8, wet: 1.0 }]],
   },
