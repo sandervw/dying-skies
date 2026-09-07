@@ -27,9 +27,10 @@ const chainInto = (nodes: Tone.ToneAudioNode[], output: Tone.ToneAudioNode): voi
   }).connect(output);
 };
 
-// the shared final gate: space, then glue, then ceiling.
+// shared final gate: block subsonic, space, glue, ceiling.
 const buildMaster = (biome: Biome): Tone.ToneAudioNode[] => {
   const nodes = [
+    new Tone.Filter({ type: "highpass", frequency: 30, rolloff: -12 }),
     new Tone.Gain(0.5),
     new Tone.Filter({ type: "lowpass", frequency: 7000, rolloff: -12 }),
     new Tone.Reverb({ decay: biome.reverbDecay, preDelay: 0.04, wet: biome.reverbWet }),
@@ -98,7 +99,7 @@ const buildPart = (
   part.start(0);
 };
 
-// wrap the reverb tail into the head, then encode wav.
+// wrap tail into head, crossfade the seam, then encode wav.
 const toWavUrl = (buffer: AudioBuffer, loopFrames: number): string => {
   const channels = buffer.numberOfChannels;
   const view = new DataView(new ArrayBuffer(44 + loopFrames * channels * 2));
@@ -117,13 +118,24 @@ const toWavUrl = (buffer: AudioBuffer, loopFrames: number): string => {
   view.setUint16(34, 16, true);
   writeText(36, "data");
   view.setUint32(40, view.byteLength - 44, true);
+  const at = (data: Float32Array, index: number): number => (index < buffer.length ? data[index] : 0);
+  const fade = Math.round(buffer.sampleRate * 0.008);
   let position = 44;
   for (let frame = 0; frame < loopFrames; frame++) {
     for (let channel = 0; channel < channels; channel++) {
       const data = buffer.getChannelData(channel);
-      const tail = frame + loopFrames < buffer.length ? data[frame + loopFrames] : 0;
-      const sample = Math.max(-1, Math.min(1, data[frame] + tail));
-      view.setInt16(position, sample * 0x7fff, true);
+      let mixed = data[frame] + at(data, frame + loopFrames);
+      if (frame < fade) {
+        // blend the loop's own continuation over the seam
+        const weight = 0.5 - 0.5 * Math.cos((Math.PI * frame) / fade);
+        const next = at(data, frame + loopFrames) + at(data, frame + 2 * loopFrames);
+        mixed = mixed * weight + next * (1 - weight);
+      }
+      // soft ceiling, then TPDF dither before 16-bit
+      const shaped = Math.tanh(mixed);
+      const dither = Math.random() + Math.random() - 1;
+      const value = Math.round(shaped * 0x7fff + dither);
+      view.setInt16(position, Math.max(-0x8000, Math.min(0x7fff, value)), true);
       position += 2;
     }
   }
