@@ -18,18 +18,6 @@ Semitone offsets from the root. Five notes each, six for whole-tone.
 | lydian-pentatonic | `[0,2,4,6,11]`   | floating, ethereal |
 | whole-tone        | `[0,2,4,6,8,10]` | weightless, hazy   |
 
-## Roles
-
-Five slots an instrument set fills. Every set defines all five.
-
-| Role    | Register    | Function                    |
-| ------- | ----------- | --------------------------- |
-| drone   | low         | the anchor                  |
-| pad     | mid         | the harmonic bed            |
-| sparkle | high        | bells and plucks            |
-| lead    | mid to high | a single singing voice      |
-| counter | low to mid  | a second texture or air bed |
-
 ## Biomes
 
 Space and arrangement. Each biome fixes tempo, the shared reverb, register shift, and which roles play. Required roles always sound; the seed picks a random subset of the optional roles, so layer overlap varies per sky.
@@ -67,8 +55,6 @@ Events per bar, per biome, per role. Fixed values, no jitter.
 | aom         | world and ritual, kalimba, oud, formant choir, filtered floor     |
 | zoombinis   | bright and buoyant, music box, soft flute, chord pad, misty swell |
 
-## Global values
+## Score
 
-- Root pitch class: 0 to 11, picked per seed.
-- Chunks: about thirty seconds of music each, plus a computed tail.
-- Master gain: one per score, from overlap-weighted voice peaks, into a compressor at -12 dBFS, 4:1.
+Purely randomly generated. Not seed-derived; see only picks mode+biome+instrument-set.

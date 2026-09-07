@@ -1,25 +1,23 @@
 import * as Tone from "tone";
 import { INSTRUMENT_SETS } from "../utils/instrumentSets";
+import { MODES } from "../utils/modes";
+import { BIOMES, type Biome } from "../utils/biomes";
 import { createSeededRandom, deriveSeed } from "./randomService";
 import type { Seed } from "./randomService";
-import type { InstrumentSetName, InstrumentSpec, Role } from "../types/music";
+import type { InstrumentSetName, InstrumentSpec } from "../types/music";
 
-const TEMPO = 56;
 const LOOP_BARS = 8;
-
-/** semitones above the root for each scale step. */
-const SCALE = [0, 3, 5, 7, 10, 12];
-
-/** the static score: bar, beat, and scale step per role. */
-const SCORE: Record<Role, readonly (readonly [number, number, number])[]> = {
-  drone: [[0, 0, 0], [4, 0, 0]],
-  pad: [[0, 0, 2], [2, 0, 4], [4, 0, 1], [6, 0, 3]],
-  sparkle: [[0, 2, 3], [1, 0, 4], [2, 2, 5], [3, 0, 2], [4, 2, 4], [5, 0, 3], [6, 2, 5], [7, 0, 1]],
-  lead: [[1, 0, 2], [3, 2, 4], [5, 0, 1], [7, 0, 3]],
-  counter: [[2, 1, 0], [6, 1, 2]],
-};
+const MAX_DENSITY = 1.5; // events per bar; caps loudness and overlap
+const MIN_REGISTER = 1; // no subsonic rumble
+const MAX_REGISTER = 6; // no piercing highs
 
 const SET_NAMES = Object.keys(INSTRUMENT_SETS) as InstrumentSetName[];
+const MODE_NAMES = Object.keys(MODES);
+const BIOME_NAMES = Object.keys(BIOMES);
+
+// one random item from a list
+const pick = <T>(random: () => number, items: readonly T[]): T =>
+  items[Math.floor(random() * items.length)];
 
 // wire nodes in order; the last one feeds the output.
 const chainInto = (nodes: Tone.ToneAudioNode[], output: Tone.ToneAudioNode): void => {
@@ -30,11 +28,11 @@ const chainInto = (nodes: Tone.ToneAudioNode[], output: Tone.ToneAudioNode): voi
 };
 
 // the shared final gate: space, then glue, then ceiling.
-const buildMaster = (): Tone.ToneAudioNode[] => {
+const buildMaster = (biome: Biome): Tone.ToneAudioNode[] => {
   const nodes = [
     new Tone.Gain(0.5),
     new Tone.Filter({ type: "lowpass", frequency: 7000, rolloff: -12 }),
-    new Tone.Reverb({ decay: 6.0, preDelay: 0.04, wet: 0.35 }),
+    new Tone.Reverb({ decay: biome.reverbDecay, preDelay: 0.04, wet: biome.reverbWet }),
     new Tone.Compressor({ threshold: -20, ratio: 3, attack: 0.05, release: 0.3 }),
     new Tone.Limiter(-1),
   ];
@@ -62,21 +60,42 @@ const buildVoice = (spec: InstrumentSpec, master: Tone.ToneAudioNode): Tone.Tone
   return nodes;
 };
 
-// one looping part per role, scored against the set's voices.
-const buildPart = (spec: InstrumentSpec, role: Role, synth: Tone.ToneAudioNode): Tone.Part => {
-  const seconds = (spec.hold * 60) / TEMPO;
+// random events for one role: [bar, beat, step]. Not seed-derived.
+const buildScore = (density: number, steps: number): [number, number, number][] => {
+  const count = Math.min(Math.round(Math.min(density, MAX_DENSITY) * LOOP_BARS), LOOP_BARS * 4);
+  const seen = new Set<string>();
+  const events: [number, number, number][] = [];
+  while (events.length < count) {
+    const bar = Math.floor(Math.random() * LOOP_BARS);
+    const beat = Math.floor(Math.random() * 4);
+    const slot = `${bar}:${beat}`;
+    if (seen.has(slot)) continue; // one note per slot: no voice-steal clicks
+    seen.add(slot);
+    events.push([bar, beat, Math.floor(Math.random() * steps)]);
+  }
+  return events;
+};
+
+// one looping part per role; steps wrap up octaves.
+const buildPart = (
+  spec: InstrumentSpec,
+  synth: Tone.ToneAudioNode,
+  events: readonly [number, number, number][],
+  offsets: readonly number[],
+  register: number,
+  tempo: number,
+): void => {
+  const seconds = (spec.hold * 60) / tempo;
   const part = new Tone.Part((time, step: number): void => {
     if (synth instanceof Tone.NoiseSynth) {
-      // pink noise has no pitch, so no note argument
-      synth.triggerAttackRelease(seconds, time);
+      synth.triggerAttackRelease(seconds, time); // pink noise has no pitch
     } else {
-      // the register's C, raised by the scale step
-      const note = Tone.Frequency(`C${spec.register}`).transpose(SCALE[step]).toFrequency();
+      const semitone = offsets[step % offsets.length] + 12 * Math.floor(step / offsets.length);
+      const note = Tone.Frequency(`C${register}`).transpose(semitone).toFrequency();
       (synth as Tone.PolySynth).triggerAttackRelease(note, seconds, time);
     }
-  }, SCORE[role].map(([bar, beat, step]): [string, number] => [`${bar}:${beat}:0`, step]));
+  }, events.map(([bar, beat, step]): [string, number] => [`${bar}:${beat}:0`, step]));
   part.start(0);
-  return part;
 };
 
 // wrap the reverb tail into the head, then encode wav.
@@ -111,22 +130,31 @@ const toWavUrl = (buffer: AudioBuffer, loopFrames: number): string => {
   return URL.createObjectURL(new Blob([view], { type: "audio/wav" }));
 };
 
-/** loop this sky's instrument set; the returned call tears it down. */
+/** loop this sky's music; the returned call tears it down. */
 const playSky = (seed: Seed): (() => void) => {
   const random = createSeededRandom(deriveSeed(seed, "music"));
-  const set = INSTRUMENT_SETS[SET_NAMES[Math.floor(random() * SET_NAMES.length)]];
-  const loopSeconds = (LOOP_BARS * 4 * 60) / TEMPO;
+  const set = INSTRUMENT_SETS[pick(random, SET_NAMES)];
+  const biome = BIOMES[pick(random, BIOME_NAMES)];
+  const offsets = MODES[pick(random, MODE_NAMES)];
+  // required roles always sound; optional roles join at random
+  const roles = [...biome.required, ...biome.optional.filter(() => random() < 0.5)];
+
+  const loopSeconds = (LOOP_BARS * 4 * 60) / biome.tempo;
   const audio = new Audio();
   audio.loop = true;
   let stopped = false;
 
   // render loop plus tail offline for a seamless wrap
   void Tone.Offline(({ transport }) => {
-    const master = buildMaster();
-    for (const role of Object.keys(SCORE) as Role[]) {
-      buildPart(set[role], role, buildVoice(set[role], master[0])[0]);
+    const master = buildMaster(biome);
+    for (const role of roles) {
+      const spec = set[role];
+      const register = Math.min(MAX_REGISTER, Math.max(MIN_REGISTER, (spec.register ?? 3) + biome.registerShift));
+      const events = buildScore(biome.density[role], offsets.length + 1);
+      const synth = buildVoice(spec, master[0])[0];
+      buildPart(spec, synth, events, offsets, register, biome.tempo);
     }
-    transport.bpm.value = TEMPO;
+    transport.bpm.value = biome.tempo;
     transport.start();
     return (master.find((node) => node instanceof Tone.Reverb) as Tone.Reverb).ready;
   }, loopSeconds + 6).then((buffer): void => {
