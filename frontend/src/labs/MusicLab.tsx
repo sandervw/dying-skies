@@ -97,6 +97,7 @@ const buildVoice = (spec: InstrumentSpec, master: Tone.ToneAudioNode): Tone.Tone
     ? new spec.synth(spec.options)
     : new Tone.PolySynth({ maxPolyphony: spec.polyphony, voice: spec.synth as never, options: spec.options as never });
   nodes.push(synth);
+  nodes.push(new Tone.Filter({ type: "highpass", frequency: 40, rolloff: -12 })); // sanitize raw source: block sub/DC pops
   if (spec.filter !== undefined) {
     nodes.push(new Tone.Filter(spec.filter));
   }
@@ -201,7 +202,7 @@ const startPlayback = (
 
   // halve then tanh: smooth ceiling, then analyser tap
   const headroom = context.createGain();
-  headroom.gain.value = 0.25;
+  headroom.gain.value = 0.18;
   const shaper = context.createWaveShaper();
   const curve = new Float32Array(1024);
   for (let index = 0; index < curve.length; index++) {
