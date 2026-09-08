@@ -2,7 +2,6 @@ import { useState } from "react";
 import type { ReactElement } from "react";
 import { Routes, Route } from "react-router-dom";
 import { Sky } from "./components/Sky";
-import { ButtonBox } from "./components/ButtonBox";
 import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { GalleryView } from "./components/GalleryView";
@@ -20,14 +19,13 @@ const App = (): ReactElement => {
         <Route path="/gallery" element={<GalleryView />} />
         <Route path="*" element={<Sky muted={muted} />} />
       </Routes>
-      <ButtonBox
-        toggleImmersion={toggleImmersion}
-        setOpen={setOpen}
-        muted={muted}
-        toggleMusic={() => setMuted((previous) => !previous)}
-      />
       <div className="ui">
-        <Header />
+        <Header
+          toggleImmersion={toggleImmersion}
+          setOpen={setOpen}
+          muted={muted}
+          toggleMusic={() => setMuted((previous) => !previous)}
+        />
         <Footer />
       </div>
       {open ? <AuthOverlay onClose={() => setOpen(false)} /> : null}

@@ -1,5 +1,7 @@
 /* site theme + in-use sparse foundations (single stylesheet) */
 
+@import url("https://fonts.googleapis.com/css2?family=DotGothic16&family=Silkscreen&display=swap");
+
 /* ### The Laws of Sparse CSS
 *By Sander Vanwilligen*
 1. There are no more than 5 of any variable type. `No Exceptions.`
@@ -21,7 +23,7 @@
 *,
 *::before,
 *::after {
-  font-family: "ia-writer-quattro-s", arial, sans-serif;
+  font-family: "DotGothic16", sans-serif;
   color: var(--color-text-primary);
   text-decoration: none;
   margin: 0;
@@ -204,7 +206,7 @@ svg:hover {
 
 .header {
   position: fixed;
-  top: var(--xlarge);
+  top: var(--small);
   left: 0;
   width: var(--percent-100);
   z-index: var(--z-overlay);
@@ -227,6 +229,7 @@ svg:hover {
 }
 
 .title {
+  font-family: "Silkscreen", monospace;
   letter-spacing: var(--xsmall);
 }
 
@@ -237,11 +240,6 @@ svg:hover {
 }
 
 .controls {
-  position: fixed;
-  top: var(--small);
-  left: 0;
-  width: var(--percent-100);
-  z-index: var(--z-nav);
   display: flex;
   justify-content: center;
   gap: var(--small);
