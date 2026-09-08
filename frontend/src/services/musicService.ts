@@ -99,49 +99,6 @@ const buildPart = (
   part.start(0);
 };
 
-// wrap tail into head, crossfade the seam, then encode wav.
-const toWavUrl = (buffer: AudioBuffer, loopFrames: number): string => {
-  const channels = buffer.numberOfChannels;
-  const view = new DataView(new ArrayBuffer(44 + loopFrames * channels * 2));
-  const writeText = (at: number, text: string): void => {
-    for (let index = 0; index < text.length; index++) view.setUint8(at + index, text.charCodeAt(index));
-  };
-  writeText(0, "RIFF");
-  view.setUint32(4, view.byteLength - 8, true);
-  writeText(8, "WAVEfmt ");
-  view.setUint32(16, 16, true);
-  view.setUint16(20, 1, true);
-  view.setUint16(22, channels, true);
-  view.setUint32(24, buffer.sampleRate, true);
-  view.setUint32(28, buffer.sampleRate * channels * 2, true);
-  view.setUint16(32, channels * 2, true);
-  view.setUint16(34, 16, true);
-  writeText(36, "data");
-  view.setUint32(40, view.byteLength - 44, true);
-  const at = (data: Float32Array, index: number): number => (index < buffer.length ? data[index] : 0);
-  const fade = Math.round(buffer.sampleRate * 0.04);
-  let position = 44;
-  for (let frame = 0; frame < loopFrames; frame++) {
-    for (let channel = 0; channel < channels; channel++) {
-      const data = buffer.getChannelData(channel);
-      let mixed = data[frame] + at(data, frame + loopFrames);
-      if (frame < fade) {
-        // blend the loop's own continuation over the seam
-        const weight = 0.5 - 0.5 * Math.cos((Math.PI * frame) / fade);
-        const next = at(data, frame + loopFrames) + at(data, frame + 2 * loopFrames);
-        mixed = mixed * weight + next * (1 - weight);
-      }
-      // soft ceiling, then TPDF dither before 16-bit
-      const shaped = Math.tanh(mixed);
-      const dither = Math.random() + Math.random() - 1;
-      const value = Math.round(shaped * 0x7fff + dither);
-      view.setInt16(position, Math.max(-0x8000, Math.min(0x7fff, value)), true);
-      position += 2;
-    }
-  }
-  return URL.createObjectURL(new Blob([view], { type: "audio/wav" }));
-};
-
 /** name the instrument set, mode, and biome a seed plays. */
 const describeSky = (seed: Seed): { set: InstrumentSetName; mode: string; biome: string } => {
   // mirrors playSky's first three picks; keep this order.
@@ -152,7 +109,7 @@ const describeSky = (seed: Seed): { set: InstrumentSetName; mode: string; biome:
   return { set, mode, biome };
 };
 
-/** loop this sky's music; the returned call tears it down. */
+/** play this sky as endless fresh chunks; the returned call stops it. */
 const playSky = (seed: Seed): (() => void) => {
   const random = createSeededRandom(deriveSeed(seed, "music"));
   const set = INSTRUMENT_SETS[pick(random, SET_NAMES)];
@@ -160,36 +117,72 @@ const playSky = (seed: Seed): (() => void) => {
   const offsets = MODES[pick(random, MODE_NAMES)];
   // required roles always sound; optional roles join at random
   const roles = [...biome.required, ...biome.optional.filter(() => random() < 0.5)];
-
   const loopSeconds = (LOOP_BARS * 4 * 60) / biome.tempo;
-  const audio = new Audio();
-  audio.loop = true;
-  let stopped = false;
 
-  // render loop plus tail offline for a seamless wrap
-  void Tone.Offline(({ transport }) => {
-    const master = buildMaster(biome);
-    for (const role of roles) {
-      const spec = set[role];
-      const register = Math.min(MAX_REGISTER, Math.max(MIN_REGISTER, (spec.register ?? 3) + biome.registerShift));
-      const events = buildScore(biome.density[role], offsets.length + 1);
-      const synth = buildVoice(spec, master[0])[0];
-      buildPart(spec, synth, events, offsets, register, biome.tempo);
+  // halve then tanh: smooth ceiling on any summed level
+  const context = Tone.getContext().rawContext as unknown as AudioContext;
+  const headroom = context.createGain();
+  headroom.gain.value = 0.25;
+  const shaper = context.createWaveShaper();
+  const curve = new Float32Array(1024);
+  for (let index = 0; index < curve.length; index++) {
+    curve[index] = Math.tanh((index / (curve.length - 1)) * 8 - 4);
+  }
+  shaper.curve = curve;
+  headroom.connect(shaper);
+  shaper.connect(context.destination);
+
+  let stopped = false;
+  let filling = false;
+  let nextTime = context.currentTime + 0.2;
+  const active = new Set<AudioBufferSourceNode>();
+
+  // render one loop plus tail offline with a fresh random score
+  const renderChunk = (): Promise<AudioBuffer> =>
+    Tone.Offline(({ transport }) => {
+      const master = buildMaster(biome);
+      for (const role of roles) {
+        const spec = set[role];
+        const register = Math.min(MAX_REGISTER, Math.max(MIN_REGISTER, (spec.register ?? 3) + biome.registerShift));
+        const events = buildScore(biome.density[role], offsets.length + 1);
+        const synth = buildVoice(spec, master[0])[0];
+        buildPart(spec, synth, events, offsets, register, biome.tempo);
+      }
+      transport.bpm.value = biome.tempo;
+      transport.start();
+      return (master.find((node) => node instanceof Tone.Reverb) as Tone.Reverb).ready;
+    }, loopSeconds + 6).then((buffer): AudioBuffer => buffer.get() as AudioBuffer);
+
+  // keep one chunk queued ahead; tails overlap for a seamless seam
+  const fill = async (): Promise<void> => {
+    if (filling) return;
+    filling = true;
+    while (!stopped && nextTime < context.currentTime + loopSeconds) {
+      const buffer = await renderChunk();
+      if (stopped) break;
+      const source = context.createBufferSource();
+      source.buffer = buffer;
+      source.connect(headroom);
+      if (nextTime < context.currentTime) nextTime = context.currentTime + 0.05;
+      source.start(nextTime);
+      nextTime += loopSeconds;
+      active.add(source);
+      source.onended = (): void => { active.delete(source); };
     }
-    transport.bpm.value = biome.tempo;
-    transport.start();
-    return (master.find((node) => node instanceof Tone.Reverb) as Tone.Reverb).ready;
-  }, loopSeconds + 6).then((buffer): void => {
-    if (stopped) return;
-    const rendered = buffer.get() as AudioBuffer;
-    audio.src = toWavUrl(rendered, Math.round(loopSeconds * rendered.sampleRate));
-    void audio.play();
-  });
+    filling = false;
+  };
+
+  const timer = setInterval((): void => { void fill(); }, 500);
+  void fill();
 
   return (): void => {
     stopped = true;
-    audio.pause();
-    if (audio.src) URL.revokeObjectURL(audio.src);
+    clearInterval(timer);
+    for (const source of active) {
+      try { source.stop(); } catch { /* already ended */ }
+    }
+    headroom.disconnect();
+    shaper.disconnect();
   };
 };
 
