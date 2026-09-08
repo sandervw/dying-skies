@@ -20,16 +20,16 @@ Semitone offsets from the root. Five notes each, six for whole-tone.
 
 ## Biomes
 
-Space and arrangement. Each biome fixes tempo, the shared reverb, register shift, and which roles play. Required roles always sound; the seed picks a random subset of the optional roles, so layer overlap varies per sky.
+Space and arrangement. Each biome fixes tempo, the shared reverb, register shift, and which roles play.
 
-| Biome    | Tempo | Reverb decay | Reverb wet | Register shift | Required            | Optional         |
-| -------- | ----- | ------------ | ---------- | -------------- | ------------------- | ---------------- |
-| cavern   | 48    | 9.0s         | 0.65       | -1             | drone, pad          | sparkle, counter |
-| chamber  | 72    | 2.5s         | 0.30       | 0              | pad, sparkle, lead  | drone, counter   |
-| expanse  | 58    | 6.0s         | 0.50       | 0              | drone, pad, lead    | sparkle, counter |
-| veil     | 44    | 12.0s        | 0.75       | +1             | pad, counter        | sparkle          |
-| scatter  | 84    | 4.0s         | 0.45       | +1             | sparkle, lead       | pad, counter     |
-| undertow | 52    | 7.0s         | 0.55       | -1             | drone, pad, counter | lead             |
+| Biome    | Tempo | Reverb decay | Reverb wet | Register shift | Instruments                        |
+| -------- | ----- | ------------ | ---------- | -------------- | ---------------------------------- |
+| cavern   | 48    | 9.0s         | 0.65       | -1             | drone, pad, sparkle, counter       |
+| chamber  | 72    | 2.5s         | 0.30       | 0              | drone, pad, sparkle, lead          |
+| expanse  | 58    | 6.0s         | 0.50       | 0              | drone, pad, sparkle, lead, counter |
+| veil     | 44    | 12.0s        | 0.75       | +1             | pad, sparkle, counter              |
+| scatter  | 84    | 4.0s         | 0.45       | +1             | pad, sparkle, lead, counter        |
+| undertow | 52    | 7.0s         | 0.55       | -1             | drone, pad, lead, counter          |
 
 ## Density
 

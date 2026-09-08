@@ -279,10 +279,7 @@ const buildPlan = (
   const set = INSTRUMENT_SETS[setName];
   const biome = BIOMES[biomeName];
   const offsets = MODES[modeName];
-  const roles = [
-    ...biome.required,
-    ...biome.optional.filter(() => Math.random() < 0.5),
-  ];
+  const roles = [...biome.instruments];
   const tempo = biome.tempo;
   const secPerBeat = 60 / tempo;
   const loopSeconds = (LOOP_BARS * BEATS_PER_BAR * 60) / tempo;

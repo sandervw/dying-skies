@@ -136,8 +136,7 @@ const playSky = (seed: Seed): (() => void) => {
   const set = INSTRUMENT_SETS[pick(random, SET_NAMES)];
   const biome = BIOMES[pick(random, BIOME_NAMES)];
   const offsets = MODES[pick(random, MODE_NAMES)];
-  // required roles always sound; optional roles join at random
-  const roles = [...biome.required, ...biome.optional.filter(() => random() < 0.5)];
+  const roles = [...biome.instruments];
   const loopSeconds = (LOOP_BARS * 4 * 60) / biome.tempo;
 
   // halve then tanh: smooth ceiling on any summed level
