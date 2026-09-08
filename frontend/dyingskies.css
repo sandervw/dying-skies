@@ -1,6 +1,6 @@
 /* site theme + in-use sparse foundations (single stylesheet) */
 
-@import url("https://fonts.googleapis.com/css2?family=DotGothic16&family=Silkscreen&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Silkscreen&display=swap");
 
 /* ### The Laws of Sparse CSS
 *By Sander Vanwilligen*
@@ -23,7 +23,7 @@
 *,
 *::before,
 *::after {
-  font-family: "DotGothic16", sans-serif;
+  font-family: arial, sans-serif;
   color: var(--color-text-primary);
   text-decoration: none;
   margin: 0;
@@ -107,6 +107,10 @@ svg {
   transition: var(--transition-fast);
 }
 svg:hover {
+  fill: var(--color-accent);
+}
+/* muted-state cue: icon holds accent to invite a click */
+.accent svg {
   fill: var(--color-accent);
 }
 
@@ -245,7 +249,9 @@ svg:hover {
   gap: var(--small);
 }
 
-.immersive .ui {
+.immersive .title,
+.immersive .tagline,
+.immersive .footer {
   display: none;
 }
 .immersive .controls {

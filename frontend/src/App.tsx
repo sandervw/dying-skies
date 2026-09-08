@@ -11,7 +11,7 @@ import { useImmersion } from "./hooks/useImmersion";
 const App = (): ReactElement => {
   const { immersive, toggleImmersion } = useImmersion();
   const [open, setOpen] = useState<boolean>(false);
-  const [muted, setMuted] = useState<boolean>(false);
+  const [muted, setMuted] = useState<boolean>(true);
 
   return (
     <div className={immersive ? "immersive" : undefined}>

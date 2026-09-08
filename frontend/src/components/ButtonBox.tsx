@@ -57,7 +57,7 @@ const ButtonBox = ({
   return (
     <div className="controls">
       <button
-        className="icon link"
+        className={muted ? "icon link accent" : "icon link"}
         onClick={toggleMusic}
         aria-label={muted ? "Unmute music" : "Mute music"}
       >
