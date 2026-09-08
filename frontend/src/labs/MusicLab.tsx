@@ -1,25 +1,36 @@
+import { useRef, useState } from "react";
+import type { CSSProperties, ReactElement } from "react";
 import * as Tone from "tone";
 import { INSTRUMENT_SETS } from "../utils/instrumentSets";
 import { MODES } from "../utils/modes";
 import { BIOMES, type Biome } from "../utils/biomes";
-import { createSeededRandom, deriveSeed } from "./randomService";
-import type { Seed } from "./randomService";
 import type { InstrumentSetName, InstrumentSpec } from "../types/music";
 
 const LOOP_BARS = 8;
-const MAX_DENSITY = 1.5; // events per bar; caps loudness and overlap
-const MIN_REGISTER = 1; // no subsonic rumble
-const MAX_REGISTER = 6; // no piercing highs
+const MAX_DENSITY = 1.5;
+const MIN_REGISTER = 1;
+const MAX_REGISTER = 6;
 
 const SET_NAMES = Object.keys(INSTRUMENT_SETS) as InstrumentSetName[];
 const MODE_NAMES = Object.keys(MODES);
 const BIOME_NAMES = Object.keys(BIOMES);
 
-// one random item from a list
-const pick = <T>(random: () => number, items: readonly T[]): T =>
-  items[Math.floor(random() * items.length)];
+const styles: Record<string, CSSProperties> = {
+  page: { display: "flex", minHeight: "100vh", background: "#0a0a0a", color: "#e6e6e6" },
+  panel: { width: 280, padding: 16, boxSizing: "border-box", overflowY: "auto", height: "100vh" },
+  title: { fontSize: 18, margin: "0 0 12px" },
+  section: { fontSize: 11, textTransform: "uppercase", letterSpacing: 1, color: "#888", margin: "14px 0 6px" },
+  label: { display: "flex", flexDirection: "column", fontSize: 12, marginBottom: 10, gap: 4 },
+  select: { background: "#1c1c1c", color: "#e6e6e6", border: "1px solid #333", padding: 4, borderRadius: 2 },
+  button: { padding: "8px 16px", cursor: "pointer", background: "#1c3466", color: "#e6e6e6", border: "1px solid #335", borderRadius: 2 },
+  buttonDisabled: { opacity: 0.4 },
+  main: { flex: 1, padding: 24, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 },
+  info: { fontSize: 12, color: "#888", maxWidth: 420, textAlign: "center", lineHeight: 1.6 },
+};
 
-// wire nodes in order; the last one feeds the output.
+const pick = <T,>(items: readonly T[]): T =>
+  items[Math.floor(Math.random() * items.length)];
+
 const chainInto = (nodes: Tone.ToneAudioNode[], output: Tone.ToneAudioNode): void => {
   nodes.reduce((previous, node): Tone.ToneAudioNode => {
     previous.connect(node);
@@ -27,7 +38,6 @@ const chainInto = (nodes: Tone.ToneAudioNode[], output: Tone.ToneAudioNode): voi
   }).connect(output);
 };
 
-// shared final gate: block subsonic, space, glue, ceiling.
 const buildMaster = (biome: Biome): Tone.ToneAudioNode[] => {
   const nodes = [
     new Tone.Filter({ type: "highpass", frequency: 30, rolloff: -12 }),
@@ -41,7 +51,6 @@ const buildMaster = (biome: Biome): Tone.ToneAudioNode[] => {
   return nodes;
 };
 
-// synth, optional filter, effects, level; the chain ends at the master.
 const buildVoice = (spec: InstrumentSpec, master: Tone.ToneAudioNode): Tone.ToneAudioNode[] => {
   const nodes: Tone.ToneAudioNode[] = [];
   const synth = spec.polyphony === undefined
@@ -61,7 +70,6 @@ const buildVoice = (spec: InstrumentSpec, master: Tone.ToneAudioNode): Tone.Tone
   return nodes;
 };
 
-// random events for one role: [bar, beat, step]. Not seed-derived.
 const buildScore = (density: number, steps: number): [number, number, number][] => {
   const count = Math.min(Math.round(Math.min(density, MAX_DENSITY) * LOOP_BARS), LOOP_BARS * 4);
   const seen = new Set<string>();
@@ -70,14 +78,13 @@ const buildScore = (density: number, steps: number): [number, number, number][] 
     const bar = Math.floor(Math.random() * LOOP_BARS);
     const beat = Math.floor(Math.random() * 4);
     const slot = `${bar}:${beat}`;
-    if (seen.has(slot) || slot === "0:0") continue; // skip seam downbeat and dupes
+    if (seen.has(slot)) continue;
     seen.add(slot);
     events.push([bar, beat, Math.floor(Math.random() * steps)]);
   }
   return events;
 };
 
-// one looping part per role; steps wrap up octaves.
 const buildPart = (
   spec: InstrumentSpec,
   synth: Tone.ToneAudioNode,
@@ -89,7 +96,7 @@ const buildPart = (
   const seconds = (spec.hold * 60) / tempo;
   const part = new Tone.Part((time, step: number): void => {
     if (synth instanceof Tone.NoiseSynth) {
-      synth.triggerAttackRelease(seconds, time); // pink noise has no pitch
+      synth.triggerAttackRelease(seconds, time);
     } else {
       const semitone = offsets[step % offsets.length] + 12 * Math.floor(step / offsets.length);
       const note = Tone.Frequency(`C${register}`).transpose(semitone).toFrequency();
@@ -99,7 +106,6 @@ const buildPart = (
   part.start(0);
 };
 
-// wrap tail into head, crossfade the seam, then encode wav.
 const toWavUrl = (buffer: AudioBuffer, loopFrames: number): string => {
   const channels = buffer.numberOfChannels;
   const view = new DataView(new ArrayBuffer(44 + loopFrames * channels * 2));
@@ -119,19 +125,17 @@ const toWavUrl = (buffer: AudioBuffer, loopFrames: number): string => {
   writeText(36, "data");
   view.setUint32(40, view.byteLength - 44, true);
   const at = (data: Float32Array, index: number): number => (index < buffer.length ? data[index] : 0);
-  const fade = Math.round(buffer.sampleRate * 0.04);
+  const fade = Math.round(buffer.sampleRate * 0.008);
   let position = 44;
   for (let frame = 0; frame < loopFrames; frame++) {
     for (let channel = 0; channel < channels; channel++) {
       const data = buffer.getChannelData(channel);
       let mixed = data[frame] + at(data, frame + loopFrames);
       if (frame < fade) {
-        // blend the loop's own continuation over the seam
         const weight = 0.5 - 0.5 * Math.cos((Math.PI * frame) / fade);
         const next = at(data, frame + loopFrames) + at(data, frame + 2 * loopFrames);
         mixed = mixed * weight + next * (1 - weight);
       }
-      // soft ceiling, then TPDF dither before 16-bit
       const shaped = Math.tanh(mixed);
       const dither = Math.random() + Math.random() - 1;
       const value = Math.round(shaped * 0x7fff + dither);
@@ -142,31 +146,21 @@ const toWavUrl = (buffer: AudioBuffer, loopFrames: number): string => {
   return URL.createObjectURL(new Blob([view], { type: "audio/wav" }));
 };
 
-/** name the instrument set, mode, and biome a seed plays. */
-const describeSky = (seed: Seed): { set: InstrumentSetName; mode: string; biome: string } => {
-  // mirrors playSky's first three picks; keep this order.
-  const random = createSeededRandom(deriveSeed(seed, "music"));
-  const set = pick(random, SET_NAMES);
-  const biome = pick(random, BIOME_NAMES);
-  const mode = pick(random, MODE_NAMES);
-  return { set, mode, biome };
-};
-
-/** loop this sky's music; the returned call tears it down. */
-const playSky = (seed: Seed): (() => void) => {
-  const random = createSeededRandom(deriveSeed(seed, "music"));
-  const set = INSTRUMENT_SETS[pick(random, SET_NAMES)];
-  const biome = BIOMES[pick(random, BIOME_NAMES)];
-  const offsets = MODES[pick(random, MODE_NAMES)];
-  // required roles always sound; optional roles join at random
-  const roles = [...biome.required, ...biome.optional.filter(() => random() < 0.5)];
+const playWithVariables = (
+  setName: InstrumentSetName,
+  biomeName: string,
+  modeName: string,
+): (() => void) => {
+  const set = INSTRUMENT_SETS[setName];
+  const biome = BIOMES[biomeName];
+  const offsets = MODES[modeName];
+  const roles = [...biome.required, ...biome.optional.filter(() => Math.random() < 0.5)];
 
   const loopSeconds = (LOOP_BARS * 4 * 60) / biome.tempo;
   const audio = new Audio();
   audio.loop = true;
   let stopped = false;
 
-  // render loop plus tail offline for a seamless wrap
   void Tone.Offline(({ transport }) => {
     const master = buildMaster(biome);
     for (const role of roles) {
@@ -193,4 +187,88 @@ const playSky = (seed: Seed): (() => void) => {
   };
 };
 
-export { describeSky, playSky };
+const MusicLab = (): ReactElement => {
+  const [setName, setSetName] = useState<InstrumentSetName>("morrowind");
+  const [biomeName, setBiomeName] = useState<string>("cavern");
+  const [modeName, setModeName] = useState<string>("majorPentatonic");
+  const [playing, setPlaying] = useState(false);
+  const stopRef = useRef<(() => void) | null>(null);
+
+  const handlePlay = async (): Promise<void> => {
+    stopRef.current?.();
+    await Tone.start();
+    stopRef.current = playWithVariables(setName, biomeName, modeName);
+    setPlaying(true);
+  };
+
+  const handleStop = (): void => {
+    stopRef.current?.();
+    stopRef.current = null;
+    setPlaying(false);
+  };
+
+  const handleRandom = (): void => {
+    setSetName(pick(SET_NAMES));
+    setBiomeName(pick(BIOME_NAMES));
+    setModeName(pick(MODE_NAMES));
+  };
+
+  return (
+    <div style={styles.page}>
+      <aside style={styles.panel}>
+        <h1 style={styles.title}>Music Lab</h1>
+
+        <h2 style={styles.section}>Instrument Set</h2>
+        <label style={styles.label}>
+          <select style={styles.select} value={setName} onChange={(e) => setSetName(e.target.value as InstrumentSetName)}>
+            {SET_NAMES.map((name) => <option key={name} value={name}>{name}</option>)}
+          </select>
+        </label>
+
+        <h2 style={styles.section}>Biome</h2>
+        <label style={styles.label}>
+          <select style={styles.select} value={biomeName} onChange={(e) => setBiomeName(e.target.value)}>
+            {BIOME_NAMES.map((name) => <option key={name} value={name}>{name}</option>)}
+          </select>
+        </label>
+
+        <h2 style={styles.section}>Mode</h2>
+        <label style={styles.label}>
+          <select style={styles.select} value={modeName} onChange={(e) => setModeName(e.target.value)}>
+            {MODE_NAMES.map((name) => <option key={name} value={name}>{name}</option>)}
+          </select>
+        </label>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 16 }}>
+          <button type="button" style={styles.button} onClick={() => { void handlePlay(); }}>
+            Play
+          </button>
+          <button type="button" style={{ ...styles.button, ...(playing ? {} : styles.buttonDisabled) }} onClick={handleStop} disabled={!playing}>
+            Stop
+          </button>
+          <button type="button" style={{ ...styles.button, background: "#1c1c1c", border: "1px solid #333" }} onClick={handleRandom}>
+            Randomise
+          </button>
+        </div>
+      </aside>
+
+      <main style={styles.main}>
+        <div style={styles.info}>
+          <p><strong>{setName}</strong> + <strong>{biomeName}</strong> + <strong>{modeName}</strong></p>
+          <p style={{ marginTop: 8 }}>
+            tempo {BIOMES[biomeName].tempo}bpm, reverb {BIOMES[biomeName].reverbDecay}s decay,{" "}
+            register shift {BIOMES[biomeName].registerShift > 0 ? "+" : ""}{BIOMES[biomeName].registerShift}
+          </p>
+          <p style={{ marginTop: 4 }}>
+            mode steps: {JSON.stringify(MODES[modeName])}
+          </p>
+          <p style={{ marginTop: 4, fontSize: 11 }}>
+            {playing ? "looping..." : "stopped"}
+          </p>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export { MusicLab };

@@ -1,6 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { PaletteLab } from "./PaletteLab";
+import { MusicLab } from "./MusicLab";
 
 const container = document.getElementById("root");
 
@@ -10,6 +10,6 @@ if (container === null) {
 
 createRoot(container).render(
   <StrictMode>
-    <PaletteLab />
+    <MusicLab />
   </StrictMode>,
 );
