@@ -42,6 +42,7 @@ synth --> filter --> effects --> gain --> speakers
 
 - **Filter**: a gate that removes part of the sound by pitch range. Lower `frequency` = darker, muffled.
 - **lowpass**: keeps low sounds, cuts high ones. Makes things warm or muffled.
+- **highpass**: the opposite; keeps high sounds, cuts low ones.
 - **bandpass**: keeps only a narrow middle slice; nasal, phone-like, distant.
 - **Q**: how narrow a bandpass filter's slice is. Higher = thinner and more whistling.
 - **rolloff**: how steeply the filter cuts what it removes. -24 cuts harder than -12.

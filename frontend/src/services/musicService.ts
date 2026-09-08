@@ -30,10 +30,10 @@ const chainInto = (nodes: Tone.ToneAudioNode[], output: Tone.ToneAudioNode): voi
 // shared final gate: block subsonic, space, glue, ceiling.
 const buildMaster = (biome: Biome): Tone.ToneAudioNode[] => {
   const nodes = [
-    new Tone.Filter({ type: "highpass", frequency: 30, rolloff: -12 }),
     new Tone.Gain(0.5),
     new Tone.Filter({ type: "lowpass", frequency: 7000, rolloff: -12 }),
     new Tone.Reverb({ decay: biome.reverbDecay, preDelay: 0.04, wet: biome.reverbWet }),
+    new Tone.Filter({ type: "highpass", frequency: 30, rolloff: -12 }),
     new Tone.Compressor({ threshold: -20, ratio: 3, attack: 0.05, release: 0.3 }),
     new Tone.Limiter(-1),
   ];
@@ -41,14 +41,20 @@ const buildMaster = (biome: Biome): Tone.ToneAudioNode[] => {
   return nodes;
 };
 
-// synth, optional filter, effects, level; the chain ends at the master.
-const buildVoice = (spec: InstrumentSpec, master: Tone.ToneAudioNode): Tone.ToneAudioNode[] => {
-  const nodes: Tone.ToneAudioNode[] = [];
+// per-voice channel strip: sub/DC highpass in, register-aware gain out.
+const equalize = (spec: InstrumentSpec, register: number): [Tone.Filter, Tone.Gain] => {
+  const highpass = new Tone.Filter({ type: "highpass", frequency: 40, rolloff: -12 });
+  const trim = register <= 2 ? 0.6 : 1;
+  return [highpass, new Tone.Gain(spec.gain * trim)];
+};
+
+// synth, filter, effects, then correction highpass and gain; the chain ends at the master.
+const buildVoice = (spec: InstrumentSpec, register: number, master: Tone.ToneAudioNode): Tone.ToneAudioNode[] => {
   const synth = spec.polyphony === undefined
     ? new spec.synth(spec.options)
     : new Tone.PolySynth({ maxPolyphony: spec.polyphony, voice: spec.synth as never, options: spec.options as never });
-  nodes.push(synth);
-  nodes.push(new Tone.Filter({ type: "highpass", frequency: 40, rolloff: -12 })); // sanitize raw source: block sub/DC pops
+  const [highpass, gain] = equalize(spec, register);
+  const nodes: Tone.ToneAudioNode[] = [synth];
   if (spec.filter !== undefined) {
     nodes.push(new Tone.Filter(spec.filter));
   }
@@ -57,7 +63,7 @@ const buildVoice = (spec: InstrumentSpec, master: Tone.ToneAudioNode): Tone.Tone
     effect.start?.();
     nodes.push(effect);
   }
-  nodes.push(new Tone.Gain(spec.gain));
+  nodes.push(highpass, gain);
   chainInto(nodes, master);
   return nodes;
 };
@@ -101,13 +107,27 @@ const buildPart = (
 };
 
 /** name the instrument set, mode, and biome a seed plays. */
-const describeSky = (seed: Seed): { set: InstrumentSetName; mode: string; biome: string } => {
+const describeSky = (seed: Seed): { set: InstrumentSetName; mode: string; biome: string; } => {
   // mirrors playSky's first three picks; keep this order.
   const random = createSeededRandom(deriveSeed(seed, "music"));
   const set = pick(random, SET_NAMES);
   const biome = pick(random, BIOME_NAMES);
   const mode = pick(random, MODE_NAMES);
   return { set, mode, biome };
+};
+
+// ramp buffer edges to zero so no truncated note pops.
+const deClick = (audio: AudioBuffer): AudioBuffer => {
+  const fade = Math.floor(audio.sampleRate * 0.02);
+  for (let channel = 0; channel < audio.numberOfChannels; channel++) {
+    const data = audio.getChannelData(channel);
+    for (let index = 0; index < fade; index++) {
+      const gain = index / fade;
+      data[index] *= gain;
+      data[data.length - 1 - index] *= gain;
+    }
+  }
+  return audio;
 };
 
 /** play this sky as endless fresh chunks; the returned call stops it. */
@@ -146,13 +166,13 @@ const playSky = (seed: Seed): (() => void) => {
         const spec = set[role];
         const register = Math.min(MAX_REGISTER, Math.max(MIN_REGISTER, (spec.register ?? 3) + biome.registerShift));
         const events = buildScore(biome.density[role], offsets.length + 1);
-        const synth = buildVoice(spec, master[0])[0];
+        const synth = buildVoice(spec, register, master[0])[0];
         buildPart(spec, synth, events, offsets, register, biome.tempo);
       }
       transport.bpm.value = biome.tempo;
       transport.start();
       return (master.find((node) => node instanceof Tone.Reverb) as Tone.Reverb).ready;
-    }, loopSeconds + 6).then((buffer): AudioBuffer => buffer.get() as AudioBuffer);
+    }, loopSeconds + 6).then((buffer): AudioBuffer => deClick(buffer.get() as AudioBuffer));
 
   // keep one chunk queued ahead; tails overlap for a seamless seam
   const fill = async (): Promise<void> => {

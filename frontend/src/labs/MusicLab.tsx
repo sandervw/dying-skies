@@ -1,3 +1,8 @@
+/**
+ * A Throwaway file for testing; may break code style/conventions
+ * Always be sure to mirror logic from musicService.ts in this file
+ */
+
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactElement } from "react";
 import * as Tone from "tone";
@@ -51,17 +56,68 @@ interface Playback {
 }
 
 const styles: Record<string, CSSProperties> = {
-  page: { display: "flex", minHeight: "100vh", background: "#0a0a0a", color: "#e6e6e6" },
-  panel: { width: 280, padding: 16, boxSizing: "border-box", overflowY: "auto", height: "100vh", flexShrink: 0 },
+  page: {
+    display: "flex",
+    minHeight: "100vh",
+    background: "#0a0a0a",
+    color: "#e6e6e6",
+  },
+  panel: {
+    width: 280,
+    padding: 16,
+    boxSizing: "border-box",
+    overflowY: "auto",
+    height: "100vh",
+    flexShrink: 0,
+  },
   title: { fontSize: 18, margin: "0 0 12px" },
-  section: { fontSize: 11, textTransform: "uppercase", letterSpacing: 1, color: "#888", margin: "14px 0 6px" },
-  label: { display: "flex", flexDirection: "column", fontSize: 12, marginBottom: 10, gap: 4 },
-  select: { background: "#1c1c1c", color: "#e6e6e6", border: "1px solid #333", padding: 4, borderRadius: 2 },
-  button: { padding: "8px 16px", cursor: "pointer", background: "#1c3466", color: "#e6e6e6", border: "1px solid #335", borderRadius: 2 },
+  section: {
+    fontSize: 11,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    color: "#888",
+    margin: "14px 0 6px",
+  },
+  label: {
+    display: "flex",
+    flexDirection: "column",
+    fontSize: 12,
+    marginBottom: 10,
+    gap: 4,
+  },
+  select: {
+    background: "#1c1c1c",
+    color: "#e6e6e6",
+    border: "1px solid #333",
+    padding: 4,
+    borderRadius: 2,
+  },
+  button: {
+    padding: "8px 16px",
+    cursor: "pointer",
+    background: "#1c3466",
+    color: "#e6e6e6",
+    border: "1px solid #335",
+    borderRadius: 2,
+  },
   buttonDisabled: { opacity: 0.4 },
-  main: { flex: 1, padding: 16, display: "flex", flexDirection: "column", gap: 12, minWidth: 0 },
+  main: {
+    flex: 1,
+    padding: 16,
+    display: "flex",
+    flexDirection: "column",
+    gap: 12,
+    minWidth: 0,
+  },
   info: { fontSize: 12, color: "#888", lineHeight: 1.6 },
-  canvasWrap: { flex: 1, minHeight: 0, border: "1px solid #222", borderRadius: 4, overflow: "hidden", background: "#060608" },
+  canvasWrap: {
+    flex: 1,
+    minHeight: 0,
+    border: "1px solid #222",
+    borderRadius: 4,
+    overflow: "hidden",
+    background: "#060608",
+  },
   canvas: { display: "block", width: "100%", height: "100%" },
 };
 
@@ -71,11 +127,16 @@ const pick = <T,>(items: readonly T[]): T =>
 const clamp = (value: number, low: number, high: number): number =>
   Math.min(high, Math.max(low, value));
 
-const chainInto = (nodes: Tone.ToneAudioNode[], output: Tone.ToneAudioNode): void => {
-  nodes.reduce((previous, node): Tone.ToneAudioNode => {
-    previous.connect(node);
-    return node;
-  }).connect(output);
+const chainInto = (
+  nodes: Tone.ToneAudioNode[],
+  output: Tone.ToneAudioNode,
+): void => {
+  nodes
+    .reduce((previous, node): Tone.ToneAudioNode => {
+      previous.connect(node);
+      return node;
+    })
+    .connect(output);
 };
 
 const buildMaster = (biome: Biome): Tone.ToneAudioNode[] => {
@@ -83,21 +144,53 @@ const buildMaster = (biome: Biome): Tone.ToneAudioNode[] => {
     new Tone.Filter({ type: "highpass", frequency: 30, rolloff: -12 }),
     new Tone.Gain(0.5),
     new Tone.Filter({ type: "lowpass", frequency: 7000, rolloff: -12 }),
-    new Tone.Reverb({ decay: biome.reverbDecay, preDelay: 0.04, wet: biome.reverbWet }),
-    new Tone.Compressor({ threshold: -20, ratio: 3, attack: 0.05, release: 0.3 }),
+    new Tone.Reverb({
+      decay: biome.reverbDecay,
+      preDelay: 0.04,
+      wet: biome.reverbWet,
+    }),
+    new Tone.Compressor({
+      threshold: -20,
+      ratio: 3,
+      attack: 0.05,
+      release: 0.3,
+    }),
     new Tone.Limiter(-1),
   ];
   chainInto(nodes, Tone.getDestination());
   return nodes;
 };
 
-const buildVoice = (spec: InstrumentSpec, master: Tone.ToneAudioNode): Tone.ToneAudioNode[] => {
-  const nodes: Tone.ToneAudioNode[] = [];
-  const synth = spec.polyphony === undefined
-    ? new spec.synth(spec.options)
-    : new Tone.PolySynth({ maxPolyphony: spec.polyphony, voice: spec.synth as never, options: spec.options as never });
-  nodes.push(synth);
-  nodes.push(new Tone.Filter({ type: "highpass", frequency: 40, rolloff: -12 })); // sanitize raw source: block sub/DC pops
+// per-voice channel strip: sub/DC highpass in, register-aware gain out.
+const equalize = (
+  spec: InstrumentSpec,
+  register: number,
+): [Tone.Filter, Tone.Gain] => {
+  const highpass = new Tone.Filter({
+    type: "highpass",
+    frequency: 40,
+    rolloff: -12,
+  });
+  const trim = register <= 2 ? 0.6 : 1;
+  return [highpass, new Tone.Gain(spec.gain * trim)];
+};
+
+// synth, filter, effects, then correction highpass and gain; the chain ends at the master.
+const buildVoice = (
+  spec: InstrumentSpec,
+  register: number,
+  master: Tone.ToneAudioNode,
+): Tone.ToneAudioNode[] => {
+  const synth =
+    spec.polyphony === undefined
+      ? new spec.synth(spec.options)
+      : new Tone.PolySynth({
+          maxPolyphony: spec.polyphony,
+          voice: spec.synth as never,
+          options: spec.options as never,
+        });
+  const [highpass, gain] = equalize(spec, register);
+  const nodes: Tone.ToneAudioNode[] = [synth];
   if (spec.filter !== undefined) {
     nodes.push(new Tone.Filter(spec.filter));
   }
@@ -106,13 +199,19 @@ const buildVoice = (spec: InstrumentSpec, master: Tone.ToneAudioNode): Tone.Tone
     effect.start?.();
     nodes.push(effect);
   }
-  nodes.push(new Tone.Gain(spec.gain));
+  nodes.push(highpass, gain);
   chainInto(nodes, master);
   return nodes;
 };
 
-const buildScore = (density: number, steps: number): [number, number, number][] => {
-  const count = Math.min(Math.round(Math.min(density, MAX_DENSITY) * LOOP_BARS), LOOP_BARS * 4);
+const buildScore = (
+  density: number,
+  steps: number,
+): [number, number, number][] => {
+  const count = Math.min(
+    Math.round(Math.min(density, MAX_DENSITY) * LOOP_BARS),
+    LOOP_BARS * 4,
+  );
   const seen = new Set<string>();
   const events: [number, number, number][] = [];
   while (events.length < count) {
@@ -135,36 +234,76 @@ const buildPart = (
   tempo: number,
 ): void => {
   const seconds = (spec.hold * 60) / tempo;
-  const part = new Tone.Part((time, step: number): void => {
-    if (synth instanceof Tone.NoiseSynth) {
-      synth.triggerAttackRelease(seconds, time);
-    } else {
-      const semitone = offsets[step % offsets.length] + 12 * Math.floor(step / offsets.length);
-      const note = Tone.Frequency(`C${register}`).transpose(semitone).toFrequency();
-      (synth as Tone.PolySynth).triggerAttackRelease(note, seconds, time);
-    }
-  }, events.map(([bar, beat, step]): [string, number] => [`${bar}:${beat}:0`, step]));
+  const part = new Tone.Part(
+    (time, step: number): void => {
+      if (synth instanceof Tone.NoiseSynth) {
+        synth.triggerAttackRelease(seconds, time);
+      } else {
+        const semitone =
+          offsets[step % offsets.length] +
+          12 * Math.floor(step / offsets.length);
+        const note = Tone.Frequency(`C${register}`)
+          .transpose(semitone)
+          .toFrequency();
+        (synth as Tone.PolySynth).triggerAttackRelease(note, seconds, time);
+      }
+    },
+    events.map(([bar, beat, step]): [string, number] => [
+      `${bar}:${beat}:0`,
+      step,
+    ]),
+  );
   part.start(0);
 };
 
 // fixed identity: roles, registers, tempo. Scores re-roll per chunk.
-const buildPlan = (setName: InstrumentSetName, biomeName: string, modeName: string) => {
+// ramp buffer edges to zero so no truncated note pops.
+const deClick = (audio: AudioBuffer): AudioBuffer => {
+  const fade = Math.floor(audio.sampleRate * 0.02);
+  for (let channel = 0; channel < audio.numberOfChannels; channel++) {
+    const data = audio.getChannelData(channel);
+    for (let index = 0; index < fade; index++) {
+      const gain = index / fade;
+      data[index] *= gain;
+      data[data.length - 1 - index] *= gain;
+    }
+  }
+  return audio;
+};
+
+const buildPlan = (
+  setName: InstrumentSetName,
+  biomeName: string,
+  modeName: string,
+) => {
   const set = INSTRUMENT_SETS[setName];
   const biome = BIOMES[biomeName];
   const offsets = MODES[modeName];
-  const roles = [...biome.required, ...biome.optional.filter(() => Math.random() < 0.5)];
+  const roles = [
+    ...biome.required,
+    ...biome.optional.filter(() => Math.random() < 0.5),
+  ];
   const tempo = biome.tempo;
   const secPerBeat = 60 / tempo;
   const loopSeconds = (LOOP_BARS * BEATS_PER_BAR * 60) / tempo;
   const voices = roles.map((role) => {
     const spec = set[role];
-    const register = clamp((spec.register ?? 3) + biome.registerShift, MIN_REGISTER, MAX_REGISTER);
+    const register = clamp(
+      (spec.register ?? 3) + biome.registerShift,
+      MIN_REGISTER,
+      MAX_REGISTER,
+    );
     return { role, spec, register };
   });
   return { biome, offsets, tempo, secPerBeat, loopSeconds, voices };
 };
 
-type ScoredVoice = { role: Role; spec: InstrumentSpec; register: number; events: [number, number, number][] };
+type ScoredVoice = {
+  role: Role;
+  spec: InstrumentSpec;
+  register: number;
+  events: [number, number, number][];
+};
 
 // a fresh random score for every voice, used by one chunk
 const scoreVoices = (plan: ReturnType<typeof buildPlan>): ScoredVoice[] =>
@@ -174,7 +313,11 @@ const scoreVoices = (plan: ReturnType<typeof buildPlan>): ScoredVoice[] =>
   }));
 
 // flatten scored voices into per-note visual data mirroring the triggers.
-const scoredToNotes = (voices: ScoredVoice[], offsets: readonly number[], secPerBeat: number): VizNote[] => {
+const scoredToNotes = (
+  voices: ScoredVoice[],
+  offsets: readonly number[],
+  secPerBeat: number,
+): VizNote[] => {
   const notes: VizNote[] = [];
   for (const voice of voices) {
     const isNoise = voice.spec.synth === Tone.NoiseSynth;
@@ -183,10 +326,21 @@ const scoredToNotes = (voices: ScoredVoice[], offsets: readonly number[], secPer
       const timeSec = (bar * BEATS_PER_BAR + beat) * secPerBeat;
       let midi: number | null = null;
       if (!isNoise) {
-        const semitone = offsets[step % offsets.length] + 12 * Math.floor(step / offsets.length);
-        midi = Tone.Frequency(`C${voice.register}`).transpose(semitone).toMidi();
+        const semitone =
+          offsets[step % offsets.length] +
+          12 * Math.floor(step / offsets.length);
+        midi = Tone.Frequency(`C${voice.register}`)
+          .transpose(semitone)
+          .toMidi();
       }
-      notes.push({ role: voice.role, color: ROLE_COLORS[voice.role], timeSec, durSec, midi, gain: voice.spec.gain });
+      notes.push({
+        role: voice.role,
+        color: ROLE_COLORS[voice.role],
+        timeSec,
+        durSec,
+        midi,
+        gain: voice.spec.gain,
+      });
     }
   }
   return notes;
@@ -229,14 +383,22 @@ const startPlayback = (
     secPerBeat: plan.secPerBeat,
     notes: [],
     schedule: [],
-    voices: plan.voices.map((voice) => ({ role: voice.role, color: ROLE_COLORS[voice.role], gain: voice.spec.gain })),
+    voices: plan.voices.map((voice) => ({
+      role: voice.role,
+      color: ROLE_COLORS[voice.role],
+      gain: voice.spec.gain,
+    })),
     analyser,
     stopped: false,
     stop: (): void => {
       playback.stopped = true;
       clearInterval(timer);
       for (const source of active) {
-        try { source.stop(); } catch { /* already ended */ }
+        try {
+          source.stop();
+        } catch {
+          /* already ended */
+        }
       }
       headroom.disconnect();
       shaper.disconnect();
@@ -249,19 +411,32 @@ const startPlayback = (
     Tone.Offline(({ transport }) => {
       const master = buildMaster(plan.biome);
       for (const voice of voices) {
-        const synth = buildVoice(voice.spec, master[0])[0];
-        buildPart(voice.spec, synth, voice.events, plan.offsets, voice.register, plan.tempo);
+        const synth = buildVoice(voice.spec, voice.register, master[0])[0];
+        buildPart(
+          voice.spec,
+          synth,
+          voice.events,
+          plan.offsets,
+          voice.register,
+          plan.tempo,
+        );
       }
       transport.bpm.value = plan.tempo;
       transport.start();
-      return (master.find((node) => node instanceof Tone.Reverb) as Tone.Reverb).ready;
-    }, plan.loopSeconds + 6).then((buffer): AudioBuffer => buffer.get() as AudioBuffer);
+      return (master.find((node) => node instanceof Tone.Reverb) as Tone.Reverb)
+        .ready;
+    }, plan.loopSeconds + 6).then(
+      (buffer): AudioBuffer => deClick(buffer.get() as AudioBuffer),
+    );
 
   // keep one chunk queued ahead; tails overlap for a seamless seam
   const fill = async (): Promise<void> => {
     if (filling) return;
     filling = true;
-    while (!playback.stopped && nextTime < context.currentTime + plan.loopSeconds) {
+    while (
+      !playback.stopped &&
+      nextTime < context.currentTime + plan.loopSeconds
+    ) {
       const voices = scoreVoices(plan);
       const buffer = await renderChunk(voices);
       if (playback.stopped) break;
@@ -270,15 +445,22 @@ const startPlayback = (
       source.connect(headroom);
       if (nextTime < context.currentTime) nextTime = context.currentTime + 0.05;
       source.start(nextTime);
-      playback.schedule.push({ startTime: nextTime, notes: scoredToNotes(voices, plan.offsets, plan.secPerBeat) });
+      playback.schedule.push({
+        startTime: nextTime,
+        notes: scoredToNotes(voices, plan.offsets, plan.secPerBeat),
+      });
       nextTime += plan.loopSeconds;
       active.add(source);
-      source.onended = (): void => { active.delete(source); };
+      source.onended = (): void => {
+        active.delete(source);
+      };
     }
     filling = false;
   };
 
-  timer = setInterval((): void => { void fill(); }, 500);
+  timer = setInterval((): void => {
+    void fill();
+  }, 500);
   void fill();
 
   return playback;
@@ -289,7 +471,10 @@ const drawFrame = (canvas: HTMLCanvasElement, playback: Playback): void => {
   const dpr = window.devicePixelRatio || 1;
   const width = canvas.clientWidth;
   const height = canvas.clientHeight;
-  if (canvas.width !== Math.round(width * dpr) || canvas.height !== Math.round(height * dpr)) {
+  if (
+    canvas.width !== Math.round(width * dpr) ||
+    canvas.height !== Math.round(height * dpr)
+  ) {
     canvas.width = Math.round(width * dpr);
     canvas.height = Math.round(height * dpr);
   }
@@ -307,8 +492,11 @@ const drawFrame = (canvas: HTMLCanvasElement, playback: Playback): void => {
   const rollTop = top;
   const rollHeight = Math.max(20, rollBottom - rollTop);
   const spanX = Math.max(1, right - left);
-  const now = (playback.context.currentTime - playback.chunkStartTime) % playback.loopSeconds;
-  const xOf = (timeSec: number): number => left + (timeSec / playback.loopSeconds) * spanX;
+  const now =
+    (playback.context.currentTime - playback.chunkStartTime) %
+    playback.loopSeconds;
+  const xOf = (timeSec: number): number =>
+    left + (timeSec / playback.loopSeconds) * spanX;
 
   const pitched = playback.notes.filter((note) => note.midi !== null);
   let lowMidi = 48;
@@ -318,7 +506,8 @@ const drawFrame = (canvas: HTMLCanvasElement, playback: Playback): void => {
     highMidi = Math.max(...pitched.map((note) => note.midi as number)) + 2;
   }
   const midiSpan = Math.max(1, highMidi - lowMidi);
-  const yOf = (midi: number): number => rollBottom - ((midi - lowMidi) / midiSpan) * rollHeight;
+  const yOf = (midi: number): number =>
+    rollBottom - ((midi - lowMidi) / midiSpan) * rollHeight;
 
   // bar blocks and beat seams: thick per bar, faint per beat.
   const secPerBar = playback.secPerBeat * BEATS_PER_BAR;
@@ -372,7 +561,8 @@ const drawFrame = (canvas: HTMLCanvasElement, playback: Playback): void => {
     const x = xOf(note.timeSec);
     const w = Math.max(3, (note.durSec / playback.loopSeconds) * spanX);
     const nearness = 1 - Math.min(1, Math.abs(note.timeSec - now) / 0.35);
-    const alpha = clamp(0.35 + note.gain * 0.8, 0.3, 1) * (0.55 + 0.45 * nearness);
+    const alpha =
+      clamp(0.35 + note.gain * 0.8, 0.3, 1) * (0.55 + 0.45 * nearness);
     context.globalAlpha = alpha;
     context.fillStyle = note.color;
     if (nearness > 0.05) {
@@ -421,7 +611,12 @@ const drawFrame = (canvas: HTMLCanvasElement, playback: Playback): void => {
       const h = value * spectrumHeight;
       const hue = 200 - index * 2;
       context.fillStyle = `hsl(${hue}, 70%, ${30 + value * 40}%)`;
-      context.fillRect(left + index * barWidth, specTop + spectrumHeight - h, barWidth - 1, h);
+      context.fillRect(
+        left + index * barWidth,
+        specTop + spectrumHeight - h,
+        barWidth - 1,
+        h,
+      );
     }
 
     // master volume from the time-domain signal.
@@ -460,7 +655,10 @@ const drawFrame = (canvas: HTMLCanvasElement, playback: Playback): void => {
   const legendY = rollBottom + percussionHeight + spectrumHeight + 22;
   for (const voice of playback.voices) {
     const sounding = playback.notes.some(
-      (note) => note.role === voice.role && now >= note.timeSec && now <= note.timeSec + note.durSec,
+      (note) =>
+        note.role === voice.role &&
+        now >= note.timeSec &&
+        now <= note.timeSec + note.durSec,
     );
     context.globalAlpha = sounding ? 1 : 0.45;
     context.fillStyle = voice.color;
@@ -488,8 +686,14 @@ const MusicLab = (): ReactElement => {
     let frame = 0;
     const loop = (): void => {
       const now = playback.context.currentTime;
-      while (playback.schedule.length > 0 && playback.schedule[0].startTime <= now) {
-        const entry = playback.schedule.shift() as { startTime: number; notes: VizNote[] };
+      while (
+        playback.schedule.length > 0 &&
+        playback.schedule[0].startTime <= now
+      ) {
+        const entry = playback.schedule.shift() as {
+          startTime: number;
+          notes: VizNote[];
+        };
         playback.notes = entry.notes;
         playback.chunkStartTime = entry.startTime;
       }
@@ -526,33 +730,86 @@ const MusicLab = (): ReactElement => {
 
         <h2 style={styles.section}>Instrument Set</h2>
         <label style={styles.label}>
-          <select style={styles.select} value={setName} onChange={(e) => setSetName(e.target.value as InstrumentSetName)}>
-            {SET_NAMES.map((name) => <option key={name} value={name}>{name}</option>)}
+          <select
+            style={styles.select}
+            value={setName}
+            onChange={(e) => setSetName(e.target.value as InstrumentSetName)}
+          >
+            {SET_NAMES.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
           </select>
         </label>
 
         <h2 style={styles.section}>Biome</h2>
         <label style={styles.label}>
-          <select style={styles.select} value={biomeName} onChange={(e) => setBiomeName(e.target.value)}>
-            {BIOME_NAMES.map((name) => <option key={name} value={name}>{name}</option>)}
+          <select
+            style={styles.select}
+            value={biomeName}
+            onChange={(e) => setBiomeName(e.target.value)}
+          >
+            {BIOME_NAMES.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
           </select>
         </label>
 
         <h2 style={styles.section}>Mode</h2>
         <label style={styles.label}>
-          <select style={styles.select} value={modeName} onChange={(e) => setModeName(e.target.value)}>
-            {MODE_NAMES.map((name) => <option key={name} value={name}>{name}</option>)}
+          <select
+            style={styles.select}
+            value={modeName}
+            onChange={(e) => setModeName(e.target.value)}
+          >
+            {MODE_NAMES.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
           </select>
         </label>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 16 }}>
-          <button type="button" style={styles.button} onClick={() => { void handlePlay(); }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+            marginTop: 16,
+          }}
+        >
+          <button
+            type="button"
+            style={styles.button}
+            onClick={() => {
+              void handlePlay();
+            }}
+          >
             Play
           </button>
-          <button type="button" style={{ ...styles.button, ...(playing ? {} : styles.buttonDisabled) }} onClick={handleStop} disabled={!playing}>
+          <button
+            type="button"
+            style={{
+              ...styles.button,
+              ...(playing ? {} : styles.buttonDisabled),
+            }}
+            onClick={handleStop}
+            disabled={!playing}
+          >
             Stop
           </button>
-          <button type="button" style={{ ...styles.button, background: "#1c1c1c", border: "1px solid #333" }} onClick={handleRandom}>
+          <button
+            type="button"
+            style={{
+              ...styles.button,
+              background: "#1c1c1c",
+              border: "1px solid #333",
+            }}
+            onClick={handleRandom}
+          >
             Randomise
           </button>
         </div>
@@ -560,10 +817,13 @@ const MusicLab = (): ReactElement => {
 
       <main style={styles.main}>
         <div style={styles.info}>
-          <strong>{setName}</strong> + <strong>{biomeName}</strong> + <strong>{modeName}</strong>
+          <strong>{setName}</strong> + <strong>{biomeName}</strong> +{" "}
+          <strong>{modeName}</strong>
           {" — "}tempo {BIOMES[biomeName].tempo}bpm, register shift{" "}
-          {BIOMES[biomeName].registerShift > 0 ? "+" : ""}{BIOMES[biomeName].registerShift}
-          {" — "}{playing ? "looping" : "stopped"}
+          {BIOMES[biomeName].registerShift > 0 ? "+" : ""}
+          {BIOMES[biomeName].registerShift}
+          {" — "}
+          {playing ? "looping" : "stopped"}
         </div>
         <div style={styles.canvasWrap}>
           <canvas ref={canvasRef} style={styles.canvas} />

@@ -1,3 +1,7 @@
+/**
+ * This file is permitted to go beyond the project's 300 line limit
+ */
+
 import * as Tone from "tone";
 import type { InstrumentSetName, InstrumentSpec, Role } from "../types/music";
 
