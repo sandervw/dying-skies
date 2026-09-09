@@ -27,28 +27,36 @@ const chainInto = (nodes: Tone.ToneAudioNode[], output: Tone.ToneAudioNode): voi
   }).connect(output);
 };
 
-// shared final gate: block subsonic, space, glue, ceiling.
+/** shared final sound gate; ends at the destination. */
 const buildMaster = (biome: Biome): Tone.ToneAudioNode[] => {
   const nodes = [
-    new Tone.Gain(0.5),
+    // cut volume
+    new Tone.Gain(0.4),
+    // cut high hz
     new Tone.Filter({ type: "lowpass", frequency: 7000, rolloff: -12 }),
+    // simulates space (makes it sound like its all in 1 room)
     new Tone.Reverb({ decay: biome.reverbDecay, preDelay: 0.04, wet: biome.reverbWet }),
-    new Tone.Filter({ type: "highpass", frequency: 30, rolloff: -12 }),
+    // cut low hz
+    new Tone.Filter({ type: "highpass", frequency: 40, rolloff: -12 }),
+    // gentler cut of high volume above a -20 dB threshold
     new Tone.Compressor({ threshold: -20, ratio: 3, attack: 0.05, release: 0.3 }),
+    // hard cut above -1 dB threshold
     new Tone.Limiter(-1),
   ];
   chainInto(nodes, Tone.getDestination());
   return nodes;
 };
 
-// per-voice channel strip: sub/DC highpass in, register-aware gain out.
+// per-instrument sound gate
 const equalize = (spec: InstrumentSpec, register: number): [Tone.Filter, Tone.Gain] => {
+  // cut off low hz
   const highpass = new Tone.Filter({ type: "highpass", frequency: 40, rolloff: -12 });
-  const trim = register <= 2 ? 0.6 : 1;
+  // lower volume below register 2, further below 1
+  const trim = register <= 1 ? 0.3 : register <= 2 ? 0.5 : 1;
   return [highpass, new Tone.Gain(spec.gain * trim)];
 };
 
-// synth, filter, effects, then correction highpass and gain; the chain ends at the master.
+/** build one instrument voice chain into the master. */
 const buildVoice = (spec: InstrumentSpec, register: number, master: Tone.ToneAudioNode): Tone.ToneAudioNode[] => {
   const synth = spec.polyphony === undefined
     ? new spec.synth(spec.options)
@@ -68,7 +76,7 @@ const buildVoice = (spec: InstrumentSpec, register: number, master: Tone.ToneAud
   return nodes;
 };
 
-// random events for one role: [bar, beat, step]. Not seed-derived.
+/** random [bar, beat, step] events for one role. */
 const buildScore = (density: number, steps: number): [number, number, number][] => {
   const count = Math.min(Math.round(Math.min(density, MAX_DENSITY) * LOOP_BARS), LOOP_BARS * 4);
   const seen = new Set<string>();
@@ -84,7 +92,7 @@ const buildScore = (density: number, steps: number): [number, number, number][] 
   return events;
 };
 
-// one looping part per role; steps wrap up octaves.
+/** schedule one role's looping part; steps wrap octaves. */
 const buildPart = (
   spec: InstrumentSpec,
   synth: Tone.ToneAudioNode,
@@ -116,7 +124,7 @@ const describeSky = (seed: Seed): { set: InstrumentSetName; mode: string; biome:
   return { set, mode, biome };
 };
 
-// ramp buffer edges to zero so no truncated note pops.
+/** ramp buffer edges to zero; prevents truncation pops. */
 const deClick = (audio: AudioBuffer): AudioBuffer => {
   const fade = Math.floor(audio.sampleRate * 0.02);
   for (let channel = 0; channel < audio.numberOfChannels; channel++) {
@@ -134,10 +142,10 @@ const deClick = (audio: AudioBuffer): AudioBuffer => {
 const playSky = (seed: Seed): (() => void) => {
   const random = createSeededRandom(deriveSeed(seed, "music"));
   const set = INSTRUMENT_SETS[pick(random, SET_NAMES)];
-  const biome = BIOMES[pick(random, BIOME_NAMES)];
+  const pickedBiome = BIOMES[pick(random, BIOME_NAMES)];
   const offsets = MODES[pick(random, MODE_NAMES)];
-  const roles = [...biome.instruments];
-  const loopSeconds = (LOOP_BARS * 4 * 60) / biome.tempo;
+  const roles = [...pickedBiome.instruments];
+  const loopSeconds = (LOOP_BARS * 4 * 60) / pickedBiome.tempo;
 
   // halve then tanh: smooth ceiling on any summed level
   const context = Tone.getContext().rawContext as unknown as AudioContext;
@@ -160,18 +168,20 @@ const playSky = (seed: Seed): (() => void) => {
   // render one loop plus tail offline with a fresh random score
   const renderChunk = (): Promise<AudioBuffer> =>
     Tone.Offline(({ transport }) => {
-      const master = buildMaster(biome);
+      const master = buildMaster(pickedBiome);
       for (const role of roles) {
         const spec = set[role];
-        const register = Math.min(MAX_REGISTER, Math.max(MIN_REGISTER, (spec.register ?? 3) + biome.registerShift));
-        const events = buildScore(biome.density[role], offsets.length + 1);
+        const register = Math.min(MAX_REGISTER, Math.max(MIN_REGISTER, (spec.register ?? 3) + pickedBiome.registerShift));
+        const events = buildScore(pickedBiome.density[role], offsets.length + 1);
         const synth = buildVoice(spec, register, master[0])[0];
-        buildPart(spec, synth, events, offsets, register, biome.tempo);
+        buildPart(spec, synth, events, offsets, register, pickedBiome.tempo);
       }
-      transport.bpm.value = biome.tempo;
+      transport.bpm.value = pickedBiome.tempo;
       transport.start();
       return (master.find((node) => node instanceof Tone.Reverb) as Tone.Reverb).ready;
-    }, loopSeconds + 6).then((buffer): AudioBuffer => deClick(buffer.get() as AudioBuffer));
+      //
+    }, loopSeconds + 6) // add a 6 second tail to let reverb ring out
+      .then((buffer): AudioBuffer => deClick(buffer.get() as AudioBuffer));
 
   // keep one chunk queued ahead; tails overlap for a seamless seam
   const fill = async (): Promise<void> => {
@@ -206,4 +216,15 @@ const playSky = (seed: Seed): (() => void) => {
   };
 };
 
-export { describeSky, playSky };
+export {
+  LOOP_BARS,
+  MIN_REGISTER,
+  MAX_REGISTER,
+  buildMaster,
+  buildVoice,
+  buildScore,
+  buildPart,
+  deClick,
+  describeSky,
+  playSky,
+};

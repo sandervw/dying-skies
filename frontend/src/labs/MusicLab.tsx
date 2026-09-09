@@ -1,6 +1,6 @@
 /**
  * A Throwaway file for testing; may break code style/conventions
- * Always be sure to mirror logic from musicService.ts in this file
+ * Audio engine is imported from musicService.ts; this adds visuals.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -8,13 +8,19 @@ import type { CSSProperties, ReactElement } from "react";
 import * as Tone from "tone";
 import { INSTRUMENT_SETS } from "../utils/instrumentSets";
 import { MODES } from "../utils/modes";
-import { BIOMES, type Biome } from "../utils/biomes";
+import { BIOMES } from "../utils/biomes";
+import {
+  LOOP_BARS,
+  MIN_REGISTER,
+  MAX_REGISTER,
+  buildMaster,
+  buildVoice,
+  buildScore,
+  buildPart,
+  deClick,
+} from "../services/musicService";
 import type { InstrumentSetName, InstrumentSpec, Role } from "../types/music";
 
-const LOOP_BARS = 8;
-const MAX_DENSITY = 1.5;
-const MIN_REGISTER = 1;
-const MAX_REGISTER = 6;
 const BEATS_PER_BAR = 4;
 
 const SET_NAMES = Object.keys(INSTRUMENT_SETS) as InstrumentSetName[];
@@ -126,150 +132,6 @@ const pick = <T,>(items: readonly T[]): T =>
 
 const clamp = (value: number, low: number, high: number): number =>
   Math.min(high, Math.max(low, value));
-
-const chainInto = (
-  nodes: Tone.ToneAudioNode[],
-  output: Tone.ToneAudioNode,
-): void => {
-  nodes
-    .reduce((previous, node): Tone.ToneAudioNode => {
-      previous.connect(node);
-      return node;
-    })
-    .connect(output);
-};
-
-const buildMaster = (biome: Biome): Tone.ToneAudioNode[] => {
-  const nodes = [
-    new Tone.Filter({ type: "highpass", frequency: 30, rolloff: -12 }),
-    new Tone.Gain(0.5),
-    new Tone.Filter({ type: "lowpass", frequency: 7000, rolloff: -12 }),
-    new Tone.Reverb({
-      decay: biome.reverbDecay,
-      preDelay: 0.04,
-      wet: biome.reverbWet,
-    }),
-    new Tone.Compressor({
-      threshold: -20,
-      ratio: 3,
-      attack: 0.05,
-      release: 0.3,
-    }),
-    new Tone.Limiter(-1),
-  ];
-  chainInto(nodes, Tone.getDestination());
-  return nodes;
-};
-
-// per-voice channel strip: sub/DC highpass in, register-aware gain out.
-const equalize = (
-  spec: InstrumentSpec,
-  register: number,
-): [Tone.Filter, Tone.Gain] => {
-  const highpass = new Tone.Filter({
-    type: "highpass",
-    frequency: 40,
-    rolloff: -12,
-  });
-  const trim = register <= 2 ? 0.6 : 1;
-  return [highpass, new Tone.Gain(spec.gain * trim)];
-};
-
-// synth, filter, effects, then correction highpass and gain; the chain ends at the master.
-const buildVoice = (
-  spec: InstrumentSpec,
-  register: number,
-  master: Tone.ToneAudioNode,
-): Tone.ToneAudioNode[] => {
-  const synth =
-    spec.polyphony === undefined
-      ? new spec.synth(spec.options)
-      : new Tone.PolySynth({
-          maxPolyphony: spec.polyphony,
-          voice: spec.synth as never,
-          options: spec.options as never,
-        });
-  const [highpass, gain] = equalize(spec, register);
-  const nodes: Tone.ToneAudioNode[] = [synth];
-  if (spec.filter !== undefined) {
-    nodes.push(new Tone.Filter(spec.filter));
-  }
-  for (const [Effect, options] of spec.effects) {
-    const effect = new Effect(options);
-    effect.start?.();
-    nodes.push(effect);
-  }
-  nodes.push(highpass, gain);
-  chainInto(nodes, master);
-  return nodes;
-};
-
-const buildScore = (
-  density: number,
-  steps: number,
-): [number, number, number][] => {
-  const count = Math.min(
-    Math.round(Math.min(density, MAX_DENSITY) * LOOP_BARS),
-    LOOP_BARS * 4,
-  );
-  const seen = new Set<string>();
-  const events: [number, number, number][] = [];
-  while (events.length < count) {
-    const bar = Math.floor(Math.random() * LOOP_BARS);
-    const beat = Math.floor(Math.random() * 4);
-    const slot = `${bar}:${beat}`;
-    if (seen.has(slot) || slot === "0:0") continue;
-    seen.add(slot);
-    events.push([bar, beat, Math.floor(Math.random() * steps)]);
-  }
-  return events;
-};
-
-const buildPart = (
-  spec: InstrumentSpec,
-  synth: Tone.ToneAudioNode,
-  events: readonly [number, number, number][],
-  offsets: readonly number[],
-  register: number,
-  tempo: number,
-): void => {
-  const seconds = (spec.hold * 60) / tempo;
-  const part = new Tone.Part(
-    (time, step: number): void => {
-      if (synth instanceof Tone.NoiseSynth) {
-        synth.triggerAttackRelease(seconds, time);
-      } else {
-        const semitone =
-          offsets[step % offsets.length] +
-          12 * Math.floor(step / offsets.length);
-        const note = Tone.Frequency(`C${register}`)
-          .transpose(semitone)
-          .toFrequency();
-        (synth as Tone.PolySynth).triggerAttackRelease(note, seconds, time);
-      }
-    },
-    events.map(([bar, beat, step]): [string, number] => [
-      `${bar}:${beat}:0`,
-      step,
-    ]),
-  );
-  part.start(0);
-};
-
-// fixed identity: roles, registers, tempo. Scores re-roll per chunk.
-// ramp buffer edges to zero so no truncated note pops.
-const deClick = (audio: AudioBuffer): AudioBuffer => {
-  const fade = Math.floor(audio.sampleRate * 0.02);
-  for (let channel = 0; channel < audio.numberOfChannels; channel++) {
-    const data = audio.getChannelData(channel);
-    for (let index = 0; index < fade; index++) {
-      const gain = index / fade;
-      data[index] *= gain;
-      data[data.length - 1 - index] *= gain;
-    }
-  }
-  return audio;
-};
 
 const buildPlan = (
   setName: InstrumentSetName,
