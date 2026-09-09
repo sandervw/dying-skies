@@ -77,12 +77,12 @@ const buildVoice = (spec: InstrumentSpec, register: number, master: Tone.ToneAud
 };
 
 /** random [bar, beat, step] events for one role. */
-const buildScore = (density: number, steps: number): [number, number, number][] => {
-  const count = Math.min(Math.round(Math.min(density, MAX_DENSITY) * LOOP_BARS), LOOP_BARS * 4);
+const buildScore = (density: number, steps: number, bars = LOOP_BARS): [number, number, number][] => {
+  const count = Math.min(Math.round(Math.min(density, MAX_DENSITY) * bars), bars * 4);
   const seen = new Set<string>();
   const events: [number, number, number][] = [];
   while (events.length < count) {
-    const bar = Math.floor(Math.random() * LOOP_BARS);
+    const bar = Math.floor(Math.random() * bars);
     const beat = Math.floor(Math.random() * 4);
     const slot = `${bar}:${beat}`;
     if (seen.has(slot) || slot === "0:0") continue; // skip seam downbeat and dupes
@@ -145,7 +145,7 @@ const playSky = (seed: Seed): (() => void) => {
   const biome = BIOMES[pick(random, BIOME_NAMES)];
   const offsets = MODES[pick(random, MODE_NAMES)];
   const roles = [...biome.instruments];
-  const loopSeconds = (LOOP_BARS * 4 * 60) / biome.tempo;
+  const chunkSeconds = (bars: number): number => (bars * 4 * 60) / biome.tempo;
 
   // halve then tanh: smooth ceiling on any summed level
   const context = Tone.getContext().rawContext as unknown as AudioContext;
@@ -165,14 +165,14 @@ const playSky = (seed: Seed): (() => void) => {
   let nextTime = context.currentTime + 0.2;
   const active = new Set<AudioBufferSourceNode>();
 
-  // render one loop plus tail offline with a fresh random score
-  const renderChunk = (): Promise<AudioBuffer> =>
+  // render `bars` bars plus tail offline with a fresh random score
+  const renderChunk = (bars: number): Promise<AudioBuffer> =>
     Tone.Offline(({ transport }) => {
       const master = buildMaster(biome);
       for (const role of roles) {
         const spec = set[role];
         const register = Math.min(MAX_REGISTER, Math.max(MIN_REGISTER, (spec.register ?? 3) + biome.registerShift));
-        const events = buildScore(biome.density[role], offsets.length + 1);
+        const events = buildScore(biome.density[role], offsets.length + 1, bars);
         const synth = buildVoice(spec, register, master[0])[0];
         buildPart(spec, synth, events, offsets, register, biome.tempo);
       }
@@ -180,22 +180,25 @@ const playSky = (seed: Seed): (() => void) => {
       transport.start();
       return (master.find((node) => node instanceof Tone.Reverb) as Tone.Reverb).ready;
       //
-    }, loopSeconds + 6) // add a 6 second tail to let reverb ring out
+    }, chunkSeconds(bars) + 6) // add a 6 second tail to let reverb ring out
       .then((buffer): AudioBuffer => deClick(buffer.get() as AudioBuffer));
 
   // keep one chunk queued ahead; tails overlap for a seamless seam
+  let firstChunk = true;
   const fill = async (): Promise<void> => {
     if (filling) return;
     filling = true;
-    while (!stopped && nextTime < context.currentTime + loopSeconds) {
-      const buffer = await renderChunk();
+    while (!stopped && nextTime < context.currentTime + chunkSeconds(LOOP_BARS)) {
+      const bars = firstChunk ? 2 : LOOP_BARS; // short first chunk plays sooner
+      const buffer = await renderChunk(bars);
       if (stopped) break;
       const source = context.createBufferSource();
       source.buffer = buffer;
       source.connect(headroom);
       if (nextTime < context.currentTime) nextTime = context.currentTime + 0.05;
       source.start(nextTime);
-      nextTime += loopSeconds;
+      nextTime += chunkSeconds(bars);
+      firstChunk = false;
       active.add(source);
       source.onended = (): void => { active.delete(source); };
     }

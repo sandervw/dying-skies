@@ -165,10 +165,10 @@ type ScoredVoice = {
 };
 
 // a fresh random score for every voice, used by one chunk
-const scoreVoices = (plan: ReturnType<typeof buildPlan>): ScoredVoice[] =>
+const scoreVoices = (plan: ReturnType<typeof buildPlan>, bars: number): ScoredVoice[] =>
   plan.voices.map((voice) => ({
     ...voice,
-    events: buildScore(plan.biome.density[voice.role], plan.offsets.length + 1),
+    events: buildScore(plan.biome.density[voice.role], plan.offsets.length + 1, bars),
   }));
 
 // flatten scored voices into per-note visual data mirroring the triggers.
@@ -265,8 +265,10 @@ const startPlayback = (
     },
   };
 
-  // render one loop plus tail offline with a fresh random score
-  const renderChunk = (voices: ScoredVoice[]): Promise<AudioBuffer> =>
+  const chunkSeconds = (bars: number): number => (bars * BEATS_PER_BAR * 60) / plan.tempo;
+
+  // render `bars` bars plus tail offline with a fresh random score
+  const renderChunk = (voices: ScoredVoice[], bars: number): Promise<AudioBuffer> =>
     Tone.Offline(({ transport }) => {
       const master = buildMaster(plan.biome);
       for (const voice of voices) {
@@ -284,11 +286,12 @@ const startPlayback = (
       transport.start();
       return (master.find((node) => node instanceof Tone.Reverb) as Tone.Reverb)
         .ready;
-    }, plan.loopSeconds + 6).then(
+    }, chunkSeconds(bars) + 6).then(
       (buffer): AudioBuffer => deClick(buffer.get() as AudioBuffer),
     );
 
   // keep one chunk queued ahead; tails overlap for a seamless seam
+  let firstChunk = true;
   const fill = async (): Promise<void> => {
     if (filling) return;
     filling = true;
@@ -296,8 +299,9 @@ const startPlayback = (
       !playback.stopped &&
       nextTime < context.currentTime + plan.loopSeconds
     ) {
-      const voices = scoreVoices(plan);
-      const buffer = await renderChunk(voices);
+      const bars = firstChunk ? 2 : LOOP_BARS; // short first chunk plays sooner
+      const voices = scoreVoices(plan, bars);
+      const buffer = await renderChunk(voices, bars);
       if (playback.stopped) break;
       const source = context.createBufferSource();
       source.buffer = buffer;
@@ -308,7 +312,8 @@ const startPlayback = (
         startTime: nextTime,
         notes: scoredToNotes(voices, plan.offsets, plan.secPerBeat),
       });
-      nextTime += plan.loopSeconds;
+      nextTime += chunkSeconds(bars);
+      firstChunk = false;
       active.add(source);
       source.onended = (): void => {
         active.delete(source);
