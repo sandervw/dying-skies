@@ -48,12 +48,12 @@ Events per bar, per biome, per role. Fixed values, no jitter.
 
 | Set         | Character                                                         |
 | ----------- | ----------------------------------------------------------------- |
-| morrowind   | cinematic, swelling saw pads, high whistle, glass chime           |
 | kingsfield  | cold and subterranean, metallic FM pad, formant horn, hiss        |
 | majorasmask | acoustic and dry, bowed strings, celesta, ocarina, koto           |
 | deusex      | synthetic, supersaw bed, FM strikes, reedy lead, noise shimmer    |
-| aom         | world and ritual, kalimba, oud, formant choir, filtered floor     |
 | zoombinis   | bright and buoyant, music box, soft flute, chord pad, misty swell |
+| aindulmedir | warm and reverberant, velvet pad, glass shimmer, crystalline harp |
+| ogresound   | cinematic and cavernous, saw swell, glassy pluck, kinetic lead    |
 
 ## Score
 

@@ -7,76 +7,6 @@
 import * as Tone from "tone";
 import type { InstrumentSetName, InstrumentSpec, Role } from "../types/music";
 
-// Peaceful Waters, plus Silt Sunrise for the drone.
-const morrowind: Record<Role, InstrumentSpec> = {
-  // deep foundation sub-drone
-  drone: {
-    synth: Tone.MonoSynth,
-    options: {
-      oscillator: { type: "triangle" },
-      filterEnvelope: { attack: 2.0, decay: 1.0, sustain: 1.0, release: 3.0, octaves: 0.5 },
-      envelope: { attack: 1.8, decay: 0.5, sustain: 1.0, release: 3.0 },
-      portamento: 0.3,
-    },
-    register: 1, hold: 8, gain: 0.9,
-    filter: { type: "lowpass", frequency: 250, rolloff: -24 },
-    effects: [],
-  },
-  // orchestral string section
-  pad: {
-    synth: Tone.Synth, polyphony: 6,
-    options: {
-      oscillator: { type: "fatsawtooth", count: 3, spread: 25 },
-      envelope: { attack: 1.8, decay: 1.2, sustain: 0.85, release: 2.5 },
-    },
-    register: 3, hold: 6, gain: 0.5,
-    filter: { type: "lowpass", frequency: 600, rolloff: -24 },
-    effects: [
-      [Tone.Chorus, { frequency: 1.5, delayTime: 3.5, depth: 0.7, wet: 0.4 }],
-      [Tone.StereoWidener, { width: 0.8, wet: 1.0 }],
-    ],
-  },
-  // airy shimmer texture
-  sparkle: {
-    synth: Tone.FMSynth, polyphony: 4,
-    options: {
-      oscillator: { type: "sine" }, modulation: { type: "sine" }, harmonicity: 3.01, modulationIndex: 2.0,
-      envelope: { attack: 0.6, decay: 2.0, sustain: 0.6, release: 3.5 },
-    },
-    register: 6, hold: 2, gain: 0.35,
-    filter: { type: "highpass", frequency: 2500, rolloff: -12 },
-    effects: [
-      [Tone.FeedbackDelay, { delayTime: 0.375, feedback: 0.45, wet: 0.35 }],
-      [Tone.AutoPanner, { frequency: 0.2, depth: 0.7, wet: 1.0 }],
-    ],
-  },
-  // plucked acoustic harp
-  lead: {
-    synth: Tone.FMSynth, polyphony: 4,
-    options: {
-      oscillator: { type: "sine" }, modulation: { type: "triangle" }, harmonicity: 3.5, modulationIndex: 1.8,
-      envelope: { attack: 0.005, decay: 0.85, sustain: 0.0, release: 1.2 },
-    },
-    register: 5, hold: 3, gain: 0.4,
-    filter: { type: "lowpass", frequency: 4500, rolloff: -12 },
-    effects: [[Tone.FeedbackDelay, { delayTime: "8n.", feedback: 0.35, wet: 0.3 }]],
-  },
-  // cinematic brass ensemble swell
-  counter: {
-    synth: Tone.Synth, polyphony: 4,
-    options: {
-      oscillator: { type: "fatsawtooth", count: 3, spread: 18 },
-      envelope: { attack: 2.0, decay: 1.5, sustain: 0.8, release: 2.5 },
-    },
-    register: 2, hold: 6, gain: 0.4,
-    filter: { type: "lowpass", frequency: 900, rolloff: -24 },
-    effects: [
-      [Tone.Chorus, { frequency: 0.5, delayTime: 3.5, depth: 0.6, wet: 0.4 }],
-      [Tone.AutoFilter, { frequency: 0.12, baseFrequency: 500, octaves: 2, wet: 0.6 }],
-    ],
-  },
-};
-
 // Big Mine, plus East Village for chimes and choir.
 const kingsfield: Record<Role, InstrumentSpec> = {
   // deep ambient sub-drone
@@ -290,77 +220,6 @@ const deusex: Record<Role, InstrumentSpec> = {
   },
 };
 
-// Suture Self, plus Chocolate Outline for the drone.
-const aom: Record<Role, InstrumentSpec> = {
-  // root sub drone
-  drone: {
-    synth: Tone.Synth, polyphony: 4,
-    options: {
-      oscillator: { type: "fatsawtooth", count: 3, spread: 18 },
-      envelope: { attack: 1.8, decay: 2.0, sustain: 0.85, release: 2.5 },
-      portamento: 0.2,
-    },
-    register: 1, hold: 8, gain: 0.8,
-    filter: { type: "lowpass", frequency: 420, rolloff: -24 },
-    effects: [[Tone.Chorus, { frequency: 0.8, delayTime: 4.0, depth: 0.5, wet: 0.4 }]],
-  },
-  // fingerpicked acoustic guitar
-  pad: {
-    synth: Tone.FMSynth, polyphony: 4,
-    options: {
-      oscillator: { type: "sine" }, modulation: { type: "triangle" }, harmonicity: 3.5, modulationIndex: 12,
-      envelope: { attack: 0.005, decay: 0.8, sustain: 0.0, release: 0.6 },
-    },
-    register: 3, hold: 3, gain: 0.45,
-    filter: { type: "lowpass", frequency: 2200, rolloff: -24 },
-    effects: [[Tone.PingPongDelay, { delayTime: "8n.", feedback: 0.35, wet: 0.25 }]],
-  },
-  // chimes and bell accents
-  sparkle: {
-    synth: Tone.FMSynth, polyphony: 8,
-    options: {
-      oscillator: { type: "sine" }, modulation: { type: "triangle" }, harmonicity: 3.5, modulationIndex: 12,
-      envelope: { attack: 0.002, decay: 0.9, sustain: 0.0, release: 0.6 },
-    },
-    register: 5, hold: 2, gain: 0.4,
-    filter: { type: "lowpass", frequency: 4500, rolloff: -12 },
-    effects: [
-      [Tone.PingPongDelay, { delayTime: "8n.", feedback: 0.35, wet: 0.25 }],
-      [Tone.AutoPanner, { frequency: 0.25, depth: 0.6, wet: 1.0 }],
-    ],
-  },
-  // breathy native american flute
-  lead: {
-    synth: Tone.MonoSynth,
-    options: {
-      oscillator: { type: "sawtooth" },
-      filterEnvelope: { attack: 0.1, decay: 0.4, sustain: 0.7, release: 0.6, baseFrequency: 700, octaves: 1.5 },
-      envelope: { attack: 0.08, decay: 0.3, sustain: 0.85, release: 0.6 },
-      portamento: 0.06,
-    },
-    register: 5, hold: 4, gain: 0.4,
-    filter: { type: "lowpass", frequency: 1800, rolloff: -12 },
-    effects: [
-      [Tone.Chorus, { frequency: 1.5, delayTime: 3.5, depth: 0.4, wet: 0.3 }],
-      [Tone.FeedbackDelay, { delayTime: "4n", feedback: 0.3, wet: 0.2 }],
-    ],
-  },
-  // wordless female vocal wash
-  counter: {
-    synth: Tone.Synth, polyphony: 6,
-    options: {
-      oscillator: { type: "fatsawtooth", count: 3, spread: 25 },
-      envelope: { attack: 1.2, decay: 1.5, sustain: 0.9, release: 2.4 },
-    },
-    register: 4, hold: 8, gain: 0.38,
-    filter: { type: "lowpass", frequency: 900, rolloff: -24 },
-    effects: [
-      [Tone.Chorus, { frequency: 0.8, delayTime: 4.0, depth: 0.7, wet: 0.5 }],
-      [Tone.StereoWidener, { width: 0.9, wet: 0.8 }],
-    ],
-  },
-};
-
 const zoombinis: Record<Role, InstrumentSpec> = {
   drone: {
     synth: Tone.MonoSynth,
@@ -425,9 +284,164 @@ const zoombinis: Record<Role, InstrumentSpec> = {
   },
 };
 
-/** the six instrument sets, each filling all five roles. */
+// Winter And Slumber, plus Wind-Bitten for the counter.
+const aindulmedir: Record<Role, InstrumentSpec> = {
+  // deep root sub-bass drone
+  drone: {
+    synth: Tone.MonoSynth,
+    options: {
+      oscillator: { type: "triangle" },
+      filterEnvelope: { attack: 1.0, decay: 1.0, sustain: 1.0, release: 2.0, baseFrequency: 180, octaves: 0.5 },
+      envelope: { attack: 1.2, decay: 1.0, sustain: 1.0, release: 2.5 },
+      portamento: 0.4,
+    },
+    register: 1, hold: 8, gain: 0.85,
+    filter: { type: "lowpass", frequency: 220, rolloff: -24 },
+    effects: [[Tone.Reverb, { decay: 3.0, preDelay: 0.01, wet: 0.2 }]],
+  },
+  // warm swelling velvet pad
+  pad: {
+    synth: Tone.Synth, polyphony: 6,
+    options: {
+      oscillator: { type: "fatsawtooth", count: 3, spread: 18 },
+      envelope: { attack: 1.8, decay: 2.0, sustain: 0.75, release: 3.0 },
+    },
+    register: 3, hold: 6, gain: 0.5,
+    filter: { type: "lowpass", frequency: 750, rolloff: -24 },
+    effects: [
+      [Tone.Chorus, { frequency: 0.8, delayTime: 4.0, depth: 0.5, wet: 0.4 }],
+      [Tone.Reverb, { decay: 6.0, preDelay: 0.05, wet: 0.65 }],
+    ],
+  },
+  // ethereal glass shimmer texture
+  sparkle: {
+    synth: Tone.AMSynth, polyphony: 3,
+    options: {
+      oscillator: { type: "sine" }, modulation: { type: "triangle" }, harmonicity: 1.0, modulationIndex: 0.4,
+      envelope: { attack: 2.5, decay: 2.0, sustain: 0.5, release: 3.5 },
+    },
+    register: 6, hold: 2, gain: 0.35,
+    filter: { type: "bandpass", frequency: 3800, rolloff: -12 },
+    effects: [
+      [Tone.Chorus, { frequency: 1.2, delayTime: 2.5, depth: 0.6, wet: 0.5 }],
+      [Tone.FeedbackDelay, { delayTime: "4n", feedback: 0.5, wet: 0.4 }],
+      [Tone.Reverb, { decay: 7.0, preDelay: 0.08, wet: 0.75 }],
+    ],
+  },
+  // crystalline harp pluck
+  lead: {
+    synth: Tone.FMSynth, polyphony: 4,
+    options: {
+      oscillator: { type: "sine" }, modulation: { type: "sine" }, harmonicity: 2.0, modulationIndex: 1.8,
+      envelope: { attack: 0.005, decay: 1.2, sustain: 0.1, release: 1.8 },
+    },
+    register: 5, hold: 3, gain: 0.4,
+    filter: { type: "lowpass", frequency: 3200, rolloff: -12 },
+    effects: [
+      [Tone.PingPongDelay, { delayTime: "8n.", feedback: 0.45, wet: 0.35 }],
+      [Tone.Chorus, { frequency: 1.5, delayTime: 3.5, depth: 0.4, wet: 0.25 }],
+      [Tone.Reverb, { decay: 4.5, preDelay: 0.02, wet: 0.55 }],
+    ],
+  },
+  // slow warm harmonic swell
+  counter: {
+    synth: Tone.Synth, polyphony: 6,
+    options: {
+      oscillator: { type: "fatsawtooth", count: 3, spread: 18 },
+      envelope: { attack: 3.0, decay: 2.0, sustain: 0.85, release: 4.5 },
+    },
+    register: 2, hold: 6, gain: 0.4,
+    filter: { type: "lowpass", frequency: 650, rolloff: -24 },
+    effects: [
+      [Tone.Chorus, { frequency: 0.5, delayTime: 3.5, depth: 0.6, wet: 0.35 }],
+      [Tone.Reverb, { decay: 8.0, preDelay: 0.04, wet: 0.6 }],
+    ],
+  },
+};
+
+// Above The Euromechopolis, plus Sneaking Suspicions for sparkle and counter.
+const ogresound: Record<Role, InstrumentSpec> = {
+  // rumbling subterranean sub-drone
+  drone: {
+    synth: Tone.MonoSynth,
+    options: {
+      oscillator: { type: "fatsawtooth", count: 3, spread: 15 },
+      filterEnvelope: { attack: 2.5, decay: 2.0, sustain: 0.7, release: 3.0, baseFrequency: 90, octaves: 1.2 },
+      envelope: { attack: 3.0, decay: 2.0, sustain: 1.0, release: 4.0 },
+      portamento: 0.5,
+    },
+    register: 1, hold: 8, gain: 0.85,
+    filter: { type: "lowpass", frequency: 180, rolloff: -12 },
+    effects: [
+      [Tone.Distortion, { distortion: 0.15, wet: 0.2 }],
+      [Tone.Reverb, { decay: 5.0, preDelay: 0.05, wet: 0.25 }],
+    ],
+  },
+  // warm broad cinematic swell pad
+  pad: {
+    synth: Tone.Synth, polyphony: 6,
+    options: {
+      oscillator: { type: "sawtooth" },
+      envelope: { attack: 2.2, decay: 2.0, sustain: 0.8, release: 3.5 },
+    },
+    register: 3, hold: 6, gain: 0.5,
+    filter: { type: "lowpass", frequency: 500, rolloff: -12 },
+    effects: [
+      [Tone.Chorus, { frequency: 1.2, delayTime: 3.5, depth: 0.65, wet: 0.5 }],
+      [Tone.StereoWidener, { width: 0.75, wet: 1.0 }],
+      [Tone.Reverb, { decay: 6.0, preDelay: 0.04, wet: 0.55 }],
+    ],
+  },
+  // crisp glassy fm pluck
+  sparkle: {
+    synth: Tone.FMSynth,
+    options: {
+      oscillator: { type: "sine" }, modulation: { type: "sine" }, harmonicity: 2.0, modulationIndex: 6.5,
+      envelope: { attack: 0.002, decay: 0.45, sustain: 0.05, release: 0.6 },
+    },
+    register: 6, hold: 2, gain: 0.4,
+    filter: { type: "lowpass", frequency: 2400, rolloff: -12 },
+    effects: [
+      [Tone.PingPongDelay, { delayTime: 0.25, feedback: 0.45, wet: 0.35 }],
+      [Tone.Reverb, { decay: 3.5, preDelay: 0.02, wet: 0.4 }],
+    ],
+  },
+  // snappy kinetic ostinato pluck
+  lead: {
+    synth: Tone.MonoSynth,
+    options: {
+      oscillator: { type: "pulse", width: 0.3 },
+      filterEnvelope: { attack: 0.002, decay: 0.15, sustain: 0.0, release: 0.15, baseFrequency: 1200, octaves: 3.0 },
+      envelope: { attack: 0.005, decay: 0.22, sustain: 0.0, release: 0.18 },
+    },
+    register: 4, hold: 2, gain: 0.4,
+    filter: { type: "lowpass", frequency: 1200, rolloff: -24 },
+    effects: [
+      [Tone.FeedbackDelay, { delayTime: "8n.", feedback: 0.45, wet: 0.35 }],
+      [Tone.PingPongDelay, { delayTime: "16n", feedback: 0.2, wet: 0.2 }],
+      [Tone.Reverb, { decay: 3.5, preDelay: 0.02, wet: 0.3 }],
+    ],
+  },
+  // dusty grainy ominous atmospheric bed
+  counter: {
+    synth: Tone.Synth, polyphony: 4,
+    options: {
+      oscillator: { type: "fatsawtooth", count: 3, spread: 25 },
+      envelope: { attack: 2.5, decay: 1.8, sustain: 0.85, release: 3.0 },
+    },
+    register: 3, hold: 6, gain: 0.42,
+    filter: { type: "bandpass", frequency: 650, rolloff: -12 },
+    effects: [
+      [Tone.Chorus, { frequency: 0.5, delayTime: 3.5, depth: 0.7, wet: 0.5 }],
+      [Tone.Reverb, { decay: 6.0, preDelay: 0.04, wet: 0.65 }],
+    ],
+  },
+};
+
+/** the instrument sets, each filling all five roles. */
 const INSTRUMENT_SETS: Record<InstrumentSetName, Record<Role, InstrumentSpec>> = {
-  morrowind, kingsfield, majorasmask, deusex, aom, zoombinis,
+  kingsfield, majorasmask, deusex, zoombinis,
+  aindulmedir, ogresound,
 };
 
 export { INSTRUMENT_SETS };

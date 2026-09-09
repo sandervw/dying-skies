@@ -3,8 +3,10 @@ import type * as Tone from "tone";
 /** the five instrument slots every set fills. */
 type Role = "drone" | "pad" | "sparkle" | "lead" | "counter";
 
-/** the six instrument sets, one voice per role. */
-type InstrumentSetName = "morrowind" | "kingsfield" | "majorasmask" | "deusex" | "aom" | "zoombinis";
+/** the instrument sets, one voice per role. */
+type InstrumentSetName =
+  | "kingsfield" | "majorasmask" | "deusex" | "zoombinis"
+  | "aindulmedir" | "ogresound";
 
 /** any Tone voice class; options are checked by Tone at runtime. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

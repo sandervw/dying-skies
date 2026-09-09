@@ -531,7 +531,7 @@ const drawFrame = (canvas: HTMLCanvasElement, playback: Playback): void => {
 };
 
 const MusicLab = (): ReactElement => {
-  const [setName, setSetName] = useState<InstrumentSetName>("morrowind");
+  const [setName, setSetName] = useState<InstrumentSetName>("kingsfield");
   const [biomeName, setBiomeName] = useState<string>("cavern");
   const [modeName, setModeName] = useState<string>("majorPentatonic");
   const [playing, setPlaying] = useState(false);
