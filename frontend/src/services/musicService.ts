@@ -142,10 +142,10 @@ const deClick = (audio: AudioBuffer): AudioBuffer => {
 const playSky = (seed: Seed): (() => void) => {
   const random = createSeededRandom(deriveSeed(seed, "music"));
   const set = INSTRUMENT_SETS[pick(random, SET_NAMES)];
-  const pickedBiome = BIOMES[pick(random, BIOME_NAMES)];
+  const biome = BIOMES[pick(random, BIOME_NAMES)];
   const offsets = MODES[pick(random, MODE_NAMES)];
-  const roles = [...pickedBiome.instruments];
-  const loopSeconds = (LOOP_BARS * 4 * 60) / pickedBiome.tempo;
+  const roles = [...biome.instruments];
+  const loopSeconds = (LOOP_BARS * 4 * 60) / biome.tempo;
 
   // halve then tanh: smooth ceiling on any summed level
   const context = Tone.getContext().rawContext as unknown as AudioContext;
@@ -168,15 +168,15 @@ const playSky = (seed: Seed): (() => void) => {
   // render one loop plus tail offline with a fresh random score
   const renderChunk = (): Promise<AudioBuffer> =>
     Tone.Offline(({ transport }) => {
-      const master = buildMaster(pickedBiome);
+      const master = buildMaster(biome);
       for (const role of roles) {
         const spec = set[role];
-        const register = Math.min(MAX_REGISTER, Math.max(MIN_REGISTER, (spec.register ?? 3) + pickedBiome.registerShift));
-        const events = buildScore(pickedBiome.density[role], offsets.length + 1);
+        const register = Math.min(MAX_REGISTER, Math.max(MIN_REGISTER, (spec.register ?? 3) + biome.registerShift));
+        const events = buildScore(biome.density[role], offsets.length + 1);
         const synth = buildVoice(spec, register, master[0])[0];
-        buildPart(spec, synth, events, offsets, register, pickedBiome.tempo);
+        buildPart(spec, synth, events, offsets, register, biome.tempo);
       }
-      transport.bpm.value = pickedBiome.tempo;
+      transport.bpm.value = biome.tempo;
       transport.start();
       return (master.find((node) => node instanceof Tone.Reverb) as Tone.Reverb).ready;
       //

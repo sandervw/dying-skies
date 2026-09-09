@@ -16,10 +16,10 @@ const morrowind: Record<Role, InstrumentSpec> = {
       oscillator: { type: "triangle" },
       filterEnvelope: { attack: 2.0, decay: 1.0, sustain: 1.0, release: 3.0, octaves: 0.5 },
       envelope: { attack: 1.8, decay: 0.5, sustain: 1.0, release: 3.0 },
-      portamento: 0.2,
+      portamento: 0.3,
     },
     register: 1, hold: 8, gain: 0.9,
-    filter: { type: "lowpass", frequency: 140, rolloff: -24 },
+    filter: { type: "lowpass", frequency: 250, rolloff: -24 },
     effects: [],
   },
   // orchestral string section
