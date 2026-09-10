@@ -35,7 +35,7 @@ API_URL = "https://openrouter.ai/api/v1/chat/completions"
 DEFAULT_MODEL = "google/gemini-3.8-flash"
 
 PROMPT = r"""For each distinct timbre in this file, note and output the following in a textual format:
-- role (drone/pad/bell/pluck)
+- role (bass/harmony/accent/lead/counter)
 - pitch register
 - attack/decay/sustain/release times
 - brightness
@@ -50,7 +50,7 @@ The desired output is something I can translate into "instrument characters/type
 ---
 
 ### [Instrument Number]. [Descriptive Instrument Name]
-* **Role:** [Drone | Pad | Lead | sparkle | counter-pad]
+* **Role:** [Bass | Harmony | Lead | Counter | Accent]
 * **Tone.js Type:** [Tone.Synth | Tone.MonoSynth | Tone.PolySynth(...) | Tone.FMSynth | Tone.AMSynth | Tone.DuoSynth | Tone.MembraneSynth | Tone.NoiseSynth | Tone.Sampler]
 * **Register / Note Range:** [e.g., Sub-Bass (C1-C2) | Mid (C3-C5) | High (C5-C7) | Frequency Band]
 * **Oscillator Configuration:**

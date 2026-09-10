@@ -24,19 +24,19 @@ Space and arrangement. Each preset fixes tempo, the shared reverb, register shif
 
 | Preset   | Tempo | Reverb decay | Reverb wet | Register shift | Instruments                        |
 | -------- | ----- | ------------ | ---------- | -------------- | ---------------------------------- |
-| cavern   | 48    | 9.0s         | 0.65       | -1             | drone, pad, sparkle, counter       |
-| chamber  | 72    | 2.5s         | 0.30       | 0              | drone, pad, sparkle, lead          |
-| expanse  | 58    | 6.0s         | 0.50       | 0              | drone, pad, sparkle, lead, counter |
-| veil     | 44    | 12.0s        | 0.75       | +1             | pad, sparkle, counter              |
-| scatter  | 84    | 4.0s         | 0.45       | +1             | pad, sparkle, lead, counter        |
-| undertow | 52    | 7.0s         | 0.55       | -1             | drone, pad, lead, counter          |
+| cavern   | 48    | 9.0s         | 0.65       | -1             | bass, harmony, accent, counter       |
+| chamber  | 72    | 2.5s         | 0.30       | 0              | bass, harmony, accent, lead          |
+| expanse  | 58    | 6.0s         | 0.50       | 0              | bass, harmony, accent, lead, counter |
+| veil     | 44    | 12.0s        | 0.75       | +1             | harmony, accent, counter             |
+| scatter  | 84    | 4.0s         | 0.45       | +1             | harmony, accent, lead, counter       |
+| undertow | 52    | 7.0s         | 0.55       | -1             | bass, harmony, lead, counter         |
 
 ## Density
 
 Events per bar, per preset, per role. Fixed values, no jitter.
 
-| Preset   | drone | pad  | sparkle | lead | counter |
-| -------- | ----- | ---- | ------- | ---- | ------- |
+| Preset   | bass  | harmony | accent | lead | counter |
+| -------- | ----- | ------- | ------ | ---- | ------- |
 | cavern   | 0.15  | 0.40 | 0.80    | 0.30 | 0.30    |
 | chamber  | 0.25  | 0.80 | 1.60    | 0.80 | 0.60    |
 | expanse  | 0.20  | 0.60 | 1.00    | 0.50 | 0.40    |

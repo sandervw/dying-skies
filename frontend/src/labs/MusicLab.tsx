@@ -29,9 +29,9 @@ const PRESET_NAMES = Object.keys(PRESETS);
 
 // one distinct colour per instrument slot, reused by audio + visuals.
 const ROLE_COLORS: Record<Role, string> = {
-  drone: "#5b6cff",
-  pad: "#39c8a0",
-  sparkle: "#ffd24a",
+  bass: "#5b6cff",
+  harmony: "#39c8a0",
+  accent: "#ffd24a",
   lead: "#ff6b4a",
   counter: "#e05bff",
 };

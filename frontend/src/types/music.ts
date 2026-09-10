@@ -1,7 +1,7 @@
 import type * as Tone from "tone";
 
 /** the five instrument slots every set fills. */
-type Role = "drone" | "pad" | "sparkle" | "lead" | "counter";
+type Role = "bass" | "harmony" | "lead" | "counter" | "accent";
 
 /** the instrument sets, one voice per role. */
 type InstrumentSetName =
