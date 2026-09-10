@@ -6,7 +6,7 @@ Vite + React single-page app rendering procedural skies on a Canvas 2D layer.
 - `components/`: `Sky` (the canvas view), `Header`, `Footer`, `ButtonBox`, `GalleryView`, `AuthOverlay` with `LoginForm`/`SignupForm`, `DestroyOverlay`, `Icon`.
 - `contexts/`: `SkySeedContext` (route seed plus save/destroy), `AuthContext` (current user).
 - `hooks/`: `useSkySeed`, `useSkyCanvas`, `useStats`, `useAuth`, `useImmersion`, `useSkyMusic`.
-- `services/`: `skyService`, `starService`, `paletteService`, `randomService` (pure seed-derived generators); `musicSoundService` (modes, biomes, instrument voices); `musicEngineService` (scoring, instrument baking, note scheduling); `starApiService`, `authService` (backend calls); `routeService`, `iconService`, `manualEntryGuards`.
+- `services/`: `skyService`, `starService`, `paletteService`, `randomService` (pure seed-derived generators); `musicSoundService` (modes, presets, instrument voices); `musicEngineService` (scoring, instrument baking, note scheduling); `starApiService`, `authService` (backend calls); `routeService`, `iconService`, `manualEntryGuards`.
 - `types/`: `sky`, `star`, `palette`, `auth`.
 - `App.tsx`, `main.tsx`: app shell and mount.
 

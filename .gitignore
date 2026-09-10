@@ -161,3 +161,7 @@ crash.log
 crash.*.log
 
 .claude/settings.local.json
+
+# frontend/scripts: track only Python sources
+frontend/scripts/*
+!frontend/scripts/*.py

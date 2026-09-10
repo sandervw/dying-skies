@@ -1,7 +1,7 @@
 import * as Tone from "tone";
 import { INSTRUMENT_SETS } from "../utils/instrumentSets";
 import { MODES } from "../utils/modes";
-import { BIOMES, type Biome } from "../utils/biomes";
+import { PRESETS, type Preset } from "../utils/presets";
 import { createSeededRandom, deriveSeed } from "./randomService";
 import type { Seed } from "./randomService";
 import type { InstrumentSetName, InstrumentSpec } from "../types/music";
@@ -13,7 +13,7 @@ const MAX_REGISTER = 6; // no piercing highs
 
 const SET_NAMES = Object.keys(INSTRUMENT_SETS) as InstrumentSetName[];
 const MODE_NAMES = Object.keys(MODES);
-const BIOME_NAMES = Object.keys(BIOMES);
+const PRESET_NAMES = Object.keys(PRESETS);
 
 // one random item from a list
 const pick = <T>(random: () => number, items: readonly T[]): T =>
@@ -28,14 +28,14 @@ const chainInto = (nodes: Tone.ToneAudioNode[], output: Tone.ToneAudioNode): voi
 };
 
 /** shared final sound gate; ends at the destination. */
-const buildMaster = (biome: Biome): Tone.ToneAudioNode[] => {
+const buildMaster = (preset: Preset): Tone.ToneAudioNode[] => {
   const nodes = [
     // cut volume
     new Tone.Gain(0.4),
     // cut high hz
     new Tone.Filter({ type: "lowpass", frequency: 7000, rolloff: -12 }),
     // simulates space (makes it sound like its all in 1 room)
-    new Tone.Reverb({ decay: biome.reverbDecay, preDelay: 0.04, wet: biome.reverbWet }),
+    new Tone.Reverb({ decay: preset.reverbDecay, preDelay: 0.04, wet: preset.reverbWet }),
     // cut low hz
     new Tone.Filter({ type: "highpass", frequency: 40, rolloff: -12 }),
     // gentler cut of high volume above a -20 dB threshold
@@ -114,14 +114,14 @@ const buildPart = (
   part.start(0);
 };
 
-/** name the instrument set, mode, and biome a seed plays. */
-const describeSky = (seed: Seed): { set: InstrumentSetName; mode: string; biome: string; } => {
+/** name the instrument set, mode, and preset a seed plays. */
+const describeSky = (seed: Seed): { set: InstrumentSetName; mode: string; preset: string; } => {
   // mirrors playSky's first three picks; keep this order.
   const random = createSeededRandom(deriveSeed(seed, "music"));
   const set = pick(random, SET_NAMES);
-  const biome = pick(random, BIOME_NAMES);
+  const preset = pick(random, PRESET_NAMES);
   const mode = pick(random, MODE_NAMES);
-  return { set, mode, biome };
+  return { set, mode, preset };
 };
 
 /** ramp buffer edges to zero; prevents truncation pops. */
@@ -142,10 +142,10 @@ const deClick = (audio: AudioBuffer): AudioBuffer => {
 const playSky = (seed: Seed): (() => void) => {
   const random = createSeededRandom(deriveSeed(seed, "music"));
   const set = INSTRUMENT_SETS[pick(random, SET_NAMES)];
-  const biome = BIOMES[pick(random, BIOME_NAMES)];
+  const preset = PRESETS[pick(random, PRESET_NAMES)];
   const offsets = MODES[pick(random, MODE_NAMES)];
-  const roles = [...biome.instruments];
-  const chunkSeconds = (bars: number): number => (bars * 4 * 60) / biome.tempo;
+  const roles = [...preset.instruments];
+  const chunkSeconds = (bars: number): number => (bars * 4 * 60) / preset.tempo;
 
   // halve then tanh: smooth ceiling on any summed level
   const context = Tone.getContext().rawContext as unknown as AudioContext;
@@ -168,15 +168,15 @@ const playSky = (seed: Seed): (() => void) => {
   // render `bars` bars plus tail offline with a fresh random score
   const renderChunk = (bars: number): Promise<AudioBuffer> =>
     Tone.Offline(({ transport }) => {
-      const master = buildMaster(biome);
+      const master = buildMaster(preset);
       for (const role of roles) {
         const spec = set[role];
-        const register = Math.min(MAX_REGISTER, Math.max(MIN_REGISTER, (spec.register ?? 3) + biome.registerShift));
-        const events = buildScore(biome.density[role], offsets.length + 1, bars);
+        const register = Math.min(MAX_REGISTER, Math.max(MIN_REGISTER, (spec.register ?? 3) + preset.registerShift));
+        const events = buildScore(preset.density[role], offsets.length + 1, bars);
         const synth = buildVoice(spec, register, master[0])[0];
-        buildPart(spec, synth, events, offsets, register, biome.tempo);
+        buildPart(spec, synth, events, offsets, register, preset.tempo);
       }
-      transport.bpm.value = biome.tempo;
+      transport.bpm.value = preset.tempo;
       transport.start();
       return (master.find((node) => node instanceof Tone.Reverb) as Tone.Reverb).ready;
       //

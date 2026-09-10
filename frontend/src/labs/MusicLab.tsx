@@ -8,7 +8,7 @@ import type { CSSProperties, ReactElement } from "react";
 import * as Tone from "tone";
 import { INSTRUMENT_SETS } from "../utils/instrumentSets";
 import { MODES } from "../utils/modes";
-import { BIOMES } from "../utils/biomes";
+import { PRESETS } from "../utils/presets";
 import {
   LOOP_BARS,
   MIN_REGISTER,
@@ -25,7 +25,7 @@ const BEATS_PER_BAR = 4;
 
 const SET_NAMES = Object.keys(INSTRUMENT_SETS) as InstrumentSetName[];
 const MODE_NAMES = Object.keys(MODES);
-const BIOME_NAMES = Object.keys(BIOMES);
+const PRESET_NAMES = Object.keys(PRESETS);
 
 // one distinct colour per instrument slot, reused by audio + visuals.
 const ROLE_COLORS: Record<Role, string> = {
@@ -135,26 +135,26 @@ const clamp = (value: number, low: number, high: number): number =>
 
 const buildPlan = (
   setName: InstrumentSetName,
-  biomeName: string,
+  presetName: string,
   modeName: string,
 ) => {
   const set = INSTRUMENT_SETS[setName];
-  const biome = BIOMES[biomeName];
+  const preset = PRESETS[presetName];
   const offsets = MODES[modeName];
-  const roles = [...biome.instruments];
-  const tempo = biome.tempo;
+  const roles = [...preset.instruments];
+  const tempo = preset.tempo;
   const secPerBeat = 60 / tempo;
   const loopSeconds = (LOOP_BARS * BEATS_PER_BAR * 60) / tempo;
   const voices = roles.map((role) => {
     const spec = set[role];
     const register = clamp(
-      (spec.register ?? 3) + biome.registerShift,
+      (spec.register ?? 3) + preset.registerShift,
       MIN_REGISTER,
       MAX_REGISTER,
     );
     return { role, spec, register };
   });
-  return { biome, offsets, tempo, secPerBeat, loopSeconds, voices };
+  return { preset, offsets, tempo, secPerBeat, loopSeconds, voices };
 };
 
 type ScoredVoice = {
@@ -168,7 +168,7 @@ type ScoredVoice = {
 const scoreVoices = (plan: ReturnType<typeof buildPlan>, bars: number): ScoredVoice[] =>
   plan.voices.map((voice) => ({
     ...voice,
-    events: buildScore(plan.biome.density[voice.role], plan.offsets.length + 1, bars),
+    events: buildScore(plan.preset.density[voice.role], plan.offsets.length + 1, bars),
   }));
 
 // flatten scored voices into per-note visual data mirroring the triggers.
@@ -207,10 +207,10 @@ const scoredToNotes = (
 
 const startPlayback = (
   setName: InstrumentSetName,
-  biomeName: string,
+  presetName: string,
   modeName: string,
 ): Playback => {
-  const plan = buildPlan(setName, biomeName, modeName);
+  const plan = buildPlan(setName, presetName, modeName);
   const context = Tone.getContext().rawContext as unknown as AudioContext;
 
   // halve then tanh: smooth ceiling, then analyser tap
@@ -270,7 +270,7 @@ const startPlayback = (
   // render `bars` bars plus tail offline with a fresh random score
   const renderChunk = (voices: ScoredVoice[], bars: number): Promise<AudioBuffer> =>
     Tone.Offline(({ transport }) => {
-      const master = buildMaster(plan.biome);
+      const master = buildMaster(plan.preset);
       for (const voice of voices) {
         const synth = buildVoice(voice.spec, voice.register, master[0])[0];
         buildPart(
@@ -537,7 +537,7 @@ const drawFrame = (canvas: HTMLCanvasElement, playback: Playback): void => {
 
 const MusicLab = (): ReactElement => {
   const [setName, setSetName] = useState<InstrumentSetName>("kingsfield");
-  const [biomeName, setBiomeName] = useState<string>("cavern");
+  const [presetName, setPresetName] = useState<string>("cavern");
   const [modeName, setModeName] = useState<string>("majorPentatonic");
   const [playing, setPlaying] = useState(false);
   const [playback, setPlayback] = useState<Playback | null>(null);
@@ -571,7 +571,7 @@ const MusicLab = (): ReactElement => {
   const handlePlay = async (): Promise<void> => {
     playback?.stop();
     await Tone.start();
-    setPlayback(startPlayback(setName, biomeName, modeName));
+    setPlayback(startPlayback(setName, presetName, modeName));
     setPlaying(true);
   };
 
@@ -583,7 +583,7 @@ const MusicLab = (): ReactElement => {
 
   const handleRandom = (): void => {
     setSetName(pick(SET_NAMES));
-    setBiomeName(pick(BIOME_NAMES));
+    setPresetName(pick(PRESET_NAMES));
     setModeName(pick(MODE_NAMES));
   };
 
@@ -607,14 +607,14 @@ const MusicLab = (): ReactElement => {
           </select>
         </label>
 
-        <h2 style={styles.section}>Biome</h2>
+        <h2 style={styles.section}>Preset</h2>
         <label style={styles.label}>
           <select
             style={styles.select}
-            value={biomeName}
-            onChange={(e) => setBiomeName(e.target.value)}
+            value={presetName}
+            onChange={(e) => setPresetName(e.target.value)}
           >
-            {BIOME_NAMES.map((name) => (
+            {PRESET_NAMES.map((name) => (
               <option key={name} value={name}>
                 {name}
               </option>
@@ -681,11 +681,11 @@ const MusicLab = (): ReactElement => {
 
       <main style={styles.main}>
         <div style={styles.info}>
-          <strong>{setName}</strong> + <strong>{biomeName}</strong> +{" "}
+          <strong>{setName}</strong> + <strong>{presetName}</strong> +{" "}
           <strong>{modeName}</strong>
-          {" — "}tempo {BIOMES[biomeName].tempo}bpm, register shift{" "}
-          {BIOMES[biomeName].registerShift > 0 ? "+" : ""}
-          {BIOMES[biomeName].registerShift}
+          {" — "}tempo {PRESETS[presetName].tempo}bpm, register shift{" "}
+          {PRESETS[presetName].registerShift > 0 ? "+" : ""}
+          {PRESETS[presetName].registerShift}
           {" — "}
           {playing ? "looping" : "stopped"}
         </div>

@@ -4,7 +4,7 @@ Values for the three seed-picked axes. Instrument parameters live in `instrument
 
 ## Axes
 
-The seed picks one mode, one biome, and one instrument set. Five modes times six biomes times six sets give 180 combinations.
+The seed picks one mode, one preset, and one instrument set. Five modes times six presets times six sets give 180 combinations.
 
 ## Modes
 
@@ -18,11 +18,11 @@ Semitone offsets from the root. Five notes each, six for whole-tone.
 | lydian-pentatonic | `[0,2,4,6,11]`   | floating, ethereal |
 | whole-tone        | `[0,2,4,6,8,10]` | weightless, hazy   |
 
-## Biomes
+## Presets
 
-Space and arrangement. Each biome fixes tempo, the shared reverb, register shift, and which roles play.
+Space and arrangement. Each preset fixes tempo, the shared reverb, register shift, and which roles play.
 
-| Biome    | Tempo | Reverb decay | Reverb wet | Register shift | Instruments                        |
+| Preset   | Tempo | Reverb decay | Reverb wet | Register shift | Instruments                        |
 | -------- | ----- | ------------ | ---------- | -------------- | ---------------------------------- |
 | cavern   | 48    | 9.0s         | 0.65       | -1             | drone, pad, sparkle, counter       |
 | chamber  | 72    | 2.5s         | 0.30       | 0              | drone, pad, sparkle, lead          |
@@ -33,9 +33,9 @@ Space and arrangement. Each biome fixes tempo, the shared reverb, register shift
 
 ## Density
 
-Events per bar, per biome, per role. Fixed values, no jitter.
+Events per bar, per preset, per role. Fixed values, no jitter.
 
-| Biome    | drone | pad  | sparkle | lead | counter |
+| Preset   | drone | pad  | sparkle | lead | counter |
 | -------- | ----- | ---- | ------- | ---- | ------- |
 | cavern   | 0.15  | 0.40 | 0.80    | 0.30 | 0.30    |
 | chamber  | 0.25  | 0.80 | 1.60    | 0.80 | 0.60    |
@@ -57,4 +57,4 @@ Events per bar, per biome, per role. Fixed values, no jitter.
 
 ## Score
 
-Purely randomly generated. Not seed-derived; see only picks mode+biome+instrument-set.
+Purely randomly generated. Not seed-derived; see only picks mode+preset+instrument-set.

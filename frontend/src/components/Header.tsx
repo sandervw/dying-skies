@@ -30,7 +30,7 @@ const Header = ({
       />
       <h1 className="title font-large">DYING SKIES</h1>
       {readout ? (
-        <p className="tagline text-center">{`${readout.set} · ${readout.mode} · ${readout.biome}`}</p>
+        <p className="tagline text-center">{`${readout.set} · ${readout.mode} · ${readout.preset}`}</p>
       ) : null}
     </header>
   );

@@ -1,7 +1,7 @@
 import type { Role } from "../types/music";
 
 /** space and arrangement for one sky: tempo, reverb, register, roles, density. */
-interface Biome {
+interface Preset {
   readonly tempo: number;
   readonly reverbDecay: number;
   readonly reverbWet: number;
@@ -10,8 +10,8 @@ interface Biome {
   readonly density: Record<Role, number>;
 }
 
-/** the six biomes; the seed picks one. */
-const BIOMES: Record<string, Biome> = {
+/** the six presets; the seed picks one. */
+const PRESETS: Record<string, Preset> = {
   cavern: {
     tempo: 56, reverbDecay: 9.0, reverbWet: 0.65, registerShift: -1,
     instruments: ["drone", "pad", "sparkle", "counter"],
@@ -44,5 +44,5 @@ const BIOMES: Record<string, Biome> = {
   },
 };
 
-export { BIOMES };
-export type { Biome };
+export { PRESETS };
+export type { Preset };
