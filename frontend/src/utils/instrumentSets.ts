@@ -84,9 +84,9 @@ const majorasmask: Record<Role, InstrumentSpec> = {
     synth: Tone.MonoSynth,
     options: {
       oscillator: { type: "triangle" },
-      filterEnvelope: { attack: 0.08, decay: 0.5, sustain: 0.85, release: 0.6, octaves: 0.8 },
-      envelope: { attack: 0.08, decay: 0.5, sustain: 0.85, release: 0.6 },
-      portamento: 0.05,
+      filterEnvelope: { attack: 0.8, decay: 1.0, sustain: 1.0, release: 2.0, octaves: 0.8 },
+      envelope: { attack: 0.8, decay: 1.0, sustain: 1.0, release: 2.0 },
+      portamento: 0.3,
     },
     register: 1, hold: 8, gain: 0.85,
     filter: { type: "lowpass", frequency: 180, rolloff: -24 },
@@ -108,7 +108,7 @@ const majorasmask: Record<Role, InstrumentSpec> = {
     synth: Tone.FMSynth, polyphony: 4,
     options: {
       oscillator: { type: "sine" }, modulation: { type: "sine" }, harmonicity: 3.5, modulationIndex: 2.2,
-      envelope: { attack: 0.001, decay: 1.4, sustain: 0.02, release: 1.5 },
+      envelope: { attack: 0.005, decay: 1.4, sustain: 0.02, release: 1.5 },
       modulationEnvelope: { attack: 0.001, decay: 0.3, sustain: 0.0, release: 0.3 },
     },
     register: 6, hold: 2, gain: 0.4,
@@ -116,13 +116,12 @@ const majorasmask: Record<Role, InstrumentSpec> = {
   },
   // airy woodwind melody
   lead: {
-    synth: Tone.Synth,
+    synth: Tone.Synth, polyphony: 4,
     options: {
       oscillator: { type: "sine" },
-      envelope: { attack: 0.06, decay: 0.2, sustain: 0.85, release: 0.25 },
-      portamento: 0.04,
+      envelope: { attack: 0.15, decay: 0.3, sustain: 0.8, release: 0.6 },
     },
-    register: 5, hold: 3, gain: 0.4,
+    register: 4, hold: 3, gain: 0.4,
     filter: { type: "lowpass", frequency: 3200, rolloff: -12 },
     effects: [[Tone.FeedbackDelay, { delayTime: "4n", feedback: 0.3, wet: 0.25 }]],
   },
@@ -177,7 +176,7 @@ const deusex: Record<Role, InstrumentSpec> = {
       envelope: { attack: 0.005, decay: 1.8, sustain: 0.0, release: 2.5 },
     },
     register: 6, hold: 2, gain: 0.35,
-    filter: { type: "highpass", frequency: 2200, rolloff: -12 },
+    filter: { type: "lowpass", frequency: 5000, rolloff: -12 },
     effects: [[Tone.PingPongDelay, { delayTime: "8n.", feedback: 0.45, wet: 0.4 }]],
   },
   // plucked harp/kora ostinato
@@ -225,9 +224,9 @@ const zoombinis: Record<Role, InstrumentSpec> = {
     synth: Tone.MonoSynth,
     options: {
       oscillator: { type: "triangle" },
-      filterEnvelope: { attack: 0.02, decay: 0.4, sustain: 0.2, release: 0.6, octaves: 1.5 },
-      envelope: { attack: 0.04, decay: 0.6, sustain: 0.5, release: 0.8 },
-      portamento: 0.02,
+      filterEnvelope: { attack: 0.8, decay: 1.0, sustain: 1.0, release: 2.0, octaves: 0.5 },
+      envelope: { attack: 0.8, decay: 1.0, sustain: 1.0, release: 2.0 },
+      portamento: 0.3,
     },
     register: 1, hold: 8, gain: 0.85,
     filter: { type: "lowpass", frequency: 180, rolloff: -24 },
@@ -251,21 +250,20 @@ const zoombinis: Record<Role, InstrumentSpec> = {
     synth: Tone.FMSynth, polyphony: 4,
     options: {
       oscillator: { type: "sine" }, modulation: { type: "sine" }, harmonicity: 3.5, modulationIndex: 12,
-      envelope: { attack: 0.002, decay: 1.2, sustain: 0.0, release: 1.0 },
+      envelope: { attack: 0.005, decay: 1.2, sustain: 0.0, release: 1.0 },
     },
     register: 5, hold: 2, gain: 0.4,
     filter: { type: "lowpass", frequency: 8000, rolloff: -12 },
     effects: [[Tone.FeedbackDelay, { delayTime: "8n.", feedback: 0.35, wet: 0.3 }]],
   },
   lead: {
-    synth: Tone.MonoSynth,
+    synth: Tone.MonoSynth, polyphony: 4,
     options: {
       oscillator: { type: "sine" },
-      filterEnvelope: { attack: 0.08, decay: 0.2, sustain: 0.7, release: 0.5, baseFrequency: 1000, octaves: 1.0 },
-      envelope: { attack: 0.08, decay: 0.3, sustain: 0.75, release: 0.6 },
-      portamento: 0.06,
+      filterEnvelope: { attack: 0.15, decay: 0.3, sustain: 0.7, release: 0.6, baseFrequency: 1000, octaves: 1.0 },
+      envelope: { attack: 0.15, decay: 0.3, sustain: 0.75, release: 0.6 },
     },
-    register: 5, hold: 3, gain: 0.4,
+    register: 4, hold: 3, gain: 0.4,
     filter: { type: "lowpass", frequency: 2200, rolloff: -12 },
     effects: [
       [Tone.Chorus, { frequency: 1.5, delayTime: 3.5, depth: 0.4, wet: 0.25 }],
@@ -297,7 +295,7 @@ const aindulmedir: Record<Role, InstrumentSpec> = {
     },
     register: 1, hold: 8, gain: 0.85,
     filter: { type: "lowpass", frequency: 220, rolloff: -24 },
-    effects: [[Tone.Reverb, { decay: 3.0, preDelay: 0.01, wet: 0.2 }]],
+    effects: [],
   },
   // warm swelling velvet pad
   pad: {
@@ -317,11 +315,11 @@ const aindulmedir: Record<Role, InstrumentSpec> = {
   sparkle: {
     synth: Tone.AMSynth, polyphony: 3,
     options: {
-      oscillator: { type: "sine" }, modulation: { type: "triangle" }, harmonicity: 1.0, modulationIndex: 0.4,
-      envelope: { attack: 2.5, decay: 2.0, sustain: 0.5, release: 3.5 },
+      oscillator: { type: "sine" }, modulation: { type: "triangle" }, harmonicity: 1.0,
+      envelope: { attack: 0.8, decay: 2.0, sustain: 0.5, release: 3.5 },
     },
     register: 6, hold: 2, gain: 0.35,
-    filter: { type: "bandpass", frequency: 3800, rolloff: -12 },
+    filter: { type: "lowpass", frequency: 5000, rolloff: -12 },
     effects: [
       [Tone.Chorus, { frequency: 1.2, delayTime: 2.5, depth: 0.6, wet: 0.5 }],
       [Tone.FeedbackDelay, { delayTime: "4n", feedback: 0.5, wet: 0.4 }],
@@ -397,7 +395,7 @@ const ogresound: Record<Role, InstrumentSpec> = {
     synth: Tone.FMSynth,
     options: {
       oscillator: { type: "sine" }, modulation: { type: "sine" }, harmonicity: 2.0, modulationIndex: 6.5,
-      envelope: { attack: 0.002, decay: 0.45, sustain: 0.05, release: 0.6 },
+      envelope: { attack: 0.005, decay: 0.45, sustain: 0.05, release: 0.6 },
     },
     register: 6, hold: 2, gain: 0.4,
     filter: { type: "lowpass", frequency: 2400, rolloff: -12 },
