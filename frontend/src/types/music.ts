@@ -1,7 +1,20 @@
 import type * as Tone from "tone";
 
-/** the five instrument slots every set fills. */
-type Role = "bass" | "harmony" | "lead" | "counter" | "accent";
+/** the six instrument slots a set can fill. */
+type Role = "bass" | "harmony" | "lead" | "counter" | "accent" | "percussion";
+
+/** allowed instrument types per role; synth-leaning and minimal. */
+const ROLE_INSTRUMENTS = {
+  bass: ["sub", "pluck", "noise"],
+  harmony: ["pad", "strings", "choir"],
+  lead: ["bell", "pluck", "keys", "winds"],
+  counter: ["pad", "strings", "swell", "choir"],
+  accent: ["bell", "sparkle", "pluck"],
+  percussion: ["kick", "hat", "tom"],
+} as const;
+
+/** every instrument type, derived from the role lists. */
+type InstrumentType = (typeof ROLE_INSTRUMENTS)[Role][number];
 
 /** the instrument sets, one voice per role. */
 type InstrumentSetName =
@@ -18,6 +31,7 @@ type EffectEntry = readonly [new (options?: any) => Tone.ToneAudioNode & { start
 
 /** one concrete voice: synth, static filter, effect chain, and levels. */
 interface InstrumentSpec {
+  readonly type: InstrumentType;
   readonly synth: SynthClass;
   readonly options: object;
   readonly polyphony?: number;
@@ -28,4 +42,5 @@ interface InstrumentSpec {
   readonly effects: readonly EffectEntry[];
 }
 
-export type { Role, InstrumentSetName, SynthClass, EffectEntry, InstrumentSpec };
+export { ROLE_INSTRUMENTS };
+export type { Role, InstrumentType, InstrumentSetName, SynthClass, EffectEntry, InstrumentSpec };

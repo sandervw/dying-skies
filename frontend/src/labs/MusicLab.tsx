@@ -34,6 +34,7 @@ const ROLE_COLORS: Record<Role, string> = {
   accent: "#ffd24a",
   lead: "#ff6b4a",
   counter: "#e05bff",
+  percussion: "#aab2c0",
 };
 
 // one drawable note: time, length, volume, pitch.
@@ -145,14 +146,15 @@ const buildPlan = (
   const tempo = preset.tempo;
   const secPerBeat = 60 / tempo;
   const loopSeconds = (LOOP_BARS * BEATS_PER_BAR * 60) / tempo;
-  const voices = roles.map((role) => {
+  const voices = roles.flatMap((role) => {
     const spec = set[role];
+    if (spec === undefined) return []; // set does not provide this role
     const register = clamp(
       (spec.register ?? 3) + preset.registerShift,
       MIN_REGISTER,
       MAX_REGISTER,
     );
-    return { role, spec, register };
+    return [{ role, spec, register }];
   });
   return { preset, offsets, tempo, secPerBeat, loopSeconds, voices };
 };
@@ -168,7 +170,7 @@ type ScoredVoice = {
 const scoreVoices = (plan: ReturnType<typeof buildPlan>, bars: number): ScoredVoice[] =>
   plan.voices.map((voice) => ({
     ...voice,
-    events: buildScore(plan.preset.density[voice.role], plan.offsets.length + 1, bars),
+    events: buildScore(plan.preset.density[voice.role] ?? 0, plan.offsets.length + 1, bars),
   }));
 
 // flatten scored voices into per-note visual data mirroring the triggers.

@@ -7,7 +7,7 @@ interface Preset {
   readonly reverbWet: number;
   readonly registerShift: number;
   readonly instruments: readonly Role[];
-  readonly density: Record<Role, number>;
+  readonly density: Partial<Record<Role, number>>;
 }
 
 /** the six presets; the seed picks one. */

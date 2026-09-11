@@ -169,8 +169,9 @@ const playSky = (seed: Seed): (() => void) => {
       const master = buildMaster(preset);
       for (const role of roles) {
         const spec = set[role];
+        if (spec === undefined) continue; // set does not provide this role
         const register = Math.min(MAX_REGISTER, Math.max(MIN_REGISTER, (spec.register ?? 3) + preset.registerShift));
-        const events = buildScore(preset.density[role], offsets.length + 1, bars);
+        const events = buildScore(preset.density[role] ?? 0, offsets.length + 1, bars);
         const synth = buildVoice(spec, register, master[0])[0];
         buildPart(spec, synth, events, offsets, register, preset.tempo, chunkSeconds(bars));
       }

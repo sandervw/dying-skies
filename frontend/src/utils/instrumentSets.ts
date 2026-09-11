@@ -8,9 +8,10 @@ import * as Tone from "tone";
 import type { InstrumentSetName, InstrumentSpec, Role } from "../types/music";
 
 // Big Mine, plus East Village for chimes and choir.
-const kingsfield: Record<Role, InstrumentSpec> = {
+const kingsfield: Partial<Record<Role, InstrumentSpec>> = {
   // deep ambient sub-drone
   bass: {
+    type: "sub",
     synth: Tone.MonoSynth,
     options: {
       oscillator: { type: "triangle" },
@@ -24,6 +25,7 @@ const kingsfield: Record<Role, InstrumentSpec> = {
   },
   // warm ethereal dream pad
   harmony: {
+    type: "pad",
     synth: Tone.Synth, polyphony: 6,
     options: {
       oscillator: { type: "fatsawtooth", count: 3, spread: 20 },
@@ -38,6 +40,7 @@ const kingsfield: Record<Role, InstrumentSpec> = {
   },
   // crystalline glass chimes
   accent: {
+    type: "bell",
     synth: Tone.FMSynth, polyphony: 3,
     options: {
       oscillator: { type: "sine" }, modulation: { type: "sine" }, harmonicity: 3.5, modulationIndex: 2.2,
@@ -49,6 +52,7 @@ const kingsfield: Record<Role, InstrumentSpec> = {
   },
   // plucked bell-like synth lead
   lead: {
+    type: "bell",
     synth: Tone.FMSynth, polyphony: 4,
     options: {
       oscillator: { type: "sine" }, modulation: { type: "sine" }, harmonicity: 3.5, modulationIndex: 8.0,
@@ -63,6 +67,7 @@ const kingsfield: Record<Role, InstrumentSpec> = {
   },
   // ethereal vocal choir swells
   counter: {
+    type: "choir",
     synth: Tone.Synth, polyphony: 4,
     options: {
       oscillator: { type: "fatsawtooth", count: 3, spread: 22 },
@@ -78,9 +83,10 @@ const kingsfield: Record<Role, InstrumentSpec> = {
 };
 
 // Title Theme, plus Majora's Theme for bass and horns.
-const majorasmask: Record<Role, InstrumentSpec> = {
+const majorasmask: Partial<Record<Role, InstrumentSpec>> = {
   // deep sub foundation
   bass: {
+    type: "sub",
     synth: Tone.MonoSynth,
     options: {
       oscillator: { type: "triangle" },
@@ -94,6 +100,7 @@ const majorasmask: Record<Role, InstrumentSpec> = {
   },
   // french horn ensemble
   harmony: {
+    type: "pad",
     synth: Tone.Synth, polyphony: 6,
     options: {
       oscillator: { type: "fatsawtooth", count: 3, spread: 18 },
@@ -105,6 +112,7 @@ const majorasmask: Record<Role, InstrumentSpec> = {
   },
   // celesta and bell plucks
   accent: {
+    type: "bell",
     synth: Tone.FMSynth, polyphony: 4,
     options: {
       oscillator: { type: "sine" }, modulation: { type: "sine" }, harmonicity: 3.5, modulationIndex: 2.2,
@@ -116,6 +124,7 @@ const majorasmask: Record<Role, InstrumentSpec> = {
   },
   // airy woodwind melody
   lead: {
+    type: "winds",
     synth: Tone.Synth, polyphony: 4,
     options: {
       oscillator: { type: "sine" },
@@ -127,6 +136,7 @@ const majorasmask: Record<Role, InstrumentSpec> = {
   },
   // symphonic string section swells
   counter: {
+    type: "strings",
     synth: Tone.Synth, polyphony: 6,
     options: {
       oscillator: { type: "fatsawtooth", count: 3, spread: 18 },
@@ -142,9 +152,10 @@ const majorasmask: Record<Role, InstrumentSpec> = {
 };
 
 // Hong Kong Streets 5, plus Liberty Island 1 for the bass.
-const deusex: Record<Role, InstrumentSpec> = {
+const deusex: Partial<Record<Role, InstrumentSpec>> = {
   // high shimmering airy drone bed
   bass: {
+    type: "noise",
     synth: Tone.NoiseSynth,
     options: {
       noise: { type: "pink" },
@@ -159,6 +170,7 @@ const deusex: Record<Role, InstrumentSpec> = {
   },
   // ambient string swell pad
   harmony: {
+    type: "strings",
     synth: Tone.Synth, polyphony: 6,
     options: {
       oscillator: { type: "fatsawtooth", count: 3, spread: 20 },
@@ -170,6 +182,7 @@ const deusex: Record<Role, InstrumentSpec> = {
   },
   // glassy shimmer tails
   accent: {
+    type: "sparkle",
     synth: Tone.FMSynth, polyphony: 4,
     options: {
       oscillator: { type: "sine" }, modulation: { type: "triangle" }, harmonicity: 3.5, modulationIndex: 2.0,
@@ -181,6 +194,7 @@ const deusex: Record<Role, InstrumentSpec> = {
   },
   // plucked harp/kora ostinato
   lead: {
+    type: "pluck",
     synth: Tone.FMSynth, polyphony: 4,
     options: {
       oscillator: { type: "sine" }, modulation: { type: "triangle" }, harmonicity: 2.0, modulationIndex: 3.5,
@@ -195,6 +209,7 @@ const deusex: Record<Role, InstrumentSpec> = {
   },
   // metallic bowed friction textures
   counter: {
+    type: "strings",
     synth: Tone.DuoSynth,
     options: {
       harmonicity: 1.5,
@@ -219,7 +234,7 @@ const deusex: Record<Role, InstrumentSpec> = {
   },
 };
 
-const zoombinis: Record<Role, InstrumentSpec> = {
+const zoombinis: Partial<Record<Role, InstrumentSpec>> = {
   bass: {
     synth: Tone.MonoSynth,
     options: {
@@ -228,11 +243,13 @@ const zoombinis: Record<Role, InstrumentSpec> = {
       envelope: { attack: 0.8, decay: 1.0, sustain: 1.0, release: 2.0 },
       portamento: 0.3,
     },
+    type: "sub",
     register: 1, hold: 8, gain: 0.85,
     filter: { type: "lowpass", frequency: 180, rolloff: -24 },
     effects: [[Tone.Distortion, { distortion: 0.1, wet: 0.15 }]],
   },
   harmony: {
+    type: "pad",
     synth: Tone.MonoSynth, polyphony: 6,
     options: {
       oscillator: { type: "fatsawtooth", count: 3, spread: 15 },
@@ -247,6 +264,7 @@ const zoombinis: Record<Role, InstrumentSpec> = {
     ],
   },
   accent: {
+    type: "sparkle",
     synth: Tone.FMSynth, polyphony: 4,
     options: {
       oscillator: { type: "sine" }, modulation: { type: "sine" }, harmonicity: 3.5, modulationIndex: 12,
@@ -257,6 +275,7 @@ const zoombinis: Record<Role, InstrumentSpec> = {
     effects: [[Tone.FeedbackDelay, { delayTime: "8n.", feedback: 0.35, wet: 0.3 }]],
   },
   lead: {
+    type: "keys",
     synth: Tone.MonoSynth, polyphony: 4,
     options: {
       oscillator: { type: "sine" },
@@ -271,6 +290,7 @@ const zoombinis: Record<Role, InstrumentSpec> = {
     ],
   },
   counter: {
+    type: "swell",
     synth: Tone.NoiseSynth,
     options: {
       noise: { type: "pink" },
@@ -283,9 +303,10 @@ const zoombinis: Record<Role, InstrumentSpec> = {
 };
 
 // Winter And Slumber, plus Wind-Bitten for the counter.
-const aindulmedir: Record<Role, InstrumentSpec> = {
+const aindulmedir: Partial<Record<Role, InstrumentSpec>> = {
   // deep root sub-bass drone
   bass: {
+    type: "sub",
     synth: Tone.MonoSynth,
     options: {
       oscillator: { type: "triangle" },
@@ -299,6 +320,7 @@ const aindulmedir: Record<Role, InstrumentSpec> = {
   },
   // warm swelling velvet pad
   harmony: {
+    type: "pad",
     synth: Tone.Synth, polyphony: 6,
     options: {
       oscillator: { type: "fatsawtooth", count: 3, spread: 18 },
@@ -313,6 +335,7 @@ const aindulmedir: Record<Role, InstrumentSpec> = {
   },
   // ethereal glass shimmer texture
   accent: {
+    type: "sparkle",
     synth: Tone.AMSynth, polyphony: 3,
     options: {
       oscillator: { type: "sine" }, modulation: { type: "triangle" }, harmonicity: 1.0,
@@ -328,6 +351,7 @@ const aindulmedir: Record<Role, InstrumentSpec> = {
   },
   // crystalline harp pluck
   lead: {
+    type: "pluck",
     synth: Tone.FMSynth, polyphony: 4,
     options: {
       oscillator: { type: "sine" }, modulation: { type: "sine" }, harmonicity: 2.0, modulationIndex: 1.8,
@@ -343,6 +367,7 @@ const aindulmedir: Record<Role, InstrumentSpec> = {
   },
   // slow warm harmonic swell
   counter: {
+    type: "swell",
     synth: Tone.Synth, polyphony: 6,
     options: {
       oscillator: { type: "fatsawtooth", count: 3, spread: 18 },
@@ -358,9 +383,10 @@ const aindulmedir: Record<Role, InstrumentSpec> = {
 };
 
 // Above The Euromechopolis, plus Sneaking Suspicions for accent and counter.
-const ogresound: Record<Role, InstrumentSpec> = {
+const ogresound: Partial<Record<Role, InstrumentSpec>> = {
   // rumbling subterranean sub-drone
   bass: {
+    type: "sub",
     synth: Tone.MonoSynth,
     options: {
       oscillator: { type: "fatsawtooth", count: 3, spread: 15 },
@@ -377,6 +403,7 @@ const ogresound: Record<Role, InstrumentSpec> = {
   },
   // warm broad cinematic swell pad
   harmony: {
+    type: "pad",
     synth: Tone.Synth, polyphony: 6,
     options: {
       oscillator: { type: "sawtooth" },
@@ -392,6 +419,7 @@ const ogresound: Record<Role, InstrumentSpec> = {
   },
   // crisp glassy fm pluck
   accent: {
+    type: "pluck",
     synth: Tone.FMSynth,
     options: {
       oscillator: { type: "sine" }, modulation: { type: "sine" }, harmonicity: 2.0, modulationIndex: 6.5,
@@ -406,6 +434,7 @@ const ogresound: Record<Role, InstrumentSpec> = {
   },
   // snappy kinetic ostinato pluck
   lead: {
+    type: "pluck",
     synth: Tone.MonoSynth,
     options: {
       oscillator: { type: "pulse", width: 0.3 },
@@ -422,6 +451,7 @@ const ogresound: Record<Role, InstrumentSpec> = {
   },
   // dusty grainy ominous atmospheric bed
   counter: {
+    type: "swell",
     synth: Tone.Synth, polyphony: 4,
     options: {
       oscillator: { type: "fatsawtooth", count: 3, spread: 25 },
@@ -436,8 +466,8 @@ const ogresound: Record<Role, InstrumentSpec> = {
   },
 };
 
-/** the instrument sets, each filling all five roles. */
-const INSTRUMENT_SETS: Record<InstrumentSetName, Record<Role, InstrumentSpec>> = {
+/** the instrument sets; each fills any subset of roles. */
+const INSTRUMENT_SETS: Record<InstrumentSetName, Partial<Record<Role, InstrumentSpec>>> = {
   kingsfield, majorasmask, deusex, zoombinis,
   aindulmedir, ogresound,
 };
