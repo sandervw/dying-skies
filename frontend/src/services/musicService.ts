@@ -4,7 +4,7 @@ import { MODES } from "../utils/modes";
 import { PRESETS, type Preset } from "../utils/presets";
 import { createSeededRandom, deriveSeed } from "./randomService";
 import type { Seed } from "./randomService";
-import type { InstrumentSpec } from "../types/music";
+import type { InstrumentSpec, InstrumentSet, Role } from "../types/music";
 
 const LOOP_BARS = 8;
 const MAX_DENSITY = 1.5; // events per bar; caps loudness and overlap
@@ -17,6 +17,14 @@ const PRESET_NAMES = Object.keys(PRESETS);
 // one random item from a list
 const pick = <T>(random: () => number, items: readonly T[]): T =>
   items[Math.floor(random() * items.length)];
+
+// sets whose voices satisfy every role the preset needs
+const setsForPreset = (preset: Preset): InstrumentSet[] =>
+  INSTRUMENT_SETS.filter((set) =>
+    (Object.entries(preset.instruments) as [Role, readonly string[]][]).every(
+      ([role, allowed]) => set[role] !== undefined && allowed.includes(set[role]!.type),
+    ),
+  );
 
 // wire nodes in order; the last one feeds the output.
 const chainInto = (nodes: Tone.ToneAudioNode[], output: Tone.ToneAudioNode): void => {
@@ -115,8 +123,8 @@ const buildPart = (
 const describeSky = (seed: Seed): { set: string; mode: string; preset: string; } => {
   // mirrors playSky's first three picks; keep this order.
   const random = createSeededRandom(deriveSeed(seed, "music"));
-  const set = pick(random, INSTRUMENT_SETS).name;
   const preset = pick(random, PRESET_NAMES);
+  const set = pick(random, setsForPreset(PRESETS[preset])).name;
   const mode = pick(random, MODE_NAMES);
   return { set, mode, preset };
 };
@@ -138,10 +146,10 @@ const deClick = (audio: AudioBuffer): AudioBuffer => {
 /** play this sky as endless fresh chunks; the returned call stops it. */
 const playSky = (seed: Seed): (() => void) => {
   const random = createSeededRandom(deriveSeed(seed, "music"));
-  const set = pick(random, INSTRUMENT_SETS);
   const preset = PRESETS[pick(random, PRESET_NAMES)];
+  const set = pick(random, setsForPreset(preset));
   const offsets = MODES[pick(random, MODE_NAMES)];
-  const roles = [...preset.instruments];
+  const roles = Object.keys(preset.instruments) as Role[];
   const chunkSeconds = (bars: number): number => (bars * 4 * 60) / preset.tempo;
 
   // halve then tanh: smooth ceiling on any summed level

@@ -142,7 +142,7 @@ const buildPlan = (
   const set = INSTRUMENT_SETS.find((entry) => entry.name === setName)!;
   const preset = PRESETS[presetName];
   const offsets = MODES[modeName];
-  const roles = [...preset.instruments];
+  const roles = Object.keys(preset.instruments) as Role[];
   const tempo = preset.tempo;
   const secPerBeat = 60 / tempo;
   const loopSeconds = (LOOP_BARS * BEATS_PER_BAR * 60) / tempo;

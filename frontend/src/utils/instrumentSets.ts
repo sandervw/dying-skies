@@ -1,7 +1,5 @@
 /**
  * This file is permitted to go beyond the project's 300 line limit
- * THE INSTRUMENTS MUST NEVER BE ADJUSTED WITHOUT EXPLICIT INSTRUCTIONS;
- *   Treat instruments as raw sound sources - fixes must go in musicService.ts
  */
 
 import * as Tone from "tone";
