@@ -79,15 +79,11 @@ const buildVoice = (spec: InstrumentSpec, register: number, master: Tone.ToneAud
 /** random [bar, beat, step] events for one role. */
 const buildScore = (density: number, steps: number, bars = LOOP_BARS): [number, number, number][] => {
   const count = Math.min(Math.round(Math.min(density, MAX_DENSITY) * bars), bars * 4);
-  const seen = new Set<string>();
   const events: [number, number, number][] = [];
-  while (events.length < count) {
-    const bar = Math.floor(Math.random() * bars);
-    const beat = Math.floor(Math.random() * 4);
-    const slot = `${bar}:${beat}`;
-    if (seen.has(slot) || slot === "0:0") continue; // skip seam downbeat and dupes
-    seen.add(slot);
-    events.push([bar, beat, Math.floor(Math.random() * steps)]);
+  const span = (bars * 4) / count; // one event per even segment
+  for (let index = 0; index < count; index++) {
+    const position = Math.max(1, Math.floor((index + Math.random()) * span)); // skip seam
+    events.push([Math.floor(position / 4), position % 4, Math.floor(Math.random() * steps)]);
   }
   return events;
 };
@@ -100,15 +96,17 @@ const buildPart = (
   offsets: readonly number[],
   register: number,
   tempo: number,
+  chunkLength: number,
 ): void => {
   const seconds = (spec.hold * 60) / tempo;
   const part = new Tone.Part((time, step: number): void => {
+    const held = Math.min(seconds, chunkLength - time); // stop notes at the seam
     if (synth instanceof Tone.NoiseSynth) {
-      synth.triggerAttackRelease(seconds, time); // pink noise has no pitch
+      synth.triggerAttackRelease(held, time); // pink noise has no pitch
     } else {
       const semitone = offsets[step % offsets.length] + 12 * Math.floor(step / offsets.length);
       const note = Tone.Frequency(`C${register}`).transpose(semitone).toFrequency();
-      (synth as Tone.PolySynth).triggerAttackRelease(note, seconds, time);
+      (synth as Tone.PolySynth).triggerAttackRelease(note, held, time);
     }
   }, events.map(([bar, beat, step]): [string, number] => [`${bar}:${beat}:0`, step]));
   part.start(0);
@@ -174,7 +172,7 @@ const playSky = (seed: Seed): (() => void) => {
         const register = Math.min(MAX_REGISTER, Math.max(MIN_REGISTER, (spec.register ?? 3) + preset.registerShift));
         const events = buildScore(preset.density[role], offsets.length + 1, bars);
         const synth = buildVoice(spec, register, master[0])[0];
-        buildPart(spec, synth, events, offsets, register, preset.tempo);
+        buildPart(spec, synth, events, offsets, register, preset.tempo, chunkSeconds(bars));
       }
       transport.bpm.value = preset.tempo;
       transport.start();
