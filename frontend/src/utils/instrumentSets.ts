@@ -5,10 +5,11 @@
  */
 
 import * as Tone from "tone";
-import type { InstrumentSetName, InstrumentSpec, Role } from "../types/music";
+import type { InstrumentSet } from "../types/music";
 
 // Big Mine, plus East Village for chimes and choir.
-const kingsfield: Partial<Record<Role, InstrumentSpec>> = {
+const kingsfield: InstrumentSet = {
+  name: "kingsfield",
   // deep ambient sub-drone
   bass: {
     type: "sub",
@@ -83,7 +84,8 @@ const kingsfield: Partial<Record<Role, InstrumentSpec>> = {
 };
 
 // Title Theme, plus Majora's Theme for bass and horns.
-const majorasmask: Partial<Record<Role, InstrumentSpec>> = {
+const majorasmask: InstrumentSet = {
+  name: "majorasmask",
   // deep sub foundation
   bass: {
     type: "sub",
@@ -152,7 +154,8 @@ const majorasmask: Partial<Record<Role, InstrumentSpec>> = {
 };
 
 // Hong Kong Streets 5, plus Liberty Island 1 for the bass.
-const deusex: Partial<Record<Role, InstrumentSpec>> = {
+const deusex: InstrumentSet = {
+  name: "deusex",
   // high shimmering airy drone bed
   bass: {
     type: "noise",
@@ -234,7 +237,8 @@ const deusex: Partial<Record<Role, InstrumentSpec>> = {
   },
 };
 
-const zoombinis: Partial<Record<Role, InstrumentSpec>> = {
+const zoombinis: InstrumentSet = {
+  name: "zoombinis",
   bass: {
     synth: Tone.MonoSynth,
     options: {
@@ -303,7 +307,8 @@ const zoombinis: Partial<Record<Role, InstrumentSpec>> = {
 };
 
 // Winter And Slumber, plus Wind-Bitten for the counter.
-const aindulmedir: Partial<Record<Role, InstrumentSpec>> = {
+const aindulmedir: InstrumentSet = {
+  name: "aindulmedir",
   // deep root sub-bass drone
   bass: {
     type: "sub",
@@ -383,7 +388,8 @@ const aindulmedir: Partial<Record<Role, InstrumentSpec>> = {
 };
 
 // Above The Euromechopolis, plus Sneaking Suspicions for accent and counter.
-const ogresound: Partial<Record<Role, InstrumentSpec>> = {
+const ogresound: InstrumentSet = {
+  name: "ogresound",
   // rumbling subterranean sub-drone
   bass: {
     type: "sub",
@@ -466,10 +472,10 @@ const ogresound: Partial<Record<Role, InstrumentSpec>> = {
   },
 };
 
-/** the instrument sets; each fills any subset of roles. */
-const INSTRUMENT_SETS: Record<InstrumentSetName, Partial<Record<Role, InstrumentSpec>>> = {
+/** the instrument sets; each names itself and fills any subset of roles. */
+const INSTRUMENT_SETS: InstrumentSet[] = [
   kingsfield, majorasmask, deusex, zoombinis,
   aindulmedir, ogresound,
-};
+];
 
 export { INSTRUMENT_SETS };

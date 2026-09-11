@@ -19,11 +19,11 @@ import {
   buildPart,
   deClick,
 } from "../services/musicService";
-import type { InstrumentSetName, InstrumentSpec, Role } from "../types/music";
+import type { InstrumentSpec, Role } from "../types/music";
 
 const BEATS_PER_BAR = 4;
 
-const SET_NAMES = Object.keys(INSTRUMENT_SETS) as InstrumentSetName[];
+const SET_NAMES = INSTRUMENT_SETS.map((set) => set.name);
 const MODE_NAMES = Object.keys(MODES);
 const PRESET_NAMES = Object.keys(PRESETS);
 
@@ -135,11 +135,11 @@ const clamp = (value: number, low: number, high: number): number =>
   Math.min(high, Math.max(low, value));
 
 const buildPlan = (
-  setName: InstrumentSetName,
+  setName: string,
   presetName: string,
   modeName: string,
 ) => {
-  const set = INSTRUMENT_SETS[setName];
+  const set = INSTRUMENT_SETS.find((entry) => entry.name === setName)!;
   const preset = PRESETS[presetName];
   const offsets = MODES[modeName];
   const roles = [...preset.instruments];
@@ -210,7 +210,7 @@ const scoredToNotes = (
 };
 
 const startPlayback = (
-  setName: InstrumentSetName,
+  setName: string,
   presetName: string,
   modeName: string,
 ): Playback => {
@@ -541,7 +541,7 @@ const drawFrame = (canvas: HTMLCanvasElement, playback: Playback): void => {
 };
 
 const MusicLab = (): ReactElement => {
-  const [setName, setSetName] = useState<InstrumentSetName>("kingsfield");
+  const [setName, setSetName] = useState<string>("kingsfield");
   const [presetName, setPresetName] = useState<string>("cavern");
   const [modeName, setModeName] = useState<string>("majorPentatonic");
   const [playing, setPlaying] = useState(false);
@@ -602,7 +602,7 @@ const MusicLab = (): ReactElement => {
           <select
             style={styles.select}
             value={setName}
-            onChange={(e) => setSetName(e.target.value as InstrumentSetName)}
+            onChange={(e) => setSetName(e.target.value)}
           >
             {SET_NAMES.map((name) => (
               <option key={name} value={name}>

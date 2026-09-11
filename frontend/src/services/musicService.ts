@@ -4,14 +4,13 @@ import { MODES } from "../utils/modes";
 import { PRESETS, type Preset } from "../utils/presets";
 import { createSeededRandom, deriveSeed } from "./randomService";
 import type { Seed } from "./randomService";
-import type { InstrumentSetName, InstrumentSpec } from "../types/music";
+import type { InstrumentSpec } from "../types/music";
 
 const LOOP_BARS = 8;
 const MAX_DENSITY = 1.5; // events per bar; caps loudness and overlap
 const MIN_REGISTER = 1; // no subsonic rumble
 const MAX_REGISTER = 6; // no piercing highs
 
-const SET_NAMES = Object.keys(INSTRUMENT_SETS) as InstrumentSetName[];
 const MODE_NAMES = Object.keys(MODES);
 const PRESET_NAMES = Object.keys(PRESETS);
 
@@ -113,10 +112,10 @@ const buildPart = (
 };
 
 /** name the instrument set, mode, and preset a seed plays. */
-const describeSky = (seed: Seed): { set: InstrumentSetName; mode: string; preset: string; } => {
+const describeSky = (seed: Seed): { set: string; mode: string; preset: string; } => {
   // mirrors playSky's first three picks; keep this order.
   const random = createSeededRandom(deriveSeed(seed, "music"));
-  const set = pick(random, SET_NAMES);
+  const set = pick(random, INSTRUMENT_SETS).name;
   const preset = pick(random, PRESET_NAMES);
   const mode = pick(random, MODE_NAMES);
   return { set, mode, preset };
@@ -139,7 +138,7 @@ const deClick = (audio: AudioBuffer): AudioBuffer => {
 /** play this sky as endless fresh chunks; the returned call stops it. */
 const playSky = (seed: Seed): (() => void) => {
   const random = createSeededRandom(deriveSeed(seed, "music"));
-  const set = INSTRUMENT_SETS[pick(random, SET_NAMES)];
+  const set = pick(random, INSTRUMENT_SETS);
   const preset = PRESETS[pick(random, PRESET_NAMES)];
   const offsets = MODES[pick(random, MODE_NAMES)];
   const roles = [...preset.instruments];
