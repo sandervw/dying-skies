@@ -11,7 +11,14 @@ interface Preset {
   readonly density: Partial<Record<Role, number>>;
 }
 
-/** the six presets; the seed picks one. */
+/** the six presets; the seed picks one.
+ * 
+ * tempo: Beats per minute. 48 is slow; 84 is fast.
+ * reverbDecay: How long a sound rings out after it plays. 9.0 sounds like a cave.
+ * reverbWet: How much of that echo you hear. 0.65 is distant; 0.30 is close.
+ * registerShift: Moves everything up/down an octave.
+ * density: Notes/Bar for each part.
+ */
 const PRESETS: Record<string, Preset> = {
   cavern: {
     tempo: 48, reverbDecay: 9.0, reverbWet: 0.65, registerShift: -1,

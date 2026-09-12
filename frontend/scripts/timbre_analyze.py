@@ -34,49 +34,51 @@ FORMAT_TAG = {".mp3": "mp3", ".wav": "wav"}
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 DEFAULT_MODEL = "google/gemini-3.8-flash"
 
-PROMPT = r"""For each distinct timbre in this file, note and output the following in a textual format:
-- role (bass/harmony/accent/lead/counter)
-- pitch register
-- attack/decay/sustain/release times
-- brightness
-- movement (vibrato, detune, LFO)
-- effects (reverb, delay, chorus).
+PROMPT = r"""For each distinct timbre in this file, describe it so I can translate it
+directly into our Tone.js instrument-set JSON. Assign each timbre to one role slot:
+- bass    (instrument types: sub | pluck | noise)
+- harmony (instrument types: pad | strings | choir)
+- lead    (instrument types: bell | pluck | keys | winds)
+- counter (instrument types: pad | strings | swell | choir)
+- accent  (instrument types: bell | sparkle | pluck)
+- percussion (instrument types: kick | hat | tom)
 
-The desired output is something I can translate into "instrument characters/types", and code up in Tone.js. Output your answer as a condensed, terse markdown doc
+Output condensed, terse markdown. Use one block per role you hear (skip roles that
+are absent). Field names and shapes mirror our JSON exactly, so keep the same keys,
+value types, and effect array form. Notes on fields:
+- synth: one of Synth | FMSynth | AMSynth | MonoSynth | DuoSynth | NoiseSynth
+- polyphony: integer voice count; omit for monophonic voices
+- register: integer octave, roughly 1 (sub-bass) to 6 (high)
+- hold: how many beats a note rings, integer
+- gain: 0.0 - 1.0 output level
+- options: the raw Tone constructor options (oscillator, envelope, filterEnvelope,
+  modulation, harmonicity, modulationIndex, portamento, count, spread) as they apply
+- filter: static post-filter { type, frequency, rolloff, Q? }
+- effects: ordered list of ["EffectName", { param: value, wet: 0.0-1.0 }]
 
 ```markdown
-# Tone.js Sound Spec Sheet Template
+# [Track Name] Instrument Set
 
 ---
 
-### [Instrument Number]. [Descriptive Instrument Name]
-* **Role:** [Bass | Harmony | Lead | Counter | Accent]
-* **Tone.js Type:** [Tone.Synth | Tone.MonoSynth | Tone.PolySynth(...) | Tone.FMSynth | Tone.AMSynth | Tone.DuoSynth | Tone.MembraneSynth | Tone.NoiseSynth | Tone.Sampler]
-* **Register / Note Range:** [e.g., Sub-Bass (C1-C2) | Mid (C3-C5) | High (C5-C7) | Frequency Band]
-* **Oscillator Configuration:**
-  * Type: [sine | square | triangle | sawtooth | fatsawtooth | pwm | pulse | white / pink / brown noise]
-  * Polyphony / Voicing: [Monophonic | Polyphonic (N voices)]
-  * Harmonicity / Modulation Index (FM/AM only): [harmonicity: float, modulationIndex: float]
-* **Amplitude Envelope (ADSR):**
-  * Attack: `[X]s`
-  * Decay: `[X]s`
-  * Sustain: `[0.0 - 1.0]`
-  * Release: `[X]s`
-* **Filter Envelope & Cutoff (Optional/MonoSynth):**
-  * Filter Type: [lowpass | highpass | bandpass | notch] ([12 | 24 | 48] dB/oct)
-  * Base Cutoff: `[X]Hz`
-  * Envelope Amount / Octaves: `[X]`
-  * Attack: `[X]s` | Decay: `[X]s` | Sustain: `[0.0 - 1.0]` | Release: `[X]s`
-* **Brightness & Timbre:** [Subjective character: e.g., dark, warm, metallic, fizzy, aggressive, hollow, glass-like]
-* **Movement & Modulation:**
-  * Pitch Mod / Vibrato: [rate: [X]Hz, depth: [X]]
-  * Detune / Unison: [spread: [X] cents, count: [X]]
-  * LFO Destinations: [Target parameter: e.g., filter cutoff, pan, amplitude] (LFO type: [X], rate: [X]Hz, min: [X], max: [X])
-  * Portamento / Glide: `[X]s`
-* **FX Chain (Ordered signal flow):**
-  1. `[Tone.FXName]` (`[param1: val, param2: val, wet: 0.0 - 1.0]`)
-  2. `[Tone.FXName]` (`[param1: val, param2: val, wet: 0.0 - 1.0]`)
-  3. `[Tone.FXName]` (`[param1: val, param2: val, wet: 0.0 - 1.0]`)
+### Role: [bass | harmony | lead | counter | accent | percussion]
+* **type:** [instrument type for this role]
+* **synth:** [Synth | FMSynth | AMSynth | MonoSynth | DuoSynth | NoiseSynth]
+* **polyphony:** [integer, or omit if monophonic]
+* **options:**
+  * oscillator: `{ "type": "sine | triangle | square | sawtooth | fatsawtooth | pwm | pulse", "count": [int?], "spread": [cents?] }`
+  * envelope: `{ "attack": [s], "decay": [s], "sustain": [0.0-1.0], "release": [s] }`
+  * filterEnvelope (MonoSynth): `{ "attack": [s], "decay": [s], "sustain": [0.0-1.0], "release": [s], "octaves": [x] }`
+  * modulation (FM/AM): `{ "type": "sine" }`, harmonicity: [float], modulationIndex: [float]
+  * portamento: `[s glide, optional]`
+* **register:** [integer octave 1-6]
+* **hold:** [integer beats]
+* **gain:** [0.0 - 1.0]
+* **filter:** `{ "type": "lowpass | highpass | bandpass | notch", "frequency": [Hz], "rolloff": [-12 | -24 | -48], "Q": [x?] }`
+* **effects:**
+  1. `["EffectName", { "param": value, "wet": 0.0-1.0 }]`
+  2. `["EffectName", { "param": value, "wet": 0.0-1.0 }]`
+* **Character:** [subjective note: dark, warm, metallic, glassy, airy, aggressive...]
 ```"""
 
 

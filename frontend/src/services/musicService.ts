@@ -7,7 +7,6 @@ import type { Seed } from "./randomService";
 import type { InstrumentSpec, InstrumentSet, Role } from "../types/music";
 
 const LOOP_BARS = 8;
-const MAX_DENSITY = 1.5; // events per bar; caps loudness and overlap
 const MIN_REGISTER = 1; // no subsonic rumble
 const MAX_REGISTER = 6; // no piercing highs
 
@@ -91,7 +90,7 @@ const buildVoice = (spec: InstrumentSpec, register: number, master: Tone.ToneAud
 
 /** random [bar, beat, step] events for one role. */
 const buildScore = (density: number, steps: number, bars = LOOP_BARS): [number, number, number][] => {
-  const count = Math.min(Math.round(Math.min(density, MAX_DENSITY) * bars), bars * 4);
+  const count = Math.min(Math.round(density * bars), bars * 4); // ceiling: one event per beat
   const events: [number, number, number][] = [];
   const span = (bars * 4) / count; // one event per even segment
   for (let index = 0; index < count; index++) {
