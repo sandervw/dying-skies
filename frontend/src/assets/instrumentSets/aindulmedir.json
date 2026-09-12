@@ -1,0 +1,74 @@
+{
+  "name": "aindulmedir",
+  "bass": {
+    "type": "sub",
+    "synth": "MonoSynth",
+    "options": {
+      "oscillator": { "type": "triangle" },
+      "filterEnvelope": { "attack": 1.0, "decay": 1.0, "sustain": 1.0, "release": 2.0, "baseFrequency": 180, "octaves": 0.5 },
+      "envelope": { "attack": 1.2, "decay": 1.0, "sustain": 1.0, "release": 2.5 },
+      "portamento": 0.4
+    },
+    "register": 1, "hold": 8, "gain": 0.85,
+    "filter": { "type": "lowpass", "frequency": 220, "rolloff": -24 },
+    "effects": []
+  },
+  "harmony": {
+    "type": "pad",
+    "synth": "Synth", "polyphony": 6,
+    "options": {
+      "oscillator": { "type": "fatsawtooth", "count": 3, "spread": 18 },
+      "envelope": { "attack": 1.8, "decay": 2.0, "sustain": 0.75, "release": 3.0 }
+    },
+    "register": 3, "hold": 6, "gain": 0.5,
+    "filter": { "type": "lowpass", "frequency": 750, "rolloff": -24 },
+    "effects": [
+      ["Chorus", { "frequency": 0.8, "delayTime": 4.0, "depth": 0.5, "wet": 0.4 }],
+      ["Reverb", { "decay": 6.0, "preDelay": 0.05, "wet": 0.65 }]
+    ]
+  },
+  "accent": {
+    "type": "sparkle",
+    "synth": "AMSynth", "polyphony": 3,
+    "options": {
+      "oscillator": { "type": "sine" }, "modulation": { "type": "triangle" }, "harmonicity": 1.0,
+      "envelope": { "attack": 0.8, "decay": 2.0, "sustain": 0.5, "release": 3.5 }
+    },
+    "register": 6, "hold": 2, "gain": 0.35,
+    "filter": { "type": "lowpass", "frequency": 5000, "rolloff": -12 },
+    "effects": [
+      ["Chorus", { "frequency": 1.2, "delayTime": 2.5, "depth": 0.6, "wet": 0.5 }],
+      ["FeedbackDelay", { "delayTime": "4n", "feedback": 0.5, "wet": 0.4 }],
+      ["Reverb", { "decay": 7.0, "preDelay": 0.08, "wet": 0.75 }]
+    ]
+  },
+  "lead": {
+    "type": "pluck",
+    "synth": "FMSynth", "polyphony": 4,
+    "options": {
+      "oscillator": { "type": "sine" }, "modulation": { "type": "sine" }, "harmonicity": 2.0, "modulationIndex": 1.8,
+      "envelope": { "attack": 0.005, "decay": 1.2, "sustain": 0.1, "release": 1.8 }
+    },
+    "register": 5, "hold": 3, "gain": 0.4,
+    "filter": { "type": "lowpass", "frequency": 3200, "rolloff": -12 },
+    "effects": [
+      ["PingPongDelay", { "delayTime": "8n.", "feedback": 0.45, "wet": 0.35 }],
+      ["Chorus", { "frequency": 1.5, "delayTime": 3.5, "depth": 0.4, "wet": 0.25 }],
+      ["Reverb", { "decay": 4.5, "preDelay": 0.02, "wet": 0.55 }]
+    ]
+  },
+  "counter": {
+    "type": "swell",
+    "synth": "Synth", "polyphony": 6,
+    "options": {
+      "oscillator": { "type": "fatsawtooth", "count": 3, "spread": 18 },
+      "envelope": { "attack": 3.0, "decay": 2.0, "sustain": 0.85, "release": 4.5 }
+    },
+    "register": 2, "hold": 6, "gain": 0.4,
+    "filter": { "type": "lowpass", "frequency": 650, "rolloff": -24 },
+    "effects": [
+      ["Chorus", { "frequency": 0.5, "delayTime": 3.5, "depth": 0.6, "wet": 0.35 }],
+      ["Reverb", { "decay": 8.0, "preDelay": 0.04, "wet": 0.6 }]
+    ]
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "name": "zoombinis",
+  "bass": {
+    "type": "sub",
+    "synth": "MonoSynth",
+    "options": {
+      "oscillator": { "type": "triangle" },
+      "filterEnvelope": { "attack": 0.8, "decay": 1.0, "sustain": 1.0, "release": 2.0, "octaves": 0.5 },
+      "envelope": { "attack": 0.8, "decay": 1.0, "sustain": 1.0, "release": 2.0 },
+      "portamento": 0.3
+    },
+    "register": 1, "hold": 8, "gain": 0.85,
+    "filter": { "type": "lowpass", "frequency": 180, "rolloff": -24 },
+    "effects": [
+      ["Distortion", { "distortion": 0.1, "wet": 0.15 }]
+    ]
+  },
+  "harmony": {
+    "type": "pad",
+    "synth": "MonoSynth", "polyphony": 6,
+    "options": {
+      "oscillator": { "type": "fatsawtooth", "count": 3, "spread": 15 },
+      "envelope": { "attack": 0.8, "decay": 1.5, "sustain": 0.75, "release": 2.2 },
+      "filter": { "type": "lowpass", "rolloff": -24 },
+      "filterEnvelope": { "attack": 0.8, "decay": 1.2, "sustain": 0.6, "release": 2.0, "baseFrequency": 1100, "octaves": 1.2 }
+    },
+    "register": 3, "hold": 6, "gain": 0.5,
+    "effects": [
+      ["Vibrato", { "frequency": 0.5, "depth": 0.01 }],
+      ["Chorus", { "frequency": 0.8, "delayTime": 4.0, "depth": 0.7, "wet": 0.4 }]
+    ]
+  },
+  "accent": {
+    "type": "sparkle",
+    "synth": "FMSynth", "polyphony": 4,
+    "options": {
+      "oscillator": { "type": "sine" }, "modulation": { "type": "sine" }, "harmonicity": 3.5, "modulationIndex": 12,
+      "envelope": { "attack": 0.005, "decay": 1.2, "sustain": 0.0, "release": 1.0 }
+    },
+    "register": 5, "hold": 2, "gain": 0.4,
+    "filter": { "type": "lowpass", "frequency": 8000, "rolloff": -12 },
+    "effects": [
+      ["FeedbackDelay", { "delayTime": "8n.", "feedback": 0.35, "wet": 0.3 }]
+    ]
+  },
+  "lead": {
+    "type": "keys",
+    "synth": "MonoSynth", "polyphony": 4,
+    "options": {
+      "oscillator": { "type": "sine" },
+      "filterEnvelope": { "attack": 0.15, "decay": 0.3, "sustain": 0.7, "release": 0.6, "baseFrequency": 1000, "octaves": 1.0 },
+      "envelope": { "attack": 0.15, "decay": 0.3, "sustain": 0.75, "release": 0.6 }
+    },
+    "register": 4, "hold": 3, "gain": 0.4,
+    "filter": { "type": "lowpass", "frequency": 2200, "rolloff": -12 },
+    "effects": [
+      ["Chorus", { "frequency": 1.5, "delayTime": 3.5, "depth": 0.4, "wet": 0.25 }],
+      ["PingPongDelay", { "delayTime": "4n", "feedback": 0.25, "wet": 0.2 }]
+    ]
+  },
+  "counter": {
+    "type": "swell",
+    "synth": "NoiseSynth",
+    "options": {
+      "noise": { "type": "pink" },
+      "envelope": { "attack": 2.2, "decay": 3.0, "sustain": 0.3, "release": 3.5 }
+    },
+    "hold": 8, "gain": 0.25,
+    "filter": { "type": "bandpass", "frequency": 2200, "rolloff": -12 },
+    "effects": [
+      ["AutoPanner", { "frequency": 0.15, "depth": 0.8, "wet": 1.0 }]
+    ]
+  }
+}

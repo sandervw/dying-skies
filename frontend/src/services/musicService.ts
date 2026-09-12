@@ -18,6 +18,12 @@ const PRESET_NAMES = Object.keys(PRESETS);
 const pick = <T>(random: () => number, items: readonly T[]): T =>
   items[Math.floor(random() * items.length)];
 
+// rendezvous-hash set pick: stable as the catalog grows
+const pickSet = (seed: Seed, sets: readonly InstrumentSet[]): InstrumentSet =>
+  sets.reduce((best, set) =>
+    deriveSeed(seed, `set:${set.name}`) > deriveSeed(seed, `set:${best.name}`) ? set : best,
+  );
+
 // sets whose voices satisfy every role the preset needs
 const setsForPreset = (preset: Preset): InstrumentSet[] =>
   INSTRUMENT_SETS.filter((set) =>
@@ -121,10 +127,10 @@ const buildPart = (
 
 /** name the instrument set, mode, and preset a seed plays. */
 const describeSky = (seed: Seed): { set: string; mode: string; preset: string; } => {
-  // mirrors playSky's first three picks; keep this order.
+  // mirrors playSky's picks; keep this draw order.
   const random = createSeededRandom(deriveSeed(seed, "music"));
   const preset = pick(random, PRESET_NAMES);
-  const set = pick(random, setsForPreset(PRESETS[preset])).name;
+  const set = pickSet(seed, setsForPreset(PRESETS[preset])).name;
   const mode = pick(random, MODE_NAMES);
   return { set, mode, preset };
 };
@@ -147,7 +153,7 @@ const deClick = (audio: AudioBuffer): AudioBuffer => {
 const playSky = (seed: Seed): (() => void) => {
   const random = createSeededRandom(deriveSeed(seed, "music"));
   const preset = PRESETS[pick(random, PRESET_NAMES)];
-  const set = pick(random, setsForPreset(preset));
+  const set = pickSet(seed, setsForPreset(preset));
   const offsets = MODES[pick(random, MODE_NAMES)];
   const roles = Object.keys(preset.instruments) as Role[];
   const chunkSeconds = (bars: number): number => (bars * 4 * 60) / preset.tempo;
