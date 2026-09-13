@@ -54,7 +54,7 @@
         "release": 2.5
       }
     },
-    "register": 3,
+    "register": 2,
     "hold": 6,
     "gain": 0.5,
     "filter": {
@@ -93,7 +93,7 @@
         "release": 2.5
       }
     },
-    "register": 6,
+    "register": 5,
     "hold": 2,
     "gain": 0.35,
     "filter": {
@@ -131,7 +131,7 @@
         "release": 0.6
       }
     },
-    "register": 5,
+    "register": 4,
     "hold": 2,
     "gain": 0.4,
     "filter": {
@@ -203,7 +203,7 @@
         }
       }
     },
-    "register": 4,
+    "register": 3,
     "hold": 6,
     "gain": 0.3,
     "filter": {

@@ -148,7 +148,7 @@ const buildPlan = (
   const voices = roles.map((role) => {
     const spec = set[role];
     const register = clamp(
-      (spec.register ?? 3) + preset.registerShift,
+      (spec.register ?? 2) + preset.registerShift,
       MIN_REGISTER,
       MAX_REGISTER,
     );
@@ -168,7 +168,7 @@ type ScoredVoice = {
 const scoreVoices = (plan: ReturnType<typeof buildPlan>, bars: number): ScoredVoice[] =>
   plan.voices.map((voice) => ({
     ...voice,
-    events: buildScore(plan.preset.density[voice.role], plan.offsets.length + 1, bars),
+    events: buildScore(plan.preset.density[voice.role], plan.offsets.length + 1, voice.spec.hold, bars),
   }));
 
 // flatten scored voices into per-note visual data mirroring the triggers.

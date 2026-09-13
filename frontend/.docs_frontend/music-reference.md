@@ -52,7 +52,7 @@ Events per bar, per preset, per role. Fixed values, no jitter.
 | majorasmask | acoustic and dry, bowed strings, celesta, ocarina, koto           |
 | deusex      | synthetic, supersaw bed, FM strikes, reedy lead, noise shimmer    |
 | zoombinis   | bright and buoyant, music box, soft flute, chord pad, misty swell |
-| aindulmedir | warm and reverberant, velvet pad, glass shimmer, crystalline harp |
+| aom         | driven and gritty, distorted sub, bright FM bell, biting saw lead |
 | ogresound   | cinematic and cavernous, saw swell, glassy pluck, kinetic lead    |
 
 ## Score

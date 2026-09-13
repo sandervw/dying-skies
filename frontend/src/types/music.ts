@@ -6,7 +6,7 @@ type Role = "bass" | "harmony" | "lead" | "counter" | "accent";
 /** the instrument sets, one voice per role. */
 type InstrumentSetName =
   | "kingsfield" | "majorasmask" | "deusex" | "zoombinis"
-  | "aindulmedir" | "ogresound";
+  | "aom" | "ogresound";
 
 /** any Tone voice class; options are checked by Tone at runtime. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -18,9 +18,9 @@
         "sustain": 1,
         "release": 2
       },
-      "portamento": 0.3
+      "portamento": 0
     },
-    "register": 1,
+    "register": 0,
     "hold": 8,
     "gain": 0.85,
     "filter": {
@@ -46,7 +46,7 @@
         "release": 1.5
       }
     },
-    "register": 2,
+    "register": 1,
     "hold": 6,
     "gain": 0.5,
     "filter": {
@@ -91,7 +91,7 @@
         "release": 0.3
       }
     },
-    "register": 6,
+    "register": 5,
     "hold": 2,
     "gain": 0.4,
     "effects": [
@@ -119,7 +119,7 @@
         "release": 0.6
       }
     },
-    "register": 4,
+    "register": 3,
     "hold": 3,
     "gain": 0.4,
     "filter": {
@@ -154,7 +154,7 @@
         "release": 2.4
       }
     },
-    "register": 3,
+    "register": 2,
     "hold": 8,
     "gain": 0.4,
     "filter": {

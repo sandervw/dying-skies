@@ -83,12 +83,15 @@ const buildVoice = (spec: InstrumentSpec, register: number, master: Tone.ToneAud
 };
 
 /** random [bar, beat, step] events for one role. */
-const buildScore = (density: number, steps: number, bars = LOOP_BARS): [number, number, number][] => {
+const buildScore = (density: number, steps: number, hold: number, bars = LOOP_BARS): [number, number, number][] => {
   const count = Math.min(Math.round(Math.min(density, MAX_DENSITY) * bars), bars * 4);
   const events: [number, number, number][] = [];
-  const span = (bars * 4) / count; // one event per even segment
+  const total = bars * 4;
+  const span = total / count; // one event per even segment
+  const latest = total - Math.min(Math.ceil(hold), total / 2); // reserve room for long notes
   for (let index = 0; index < count; index++) {
-    const position = Math.max(1, Math.floor((index + Math.random()) * span)); // skip seam
+    const raw = Math.max(1, Math.floor((index + Math.random()) * span)); // skip seam
+    const position = Math.min(raw, latest); // slow notes never start too late
     events.push([Math.floor(position / 4), position % 4, Math.floor(Math.random() * steps)]);
   }
   return events;
@@ -175,8 +178,8 @@ const playSky = (seed: Seed): (() => void) => {
       const master = buildMaster(preset);
       for (const role of roles) {
         const spec = set[role];
-        const register = Math.min(MAX_REGISTER, Math.max(MIN_REGISTER, (spec.register ?? 3) + preset.registerShift));
-        const events = buildScore(preset.density[role], offsets.length + 1, bars);
+        const register = Math.min(MAX_REGISTER, Math.max(MIN_REGISTER, (spec.register ?? 2) + preset.registerShift));
+        const events = buildScore(preset.density[role], offsets.length + 1, spec.hold, bars);
         const synth = buildVoice(spec, register, master[0])[0];
         buildPart(spec, synth, events, offsets, register, preset.tempo, chunkSeconds(bars));
       }
