@@ -176,6 +176,7 @@ const scoredToNotes = (
   voices: ScoredVoice[],
   offsets: readonly number[],
   secPerBeat: number,
+  chunkSec: number,
 ): VizNote[] => {
   const notes: VizNote[] = [];
   for (const voice of voices) {
@@ -196,7 +197,7 @@ const scoredToNotes = (
         role: voice.role,
         color: ROLE_COLORS[voice.role],
         timeSec,
-        durSec,
+        durSec: Math.min(durSec, chunkSec - timeSec),
         midi,
         gain: voice.spec.gain,
       });
@@ -311,7 +312,7 @@ const startPlayback = (
       source.start(nextTime);
       playback.schedule.push({
         startTime: nextTime,
-        notes: scoredToNotes(voices, plan.offsets, plan.secPerBeat),
+        notes: scoredToNotes(voices, plan.offsets, plan.secPerBeat, chunkSeconds(bars)),
       });
       nextTime += chunkSeconds(bars);
       firstChunk = false;
