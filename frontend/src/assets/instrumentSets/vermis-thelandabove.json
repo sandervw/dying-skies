@@ -44,19 +44,5 @@
       ["Chorus", { "frequency": 0.8, "delayTime": 4.0, "depth": 0.6, "wet": 0.4 }],
       ["Reverb", { "decay": 3.5, "wet": 0.4 }]
     ]
-  },
-  "percussion": {
-    "type": "kick",
-    "synth": "MonoSynth",
-    "options": {
-      "oscillator": { "type": "sine" },
-      "envelope": { "attack": 0.001, "decay": 0.35, "sustain": 0.0, "release": 0.08 },
-      "filterEnvelope": { "attack": 0.001, "decay": 0.08, "sustain": 0.0, "release": 0.05, "octaves": 4 }
-    },
-    "register": 1, "hold": 1, "gain": 0.85,
-    "filter": { "type": "lowpass", "frequency": 120, "rolloff": -24 },
-    "effects": [
-      ["Distortion", { "distortion": 0.15, "wet": 0.1 }]
-    ]
   }
 }

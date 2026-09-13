@@ -60,19 +60,5 @@
     "effects": [
       ["Compressor", { "threshold": -16, "ratio": 3, "attack": 0.03, "release": 0.25 }]
     ]
-  },
-  "percussion": {
-    "type": "tom",
-    "synth": "MonoSynth",
-    "options": {
-      "oscillator": { "type": "sine" },
-      "envelope": { "attack": 0.005, "decay": 0.35, "sustain": 0.0, "release": 0.2 },
-      "filterEnvelope": { "attack": 0.005, "decay": 0.18, "sustain": 0.0, "release": 0.1, "octaves": 3 }
-    },
-    "register": 1, "hold": 1, "gain": 0.75,
-    "filter": { "type": "lowpass", "frequency": 350, "rolloff": -12 },
-    "effects": [
-      ["Reverb", { "decay": 1.8, "wet": 0.25 }]
-    ]
   }
 }

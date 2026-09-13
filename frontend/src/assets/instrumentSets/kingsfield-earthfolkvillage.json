@@ -45,17 +45,5 @@
       ["FeedbackDelay", { "delayTime": "8n.", "feedback": 0.3, "wet": 0.25 }],
       ["Reverb", { "decay": 2.5, "preDelay": 0.02, "wet": 0.35 }]
     ]
-  },
-  "percussion": {
-    "type": "hat",
-    "synth": "NoiseSynth",
-    "options": {
-      "envelope": { "attack": 0.002, "decay": 0.06, "sustain": 0.0, "release": 0.05 }
-    },
-    "hold": 1, "gain": 0.45,
-    "filter": { "type": "highpass", "frequency": 6500, "rolloff": -24 },
-    "effects": [
-      ["BitCrusher", { "bits": 10, "wet": 0.2 }]
-    ]
   }
 }

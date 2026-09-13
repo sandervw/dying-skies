@@ -61,18 +61,5 @@
       ["PingPongDelay", { "delayTime": "4n", "feedback": 0.45, "wet": 0.4 }],
       ["Reverb", { "decay": 7.0, "preDelay": 0.02, "wet": 0.65 }]
     ]
-  },
-  "percussion": {
-    "type": "tom",
-    "synth": "Synth",
-    "options": {
-      "oscillator": { "type": "sine" },
-      "envelope": { "attack": 0.02, "decay": 1.8, "sustain": 0.0, "release": 1.8 }
-    },
-    "register": 1, "hold": 2, "gain": 0.8,
-    "filter": { "type": "lowpass", "frequency": 350, "rolloff": -24, "Q": 1.5 },
-    "effects": [
-      ["Reverb", { "decay": 3.2, "preDelay": 0.04, "wet": 0.4 }]
-    ]
   }
 }

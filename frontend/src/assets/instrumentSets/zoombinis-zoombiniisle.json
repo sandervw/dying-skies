@@ -17,7 +17,7 @@
       ["Reverb", { "decay": 2.2, "preDelay": 0.01, "wet": 0.35 }]
     ]
   },
-  "counter": {
+  "harmony": {
     "type": "strings",
     "synth": "Synth",
     "options": {
@@ -44,18 +44,6 @@
     "filter": { "type": "lowpass", "frequency": 220, "rolloff": -24 },
     "effects": [
       ["Compressor", { "threshold": -18, "ratio": 3, "wet": 1.0 }]
-    ]
-  },
-  "percussion": {
-    "type": "hat",
-    "synth": "NoiseSynth",
-    "options": {
-      "envelope": { "attack": 0.005, "decay": 0.06, "sustain": 0.0, "release": 0.04 }
-    },
-    "register": 5, "hold": 1, "gain": 0.5,
-    "filter": { "type": "bandpass", "frequency": 4200, "rolloff": -12, "Q": 2.5 },
-    "effects": [
-      ["Freeverb", { "roomSize": 0.2, "dampening": 3000, "wet": 0.15 }]
     ]
   }
 }

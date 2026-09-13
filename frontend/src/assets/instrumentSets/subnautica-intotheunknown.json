@@ -28,8 +28,8 @@
       ["Reverb", { "decay": 2.2, "wet": 0.25 }]
     ]
   },
-  "counter": {
-    "type": "swell",
+  "harmony": {
+    "type": "pad",
     "synth": "AMSynth",
     "options": {
       "oscillator": { "type": "sawtooth" },
@@ -43,20 +43,6 @@
     "effects": [
       ["Chorus", { "frequency": 0.8, "delayTime": 3.5, "depth": 0.7, "wet": 0.4 }],
       ["Reverb", { "decay": 4.5, "wet": 0.45 }]
-    ]
-  },
-  "percussion": {
-    "type": "kick",
-    "synth": "MonoSynth",
-    "options": {
-      "oscillator": { "type": "sine" },
-      "envelope": { "attack": 0.002, "decay": 0.28, "sustain": 0.0, "release": 0.2 },
-      "filterEnvelope": { "attack": 0.001, "decay": 0.08, "sustain": 0.0, "release": 0.08, "octaves": 3.0 }
-    },
-    "register": 1, "hold": 1, "gain": 0.95,
-    "filter": { "type": "lowpass", "frequency": 110, "rolloff": -24, "Q": 1.0 },
-    "effects": [
-      ["Distortion", { "distortion": 0.08, "wet": 0.15 }]
     ]
   }
 }

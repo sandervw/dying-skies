@@ -138,11 +138,7 @@ const pick = <T,>(items: readonly T[]): T =>
 const clamp = (value: number, low: number, high: number): number =>
   Math.min(high, Math.max(low, value));
 
-const buildPlan = (
-  setName: string,
-  presetName: string,
-  modeName: string,
-) => {
+const buildPlan = (setName: string, presetName: string, modeName: string) => {
   const set = INSTRUMENT_SETS.find((entry) => entry.name === setName)!;
   const preset = PRESETS[presetName];
   const offsets = MODES[modeName];
@@ -171,10 +167,17 @@ type ScoredVoice = {
 };
 
 // a fresh random score for every voice, used by one chunk
-const scoreVoices = (plan: ReturnType<typeof buildPlan>, bars: number): ScoredVoice[] =>
+const scoreVoices = (
+  plan: ReturnType<typeof buildPlan>,
+  bars: number,
+): ScoredVoice[] =>
   plan.voices.map((voice) => ({
     ...voice,
-    events: buildScore(plan.preset.density[voice.role] ?? 0, plan.offsets.length + 1, bars),
+    events: buildScore(
+      plan.preset.density[voice.role] ?? 0,
+      plan.offsets.length + 1,
+      bars,
+    ),
   }));
 
 // flatten scored voices into per-note visual data mirroring the triggers.
@@ -273,31 +276,37 @@ const startPlayback = (
     },
   };
 
-  const chunkSeconds = (bars: number): number => (bars * BEATS_PER_BAR * 60) / plan.tempo;
+  const chunkSeconds = (bars: number): number =>
+    (bars * BEATS_PER_BAR * 60) / plan.tempo;
 
   // render `bars` bars plus tail offline with a fresh random score
-  const renderChunk = (voices: ScoredVoice[], bars: number): Promise<AudioBuffer> =>
-    Tone.Offline(({ transport }) => {
-      const master = buildMaster(plan.preset);
-      for (const voice of voices) {
-        const synth = buildVoice(voice.spec, voice.register, master[0])[0];
-        buildPart(
-          voice.spec,
-          synth,
-          voice.events,
-          plan.offsets,
-          voice.register,
-          plan.tempo,
-          chunkSeconds(bars),
-        );
-      }
-      transport.bpm.value = plan.tempo;
-      transport.start();
-      return (master.find((node) => node instanceof Tone.Reverb) as Tone.Reverb)
-        .ready;
-    }, chunkSeconds(bars) + 6).then(
-      (buffer): AudioBuffer => deClick(buffer.get() as AudioBuffer),
-    );
+  const renderChunk = (
+    voices: ScoredVoice[],
+    bars: number,
+  ): Promise<AudioBuffer> =>
+    Tone.Offline(
+      ({ transport }) => {
+        const master = buildMaster(plan.preset);
+        for (const voice of voices) {
+          const synth = buildVoice(voice.spec, voice.register, master[0])[0];
+          buildPart(
+            voice.spec,
+            synth,
+            voice.events,
+            plan.offsets,
+            voice.register,
+            plan.tempo,
+            chunkSeconds(bars),
+          );
+        }
+        transport.bpm.value = plan.tempo;
+        transport.start();
+        return (
+          master.find((node) => node instanceof Tone.Reverb) as Tone.Reverb
+        ).ready;
+      },
+      chunkSeconds(bars) + 6,
+    ).then((buffer): AudioBuffer => deClick(buffer.get() as AudioBuffer));
 
   // keep one chunk queued ahead; tails overlap for a seamless seam
   let firstChunk = true;
@@ -308,7 +317,7 @@ const startPlayback = (
       !playback.stopped &&
       nextTime < context.currentTime + plan.loopSeconds
     ) {
-      const bars = firstChunk ? 2 : LOOP_BARS; // short first chunk plays sooner
+      const bars = firstChunk ? 4 : LOOP_BARS; // short first chunk plays sooner
       const voices = scoreVoices(plan, bars);
       const buffer = await renderChunk(voices, bars);
       if (playback.stopped) break;
@@ -319,7 +328,12 @@ const startPlayback = (
       source.start(nextTime);
       playback.schedule.push({
         startTime: nextTime,
-        notes: scoredToNotes(voices, plan.offsets, plan.secPerBeat, bars * BEATS_PER_BAR * plan.secPerBeat),
+        notes: scoredToNotes(
+          voices,
+          plan.offsets,
+          plan.secPerBeat,
+          bars * BEATS_PER_BAR * plan.secPerBeat,
+        ),
       });
       nextTime += chunkSeconds(bars);
       firstChunk = false;
@@ -546,7 +560,9 @@ const drawFrame = (canvas: HTMLCanvasElement, playback: Playback): void => {
 
 const MusicLab = (): ReactElement => {
   const [presetName, setPresetName] = useState<string>("cavern");
-  const [setName, setSetName] = useState<string>(() => matchingSets("cavern")[0]);
+  const [setName, setSetName] = useState<string>(
+    () => matchingSets("cavern")[0],
+  );
   const [modeName, setModeName] = useState<string>("majorPentatonic");
   const setNames = matchingSets(presetName);
   const [playing, setPlaying] = useState(false);

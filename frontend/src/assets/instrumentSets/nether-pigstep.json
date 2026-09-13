@@ -32,7 +32,7 @@
       ["Reverb", { "decay": 2.2, "preDelay": 0.02, "wet": 0.3 }]
     ]
   },
-  "counter": {
+  "harmony": {
     "type": "pad",
     "synth": "Synth",
     "polyphony": 4,
@@ -62,18 +62,6 @@
     "effects": [
       ["PingPongDelay", { "delayTime": "8n.", "feedback": 0.4, "wet": 0.35 }],
       ["Reverb", { "decay": 2.8, "preDelay": 0.01, "wet": 0.4 }]
-    ]
-  },
-  "percussion": {
-    "type": "hat",
-    "synth": "NoiseSynth",
-    "options": {
-      "envelope": { "attack": 0.001, "decay": 0.045, "sustain": 0.0, "release": 0.03 }
-    },
-    "register": 6, "hold": 1, "gain": 0.6,
-    "filter": { "type": "highpass", "frequency": 7500, "rolloff": -24, "Q": 1.0 },
-    "effects": [
-      ["Freeverb", { "roomSize": 0.2, "dampening": 4000, "wet": 0.15 }]
     ]
   }
 }

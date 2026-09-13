@@ -29,21 +29,6 @@
       ["Reverb", { "decay": 9.0, "preDelay": 0.08, "wet": 0.65 }]
     ]
   },
-  "percussion": {
-    "type": "kick",
-    "synth": "MonoSynth",
-    "options": {
-      "oscillator": { "type": "sine" },
-      "envelope": { "attack": 0.02, "decay": 1.2, "sustain": 0.0, "release": 1.0 },
-      "filterEnvelope": { "attack": 0.005, "decay": 0.3, "sustain": 0.0, "release": 0.3, "octaves": 3.5 }
-    },
-    "register": 1, "hold": 1, "gain": 0.8,
-    "filter": { "type": "lowpass", "frequency": 95, "rolloff": -24 },
-    "effects": [
-      ["Compressor", { "threshold": -18, "ratio": 4, "wet": 1.0 }],
-      ["Reverb", { "decay": 4.5, "wet": 0.45 }]
-    ]
-  },
   "counter": {
     "type": "choir",
     "synth": "AMSynth",

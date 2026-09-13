@@ -14,20 +14,6 @@
       ["Compressor", { "threshold": -20, "ratio": 3, "wet": 1.0 }]
     ]
   },
-  "percussion": {
-    "type": "kick",
-    "synth": "MonoSynth",
-    "options": {
-      "oscillator": { "type": "triangle" },
-      "envelope": { "attack": 0.005, "decay": 0.45, "sustain": 0.0, "release": 0.2 },
-      "filterEnvelope": { "attack": 0.005, "decay": 0.18, "sustain": 0.0, "release": 0.2, "octaves": 2.5 }
-    },
-    "register": 1, "hold": 1, "gain": 0.75,
-    "filter": { "type": "lowpass", "frequency": 110, "rolloff": -24 },
-    "effects": [
-      ["Reverb", { "decay": 2.2, "preDelay": 0.02, "wet": 0.25 }]
-    ]
-  },
   "harmony": {
     "type": "pad",
     "synth": "Synth",

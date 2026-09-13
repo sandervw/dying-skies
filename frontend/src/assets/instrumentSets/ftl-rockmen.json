@@ -59,19 +59,5 @@
       ["FeedbackDelay", { "delayTime": "4n.", "feedback": 0.4, "wet": 0.35 }],
       ["Reverb", { "decay": 3.0, "wet": 0.45 }]
     ]
-  },
-  "percussion": {
-    "type": "kick",
-    "synth": "MonoSynth",
-    "options": {
-      "oscillator": { "type": "sine" },
-      "envelope": { "attack": 0.002, "decay": 0.35, "sustain": 0.0, "release": 0.2 },
-      "filterEnvelope": { "attack": 0.001, "decay": 0.08, "sustain": 0.0, "release": 0.1, "octaves": 4.0 }
-    },
-    "register": 1, "hold": 1, "gain": 0.9,
-    "filter": { "type": "lowpass", "frequency": 120, "rolloff": -24 },
-    "effects": [
-      ["Distortion", { "distortion": 0.12, "wet": 0.1 }]
-    ]
   }
 }

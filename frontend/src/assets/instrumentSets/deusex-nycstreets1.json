@@ -55,19 +55,5 @@
       ["AutoFilter", { "frequency": "2n", "baseFrequency": 400, "octaves": 3.5, "wet": 0.8 }],
       ["Reverb", { "decay": 2.5, "preDelay": 0.02, "wet": 0.5 }]
     ]
-  },
-  "percussion": {
-    "type": "kick",
-    "synth": "MonoSynth",
-    "options": {
-      "oscillator": { "type": "sine" },
-      "envelope": { "attack": 0.001, "decay": 0.35, "sustain": 0.0, "release": 0.1 },
-      "filterEnvelope": { "attack": 0.001, "decay": 0.08, "sustain": 0.0, "release": 0.08, "octaves": 4.5 }
-    },
-    "register": 1, "hold": 1, "gain": 0.95,
-    "filter": { "type": "lowpass", "frequency": 160, "rolloff": -24 },
-    "effects": [
-      ["Distortion", { "distortion": 0.1, "wet": 0.15 }]
-    ]
   }
 }

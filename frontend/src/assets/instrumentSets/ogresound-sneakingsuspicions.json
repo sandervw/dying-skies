@@ -59,19 +59,5 @@
       ["Phaser", { "frequency": 0.5, "octaves": 3, "wet": 0.3 }],
       ["Reverb", { "decay": 5.0, "wet": 0.5 }]
     ]
-  },
-  "percussion": {
-    "type": "kick",
-    "synth": "MonoSynth",
-    "options": {
-      "oscillator": { "type": "sine" },
-      "envelope": { "attack": 0.001, "decay": 0.32, "sustain": 0.0, "release": 0.15 },
-      "filterEnvelope": { "attack": 0.001, "decay": 0.06, "sustain": 0.0, "release": 0.1, "octaves": 4.5 }
-    },
-    "register": 1, "hold": 1, "gain": 0.95,
-    "filter": { "type": "lowpass", "frequency": 120, "rolloff": -24, "Q": 1.0 },
-    "effects": [
-      ["Distortion", { "distortion": 0.15, "wet": 0.2 }]
-    ]
   }
 }

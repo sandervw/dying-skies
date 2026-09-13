@@ -1,18 +1,5 @@
 {
   "name": "deusex-unatco",
-  "percussion": {
-    "type": "kick",
-    "synth": "Synth",
-    "options": {
-      "oscillator": { "type": "sine" },
-      "envelope": { "attack": 0.005, "decay": 0.35, "sustain": 0.0, "release": 0.2 }
-    },
-    "register": 1, "hold": 1, "gain": 0.85,
-    "filter": { "type": "lowpass", "frequency": 180, "rolloff": -24 },
-    "effects": [
-      ["Distortion", { "distortion": 0.2, "wet": 0.15 }]
-    ]
-  },
   "bass": {
     "type": "sub",
     "synth": "MonoSynth",

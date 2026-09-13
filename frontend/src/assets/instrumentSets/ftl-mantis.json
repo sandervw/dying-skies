@@ -57,19 +57,5 @@
     "effects": [
       ["Freeverb", { "roomSize": 0.85, "dampening": 2000, "wet": 0.5 }]
     ]
-  },
-  "percussion": {
-    "type": "kick",
-    "synth": "MonoSynth",
-    "options": {
-      "oscillator": { "type": "sine" },
-      "envelope": { "attack": 0.002, "decay": 0.3, "sustain": 0.0, "release": 0.2 },
-      "filterEnvelope": { "attack": 0.001, "decay": 0.12, "sustain": 0.0, "release": 0.1, "octaves": 3.5 }
-    },
-    "register": 1, "hold": 1, "gain": 0.85,
-    "filter": { "type": "lowpass", "frequency": 120, "rolloff": -12 },
-    "effects": [
-      ["Compressor", { "threshold": -14, "ratio": 4, "wet": 1.0 }]
-    ]
   }
 }
