@@ -35,16 +35,19 @@ API_URL = "https://openrouter.ai/api/v1/chat/completions"
 DEFAULT_MODEL = "google/gemini-3.8-flash"
 
 PROMPT = r"""For each distinct timbre in this file, describe it so I can translate it
-directly into our Tone.js instrument-set JSON. Assign each timbre to one role slot:
-- bass    (instrument types: sub | pluck | noise)
-- harmony (instrument types: pad | strings | choir)
-- lead    (instrument types: bell | pluck | keys | winds)
-- counter (instrument types: pad | strings | swell | choir)
-- accent  (instrument types: bell | sparkle | pluck)
-- percussion (instrument types: kick | hat | tom)
+directly into our Tone.js instrument-set JSON. Assign each timbre to one of our
+five role slots:
+- bass
+- harmony
+- lead
+- counter
+- accent
+
+Ignore percussion entirely: drop any drums, kicks, hats, toms, or unpitched
+rhythmic hits, and never output a block for them.
 
 Output condensed, terse markdown. Use one block per role you hear (skip roles that
-are absent). Field names and shapes mirror our JSON exactly, so keep the same keys,
+are absent; at most one block per role). Field names and shapes mirror our JSON exactly, so keep the same keys,
 value types, and effect array form. Notes on fields:
 - synth: one of Synth | FMSynth | AMSynth | MonoSynth | DuoSynth | NoiseSynth
 - polyphony: integer voice count; omit for monophonic voices
@@ -61,8 +64,7 @@ value types, and effect array form. Notes on fields:
 
 ---
 
-### Role: [bass | harmony | lead | counter | accent | percussion]
-* **type:** [instrument type for this role]
+### Role: [bass | harmony | lead | counter | accent]
 * **synth:** [Synth | FMSynth | AMSynth | MonoSynth | DuoSynth | NoiseSynth]
 * **polyphony:** [integer, or omit if monophonic]
 * **options:**
@@ -78,7 +80,6 @@ value types, and effect array form. Notes on fields:
 * **effects:**
   1. `["EffectName", { "param": value, "wet": 0.0-1.0 }]`
   2. `["EffectName", { "param": value, "wet": 0.0-1.0 }]`
-* **Character:** [subjective note: dark, warm, metallic, glassy, airy, aggressive...]
 ```"""
 
 

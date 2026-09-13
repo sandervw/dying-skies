@@ -4,12 +4,14 @@ import { MODES } from "../utils/modes";
 import { PRESETS, type Preset } from "../utils/presets";
 import { createSeededRandom, deriveSeed } from "./randomService";
 import type { Seed } from "./randomService";
-import type { InstrumentSpec, InstrumentSet, Role } from "../types/music";
+import type { InstrumentSetName, InstrumentSpec } from "../types/music";
 
 const LOOP_BARS = 8;
+const MAX_DENSITY = 2.5; // events per bar; caps loudness and overlap
 const MIN_REGISTER = 1; // no subsonic rumble
 const MAX_REGISTER = 6; // no piercing highs
 
+const SET_NAMES = Object.keys(INSTRUMENT_SETS) as InstrumentSetName[];
 const MODE_NAMES = Object.keys(MODES);
 const PRESET_NAMES = Object.keys(PRESETS);
 
@@ -18,17 +20,9 @@ const pick = <T>(random: () => number, items: readonly T[]): T =>
   items[Math.floor(random() * items.length)];
 
 // rendezvous-hash set pick: stable as the catalog grows
-const pickSet = (seed: Seed, sets: readonly InstrumentSet[]): InstrumentSet =>
-  sets.reduce((best, set) =>
-    deriveSeed(seed, `set:${set.name}`) > deriveSeed(seed, `set:${best.name}`) ? set : best,
-  );
-
-/** sets whose voices satisfy every role the preset needs. */
-const setsForPreset = (preset: Preset): InstrumentSet[] =>
-  INSTRUMENT_SETS.filter((set) =>
-    (Object.entries(preset.instruments) as [Role, readonly string[]][]).every(
-      ([role, allowed]) => set[role] !== undefined && allowed.includes(set[role]!.type),
-    ),
+const pickSet = (seed: Seed): InstrumentSetName =>
+  SET_NAMES.reduce((best, name) =>
+    deriveSeed(seed, `set:${name}`) > deriveSeed(seed, `set:${best}`) ? name : best,
   );
 
 // wire nodes in order; the last one feeds the output.
@@ -90,14 +84,11 @@ const buildVoice = (spec: InstrumentSpec, register: number, master: Tone.ToneAud
 
 /** random [bar, beat, step] events for one role. */
 const buildScore = (density: number, steps: number, bars = LOOP_BARS): [number, number, number][] => {
-  const count = Math.min(Math.round(density * bars), bars * 4); // ceiling: one event per beat
+  const count = Math.min(Math.round(Math.min(density, MAX_DENSITY) * bars), bars * 4);
   const events: [number, number, number][] = [];
   const span = (bars * 4) / count; // one event per even segment
-  const used = new Set<number>();
   for (let index = 0; index < count; index++) {
     const position = Math.max(1, Math.floor((index + Math.random()) * span)); // skip seam
-    if (used.has(position)) continue; // one event per slot; voices can't stack
-    used.add(position);
     events.push([Math.floor(position / 4), position % 4, Math.floor(Math.random() * steps)]);
   }
   return events;
@@ -128,11 +119,11 @@ const buildPart = (
 };
 
 /** name the instrument set, mode, and preset a seed plays. */
-const describeSky = (seed: Seed): { set: string; mode: string; preset: string; } => {
-  // mirrors playSky's picks; keep this draw order.
+const describeSky = (seed: Seed): { set: InstrumentSetName; mode: string; preset: string; } => {
+  // mirrors playSky's first three picks; keep this order.
   const random = createSeededRandom(deriveSeed(seed, "music"));
+  const set = pickSet(seed);
   const preset = pick(random, PRESET_NAMES);
-  const set = pickSet(seed, setsForPreset(PRESETS[preset])).name;
   const mode = pick(random, MODE_NAMES);
   return { set, mode, preset };
 };
@@ -154,10 +145,10 @@ const deClick = (audio: AudioBuffer): AudioBuffer => {
 /** play this sky as endless fresh chunks; the returned call stops it. */
 const playSky = (seed: Seed): (() => void) => {
   const random = createSeededRandom(deriveSeed(seed, "music"));
+  const set = INSTRUMENT_SETS[pickSet(seed)];
   const preset = PRESETS[pick(random, PRESET_NAMES)];
-  const set = pickSet(seed, setsForPreset(preset));
   const offsets = MODES[pick(random, MODE_NAMES)];
-  const roles = Object.keys(preset.instruments) as Role[];
+  const roles = [...preset.instruments];
   const chunkSeconds = (bars: number): number => (bars * 4 * 60) / preset.tempo;
 
   // halve then tanh: smooth ceiling on any summed level
@@ -184,9 +175,8 @@ const playSky = (seed: Seed): (() => void) => {
       const master = buildMaster(preset);
       for (const role of roles) {
         const spec = set[role];
-        if (spec === undefined) continue; // set does not provide this role
         const register = Math.min(MAX_REGISTER, Math.max(MIN_REGISTER, (spec.register ?? 3) + preset.registerShift));
-        const events = buildScore(preset.density[role] ?? 0, offsets.length + 1, bars);
+        const events = buildScore(preset.density[role], offsets.length + 1, bars);
         const synth = buildVoice(spec, register, master[0])[0];
         buildPart(spec, synth, events, offsets, register, preset.tempo, chunkSeconds(bars));
       }
@@ -203,7 +193,7 @@ const playSky = (seed: Seed): (() => void) => {
     if (filling) return;
     filling = true;
     while (!stopped && nextTime < context.currentTime + chunkSeconds(LOOP_BARS)) {
-      const bars = firstChunk ? 4 : LOOP_BARS; // short first chunk plays sooner
+      const bars = firstChunk ? 2 : LOOP_BARS; // short first chunk plays sooner
       const buffer = await renderChunk(bars);
       if (stopped) break;
       const source = context.createBufferSource();
@@ -244,5 +234,4 @@ export {
   deClick,
   describeSky,
   playSky,
-  setsForPreset,
 };

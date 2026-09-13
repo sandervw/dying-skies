@@ -18,18 +18,14 @@ import {
   buildScore,
   buildPart,
   deClick,
-  setsForPreset,
 } from "../services/musicService";
-import type { InstrumentSpec, Role } from "../types/music";
+import type { InstrumentSetName, InstrumentSpec, Role } from "../types/music";
 
 const BEATS_PER_BAR = 4;
 
+const SET_NAMES = Object.keys(INSTRUMENT_SETS) as InstrumentSetName[];
 const MODE_NAMES = Object.keys(MODES);
 const PRESET_NAMES = Object.keys(PRESETS);
-
-// set names that match a given preset, per the engine's own rule.
-const matchingSets = (presetName: string): string[] =>
-  setsForPreset(PRESETS[presetName]).map((set) => set.name);
 
 // one distinct colour per instrument slot, reused by audio + visuals.
 const ROLE_COLORS: Record<Role, string> = {
@@ -38,7 +34,6 @@ const ROLE_COLORS: Record<Role, string> = {
   accent: "#ffd24a",
   lead: "#ff6b4a",
   counter: "#e05bff",
-  percussion: "#aab2c0",
 };
 
 // one drawable note: time, length, volume, pitch.
@@ -138,23 +133,26 @@ const pick = <T,>(items: readonly T[]): T =>
 const clamp = (value: number, low: number, high: number): number =>
   Math.min(high, Math.max(low, value));
 
-const buildPlan = (setName: string, presetName: string, modeName: string) => {
-  const set = INSTRUMENT_SETS.find((entry) => entry.name === setName)!;
+const buildPlan = (
+  setName: InstrumentSetName,
+  presetName: string,
+  modeName: string,
+) => {
+  const set = INSTRUMENT_SETS[setName];
   const preset = PRESETS[presetName];
   const offsets = MODES[modeName];
-  const roles = Object.keys(preset.instruments) as Role[];
+  const roles = [...preset.instruments];
   const tempo = preset.tempo;
   const secPerBeat = 60 / tempo;
   const loopSeconds = (LOOP_BARS * BEATS_PER_BAR * 60) / tempo;
-  const voices = roles.flatMap((role) => {
+  const voices = roles.map((role) => {
     const spec = set[role];
-    if (spec === undefined) return []; // set does not provide this role
     const register = clamp(
       (spec.register ?? 3) + preset.registerShift,
       MIN_REGISTER,
       MAX_REGISTER,
     );
-    return [{ role, spec, register }];
+    return { role, spec, register };
   });
   return { preset, offsets, tempo, secPerBeat, loopSeconds, voices };
 };
@@ -167,17 +165,10 @@ type ScoredVoice = {
 };
 
 // a fresh random score for every voice, used by one chunk
-const scoreVoices = (
-  plan: ReturnType<typeof buildPlan>,
-  bars: number,
-): ScoredVoice[] =>
+const scoreVoices = (plan: ReturnType<typeof buildPlan>, bars: number): ScoredVoice[] =>
   plan.voices.map((voice) => ({
     ...voice,
-    events: buildScore(
-      plan.preset.density[voice.role] ?? 0,
-      plan.offsets.length + 1,
-      bars,
-    ),
+    events: buildScore(plan.preset.density[voice.role], plan.offsets.length + 1, bars),
   }));
 
 // flatten scored voices into per-note visual data mirroring the triggers.
@@ -185,7 +176,6 @@ const scoredToNotes = (
   voices: ScoredVoice[],
   offsets: readonly number[],
   secPerBeat: number,
-  chunkSec: number,
 ): VizNote[] => {
   const notes: VizNote[] = [];
   for (const voice of voices) {
@@ -206,8 +196,7 @@ const scoredToNotes = (
         role: voice.role,
         color: ROLE_COLORS[voice.role],
         timeSec,
-        durSec: Math.min(durSec, chunkSec - timeSec), // stop notes at the seam
-
+        durSec,
         midi,
         gain: voice.spec.gain,
       });
@@ -217,7 +206,7 @@ const scoredToNotes = (
 };
 
 const startPlayback = (
-  setName: string,
+  setName: InstrumentSetName,
   presetName: string,
   modeName: string,
 ): Playback => {
@@ -276,37 +265,31 @@ const startPlayback = (
     },
   };
 
-  const chunkSeconds = (bars: number): number =>
-    (bars * BEATS_PER_BAR * 60) / plan.tempo;
+  const chunkSeconds = (bars: number): number => (bars * BEATS_PER_BAR * 60) / plan.tempo;
 
   // render `bars` bars plus tail offline with a fresh random score
-  const renderChunk = (
-    voices: ScoredVoice[],
-    bars: number,
-  ): Promise<AudioBuffer> =>
-    Tone.Offline(
-      ({ transport }) => {
-        const master = buildMaster(plan.preset);
-        for (const voice of voices) {
-          const synth = buildVoice(voice.spec, voice.register, master[0])[0];
-          buildPart(
-            voice.spec,
-            synth,
-            voice.events,
-            plan.offsets,
-            voice.register,
-            plan.tempo,
-            chunkSeconds(bars),
-          );
-        }
-        transport.bpm.value = plan.tempo;
-        transport.start();
-        return (
-          master.find((node) => node instanceof Tone.Reverb) as Tone.Reverb
-        ).ready;
-      },
-      chunkSeconds(bars) + 6,
-    ).then((buffer): AudioBuffer => deClick(buffer.get() as AudioBuffer));
+  const renderChunk = (voices: ScoredVoice[], bars: number): Promise<AudioBuffer> =>
+    Tone.Offline(({ transport }) => {
+      const master = buildMaster(plan.preset);
+      for (const voice of voices) {
+        const synth = buildVoice(voice.spec, voice.register, master[0])[0];
+        buildPart(
+          voice.spec,
+          synth,
+          voice.events,
+          plan.offsets,
+          voice.register,
+          plan.tempo,
+          chunkSeconds(bars),
+        );
+      }
+      transport.bpm.value = plan.tempo;
+      transport.start();
+      return (master.find((node) => node instanceof Tone.Reverb) as Tone.Reverb)
+        .ready;
+    }, chunkSeconds(bars) + 6).then(
+      (buffer): AudioBuffer => deClick(buffer.get() as AudioBuffer),
+    );
 
   // keep one chunk queued ahead; tails overlap for a seamless seam
   let firstChunk = true;
@@ -317,7 +300,7 @@ const startPlayback = (
       !playback.stopped &&
       nextTime < context.currentTime + plan.loopSeconds
     ) {
-      const bars = firstChunk ? 4 : LOOP_BARS; // short first chunk plays sooner
+      const bars = firstChunk ? 2 : LOOP_BARS; // short first chunk plays sooner
       const voices = scoreVoices(plan, bars);
       const buffer = await renderChunk(voices, bars);
       if (playback.stopped) break;
@@ -328,12 +311,7 @@ const startPlayback = (
       source.start(nextTime);
       playback.schedule.push({
         startTime: nextTime,
-        notes: scoredToNotes(
-          voices,
-          plan.offsets,
-          plan.secPerBeat,
-          bars * BEATS_PER_BAR * plan.secPerBeat,
-        ),
+        notes: scoredToNotes(voices, plan.offsets, plan.secPerBeat),
       });
       nextTime += chunkSeconds(bars);
       firstChunk = false;
@@ -559,12 +537,9 @@ const drawFrame = (canvas: HTMLCanvasElement, playback: Playback): void => {
 };
 
 const MusicLab = (): ReactElement => {
+  const [setName, setSetName] = useState<InstrumentSetName>("kingsfield");
   const [presetName, setPresetName] = useState<string>("cavern");
-  const [setName, setSetName] = useState<string>(
-    () => matchingSets("cavern")[0],
-  );
   const [modeName, setModeName] = useState<string>("majorPentatonic");
-  const setNames = matchingSets(presetName);
   const [playing, setPlaying] = useState(false);
   const [playback, setPlayback] = useState<Playback | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -607,16 +582,9 @@ const MusicLab = (): ReactElement => {
     setPlaying(false);
   };
 
-  // changing preset resets the set to its first match.
-  const handlePreset = (name: string): void => {
-    setPresetName(name);
-    setSetName(matchingSets(name)[0]);
-  };
-
   const handleRandom = (): void => {
-    const preset = pick(PRESET_NAMES);
-    setPresetName(preset);
-    setSetName(pick(matchingSets(preset)));
+    setSetName(pick(SET_NAMES));
+    setPresetName(pick(PRESET_NAMES));
     setModeName(pick(MODE_NAMES));
   };
 
@@ -625,14 +593,14 @@ const MusicLab = (): ReactElement => {
       <aside style={styles.panel}>
         <h1 style={styles.title}>Music Lab</h1>
 
-        <h2 style={styles.section}>Preset</h2>
+        <h2 style={styles.section}>Instrument Set</h2>
         <label style={styles.label}>
           <select
             style={styles.select}
-            value={presetName}
-            onChange={(e) => handlePreset(e.target.value)}
+            value={setName}
+            onChange={(e) => setSetName(e.target.value as InstrumentSetName)}
           >
-            {PRESET_NAMES.map((name) => (
+            {SET_NAMES.map((name) => (
               <option key={name} value={name}>
                 {name}
               </option>
@@ -640,14 +608,14 @@ const MusicLab = (): ReactElement => {
           </select>
         </label>
 
-        <h2 style={styles.section}>Instrument Set ({setNames.length} match)</h2>
+        <h2 style={styles.section}>Preset</h2>
         <label style={styles.label}>
           <select
             style={styles.select}
-            value={setName}
-            onChange={(e) => setSetName(e.target.value)}
+            value={presetName}
+            onChange={(e) => setPresetName(e.target.value)}
           >
-            {setNames.map((name) => (
+            {PRESET_NAMES.map((name) => (
               <option key={name} value={name}>
                 {name}
               </option>
