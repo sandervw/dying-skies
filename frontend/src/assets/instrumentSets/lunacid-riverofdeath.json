@@ -1,0 +1,49 @@
+{
+  "name": "lunacid-riverofdeath",
+  "bass": {
+    "type": "sub",
+    "synth": "MonoSynth",
+    "options": {
+      "oscillator": { "type": "sine" },
+      "envelope": { "attack": 2.5, "decay": 1.0, "sustain": 1.0, "release": 3.5 },
+      "filterEnvelope": { "attack": 2.0, "decay": 2.0, "sustain": 0.8, "release": 3.5, "octaves": 1.2 }
+    },
+    "register": 1, "hold": 8, "gain": 0.65,
+    "filter": { "type": "lowpass", "frequency": 150, "rolloff": -24 },
+    "effects": [
+      ["Distortion", { "distortion": 0.1, "wet": 0.15 }],
+      ["Reverb", { "decay": 4.0, "wet": 0.25 }]
+    ]
+  },
+  "harmony": {
+    "type": "pad",
+    "synth": "Synth", "polyphony": 4,
+    "options": {
+      "oscillator": { "type": "fatsawtooth", "count": 3, "spread": 25 },
+      "envelope": { "attack": 3.5, "decay": 2.5, "sustain": 0.85, "release": 5.0 }
+    },
+    "register": 3, "hold": 12, "gain": 0.5,
+    "filter": { "type": "lowpass", "frequency": 900, "rolloff": -24, "Q": 1.2 },
+    "effects": [
+      ["Chorus", { "frequency": 0.6, "delayTime": 3.5, "depth": 0.55, "wet": 0.4 }],
+      ["Reverb", { "decay": 8.0, "wet": 0.6 }]
+    ]
+  },
+  "counter": {
+    "type": "swell",
+    "synth": "FMSynth", "polyphony": 2,
+    "options": {
+      "oscillator": { "type": "sine" },
+      "envelope": { "attack": 4.5, "decay": 3.0, "sustain": 0.7, "release": 5.5 },
+      "modulation": { "type": "sine" },
+      "harmonicity": 2.01,
+      "modulationIndex": 1.8
+    },
+    "register": 4, "hold": 16, "gain": 0.35,
+    "filter": { "type": "bandpass", "frequency": 1600, "rolloff": -12, "Q": 1.8 },
+    "effects": [
+      ["PingPongDelay", { "delayTime": "4n.", "feedback": 0.5, "wet": 0.35 }],
+      ["Reverb", { "decay": 10.0, "wet": 0.7 }]
+    ]
+  }
+}

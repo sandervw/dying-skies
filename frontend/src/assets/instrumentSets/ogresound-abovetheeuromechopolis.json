@@ -1,0 +1,46 @@
+{
+  "name": "ogresound-abovetheeuromechopolis",
+  "lead": {
+    "type": "pluck",
+    "synth": "MonoSynth",
+    "options": {
+      "oscillator": { "type": "sawtooth" },
+      "envelope": { "attack": 0.005, "decay": 0.22, "sustain": 0.15, "release": 0.3 },
+      "filterEnvelope": { "attack": 0.005, "decay": 0.18, "sustain": 0.2, "release": 0.25, "octaves": 3.2 }
+    },
+    "register": 3, "hold": 1, "gain": 0.7,
+    "filter": { "type": "lowpass", "frequency": 2200, "rolloff": -12, "Q": 2.2 },
+    "effects": [
+      ["FeedbackDelay", { "delayTime": "8n.", "feedback": 0.45, "wet": 0.35 }],
+      ["Reverb", { "decay": 2.8, "wet": 0.3 }]
+    ]
+  },
+  "harmony": {
+    "type": "pad",
+    "synth": "Synth", "polyphony": 4,
+    "options": {
+      "oscillator": { "type": "sawtooth" },
+      "envelope": { "attack": 3.0, "decay": 2.0, "sustain": 0.75, "release": 4.0 }
+    },
+    "register": 2, "hold": 8, "gain": 0.55,
+    "filter": { "type": "lowpass", "frequency": 650, "rolloff": -24, "Q": 1.2 },
+    "effects": [
+      ["Chorus", { "frequency": 0.5, "delayTime": 3.5, "depth": 0.7, "wet": 0.6 }],
+      ["Reverb", { "decay": 6.0, "wet": 0.65 }]
+    ]
+  },
+  "bass": {
+    "type": "sub",
+    "synth": "MonoSynth",
+    "options": {
+      "oscillator": { "type": "fatsawtooth", "count": 3, "spread": 20 },
+      "envelope": { "attack": 2.0, "decay": 1.5, "sustain": 0.85, "release": 3.0 },
+      "filterEnvelope": { "attack": 2.5, "decay": 1.0, "sustain": 0.5, "release": 3.0, "octaves": 1.8 }
+    },
+    "register": 1, "hold": 8, "gain": 0.8,
+    "filter": { "type": "lowpass", "frequency": 140, "rolloff": -24 },
+    "effects": [
+      ["Distortion", { "distortion": 0.2, "wet": 0.25 }]
+    ]
+  }
+}

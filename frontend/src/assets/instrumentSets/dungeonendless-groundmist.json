@@ -1,0 +1,65 @@
+{
+  "name": "dungeonendless-groundmist",
+  "bass": {
+    "type": "sub",
+    "synth": "MonoSynth",
+    "options": {
+      "oscillator": { "type": "sine" },
+      "envelope": { "attack": 1.2, "decay": 2.0, "sustain": 0.85, "release": 3.0 },
+      "filterEnvelope": { "attack": 1.5, "decay": 2.0, "sustain": 0.6, "release": 3.0, "octaves": 2 }
+    },
+    "register": 1, "hold": 8, "gain": 0.7,
+    "filter": { "type": "lowpass", "frequency": 120, "rolloff": -24 },
+    "effects": [
+      ["Chorus", { "frequency": 0.5, "delayTime": 4.0, "depth": 0.2, "wet": 0.15 }],
+      ["Reverb", { "decay": 4.5, "preDelay": 0.05, "wet": 0.3 }]
+    ]
+  },
+  "harmony": {
+    "type": "pad",
+    "synth": "Synth", "polyphony": 4,
+    "options": {
+      "oscillator": { "type": "fatsawtooth", "count": 3, "spread": 20 },
+      "envelope": { "attack": 2.5, "decay": 3.0, "sustain": 0.75, "release": 4.0 }
+    },
+    "register": 3, "hold": 8, "gain": 0.45,
+    "filter": { "type": "lowpass", "frequency": 800, "rolloff": -24, "Q": 1.0 },
+    "effects": [
+      ["Chorus", { "frequency": 1.2, "delayTime": 3.5, "depth": 0.6, "wet": 0.4 }],
+      ["Reverb", { "decay": 6.0, "preDelay": 0.04, "wet": 0.5 }]
+    ]
+  },
+  "lead": {
+    "type": "bell",
+    "synth": "FMSynth", "polyphony": 3,
+    "options": {
+      "oscillator": { "type": "sine" },
+      "envelope": { "attack": 0.003, "decay": 1.8, "sustain": 0.0, "release": 1.5 },
+      "modulation": { "type": "sine" },
+      "harmonicity": 3.5,
+      "modulationIndex": 2.0
+    },
+    "register": 5, "hold": 2, "gain": 0.6,
+    "filter": { "type": "lowpass", "frequency": 4500, "rolloff": -12 },
+    "effects": [
+      ["PingPongDelay", { "delayTime": "8n.", "feedback": 0.4, "wet": 0.35 }],
+      ["Reverb", { "decay": 5.0, "preDelay": 0.02, "wet": 0.45 }]
+    ]
+  },
+  "counter": {
+    "type": "choir",
+    "synth": "AMSynth", "polyphony": 2,
+    "options": {
+      "oscillator": { "type": "sine" },
+      "envelope": { "attack": 1.8, "decay": 2.5, "sustain": 0.7, "release": 3.5 },
+      "modulation": { "type": "triangle" },
+      "harmonicity": 1.01
+    },
+    "register": 4, "hold": 6, "gain": 0.5,
+    "filter": { "type": "bandpass", "frequency": 900, "rolloff": -24, "Q": 2.2 },
+    "effects": [
+      ["Vibrato", { "frequency": 4.5, "depth": 0.15, "wet": 0.5 }],
+      ["Reverb", { "decay": 7.0, "preDelay": 0.06, "wet": 0.55 }]
+    ]
+  }
+}

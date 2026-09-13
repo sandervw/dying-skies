@@ -1,0 +1,83 @@
+{
+  "name": "magelight-theeldesttongue",
+  "lead": {
+    "type": "bell",
+    "synth": "FMSynth",
+    "polyphony": 4,
+    "options": {
+      "oscillator": { "type": "sine" },
+      "envelope": { "attack": 0.005, "decay": 1.8, "sustain": 0.1, "release": 1.2 },
+      "modulation": { "type": "sine" },
+      "harmonicity": 3.5,
+      "modulationIndex": 2.0
+    },
+    "register": 5, "hold": 2, "gain": 0.65,
+    "filter": { "type": "lowpass", "frequency": 6500, "rolloff": -12 },
+    "effects": [
+      ["FeedbackDelay", { "delayTime": "8n.", "feedback": 0.35, "wet": 0.3 }],
+      ["Reverb", { "decay": 4.5, "wet": 0.45 }]
+    ]
+  },
+  "counter": {
+    "type": "choir",
+    "synth": "AMSynth",
+    "options": {
+      "oscillator": { "type": "sine" },
+      "envelope": { "attack": 0.8, "decay": 1.2, "sustain": 0.85, "release": 1.8 },
+      "modulation": { "type": "sawtooth" },
+      "harmonicity": 1.0,
+      "modulationIndex": 0.8,
+      "portamento": 0.12
+    },
+    "register": 4, "hold": 6, "gain": 0.75,
+    "filter": { "type": "bandpass", "frequency": 1400, "rolloff": -24, "Q": 1.8 },
+    "effects": [
+      ["Chorus", { "frequency": 1.5, "delayTime": 4.0, "depth": 0.6, "wet": 0.4 }],
+      ["Reverb", { "decay": 6.0, "wet": 0.6 }]
+    ]
+  },
+  "harmony": {
+    "type": "pad",
+    "synth": "Synth",
+    "polyphony": 6,
+    "options": {
+      "oscillator": { "type": "triangle" },
+      "envelope": { "attack": 1.5, "decay": 2.0, "sustain": 0.9, "release": 2.5 }
+    },
+    "register": 3, "hold": 8, "gain": 0.5,
+    "filter": { "type": "lowpass", "frequency": 1200, "rolloff": -24 },
+    "effects": [
+      ["Chorus", { "frequency": 0.8, "delayTime": 3.5, "depth": 0.5, "wet": 0.35 }],
+      ["Reverb", { "decay": 5.0, "wet": 0.5 }]
+    ]
+  },
+  "percussion": {
+    "type": "kick",
+    "synth": "MonoSynth",
+    "options": {
+      "oscillator": { "type": "sine" },
+      "envelope": { "attack": 0.005, "decay": 0.9, "sustain": 0.0, "release": 0.6 },
+      "filterEnvelope": { "attack": 0.005, "decay": 0.25, "sustain": 0.0, "release": 0.2, "octaves": 3.5 }
+    },
+    "register": 1, "hold": 1, "gain": 0.85,
+    "filter": { "type": "lowpass", "frequency": 160, "rolloff": -24 },
+    "effects": [
+      ["Distortion", { "distortion": 0.15, "wet": 0.1 }],
+      ["Reverb", { "decay": 2.8, "wet": 0.3 }]
+    ]
+  },
+  "bass": {
+    "type": "sub",
+    "synth": "MonoSynth",
+    "options": {
+      "oscillator": { "type": "triangle" },
+      "envelope": { "attack": 0.4, "decay": 1.0, "sustain": 0.85, "release": 1.2 },
+      "filterEnvelope": { "attack": 0.2, "decay": 0.8, "sustain": 0.4, "release": 0.8, "octaves": 1.5 }
+    },
+    "register": 1, "hold": 4, "gain": 0.7,
+    "filter": { "type": "lowpass", "frequency": 120, "rolloff": -24 },
+    "effects": [
+      ["Compressor", { "threshold": -20, "ratio": 4, "wet": 1.0 }]
+    ]
+  }
+}

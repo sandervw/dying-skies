@@ -1,0 +1,62 @@
+{
+  "name": "subnautica-intotheunknown",
+  "bass": {
+    "type": "sub",
+    "synth": "MonoSynth",
+    "options": {
+      "oscillator": { "type": "sawtooth" },
+      "envelope": { "attack": 0.01, "decay": 0.25, "sustain": 0.3, "release": 0.2 },
+      "filterEnvelope": { "attack": 0.01, "decay": 0.2, "sustain": 0.1, "release": 0.2, "octaves": 2.5 }
+    },
+    "register": 1, "hold": 1, "gain": 0.85,
+    "filter": { "type": "lowpass", "frequency": 180, "rolloff": -24, "Q": 1.5 },
+    "effects": [
+      ["Distortion", { "distortion": 0.15, "wet": 0.2 }]
+    ]
+  },
+  "lead": {
+    "type": "pluck",
+    "synth": "Synth",
+    "options": {
+      "oscillator": { "type": "sawtooth" },
+      "envelope": { "attack": 0.005, "decay": 0.18, "sustain": 0.0, "release": 0.15 }
+    },
+    "register": 3, "hold": 1, "gain": 0.75,
+    "filter": { "type": "lowpass", "frequency": 1400, "rolloff": -12, "Q": 2.0 },
+    "effects": [
+      ["FeedbackDelay", { "delayTime": "16n.", "feedback": 0.35, "wet": 0.3 }],
+      ["Reverb", { "decay": 2.2, "wet": 0.25 }]
+    ]
+  },
+  "counter": {
+    "type": "swell",
+    "synth": "AMSynth",
+    "options": {
+      "oscillator": { "type": "sawtooth" },
+      "envelope": { "attack": 2.0, "decay": 1.5, "sustain": 0.7, "release": 3.0 },
+      "modulation": { "type": "sine" },
+      "harmonicity": 0.5,
+      "modulationIndex": 1.2
+    },
+    "register": 3, "hold": 8, "gain": 0.5,
+    "filter": { "type": "bandpass", "frequency": 800, "rolloff": -12, "Q": 1.0 },
+    "effects": [
+      ["Chorus", { "frequency": 0.8, "delayTime": 3.5, "depth": 0.7, "wet": 0.4 }],
+      ["Reverb", { "decay": 4.5, "wet": 0.45 }]
+    ]
+  },
+  "percussion": {
+    "type": "kick",
+    "synth": "MonoSynth",
+    "options": {
+      "oscillator": { "type": "sine" },
+      "envelope": { "attack": 0.002, "decay": 0.28, "sustain": 0.0, "release": 0.2 },
+      "filterEnvelope": { "attack": 0.001, "decay": 0.08, "sustain": 0.0, "release": 0.08, "octaves": 3.0 }
+    },
+    "register": 1, "hold": 1, "gain": 0.95,
+    "filter": { "type": "lowpass", "frequency": 110, "rolloff": -24, "Q": 1.0 },
+    "effects": [
+      ["Distortion", { "distortion": 0.08, "wet": 0.15 }]
+    ]
+  }
+}
