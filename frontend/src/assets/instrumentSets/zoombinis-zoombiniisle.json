@@ -18,7 +18,7 @@
     ]
   },
   "counter": {
-    "type": "winds",
+    "type": "strings",
     "synth": "Synth",
     "options": {
       "oscillator": { "type": "triangle" },

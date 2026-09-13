@@ -52,7 +52,7 @@
     "options": {
       "envelope": { "attack": 0.002, "decay": 0.06, "sustain": 0.0, "release": 0.05 }
     },
-    "gain": 0.45,
+    "hold": 1, "gain": 0.45,
     "filter": { "type": "highpass", "frequency": 6500, "rolloff": -24 },
     "effects": [
       ["BitCrusher", { "bits": 10, "wet": 0.2 }]

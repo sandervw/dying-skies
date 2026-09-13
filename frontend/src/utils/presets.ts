@@ -23,7 +23,7 @@ const PRESETS: Record<string, Preset> = {
   cavern: {
     tempo: 46, reverbDecay: 9.0, reverbWet: 0.65, registerShift: -1,
     instruments: {
-      bass: ["sub", "noise"], harmony: ["pad", "strings"],
+      bass: ["sub", "noise"], harmony: ["pad", "strings", "choir"],
       counter: ["swell", "choir"], accent: ["sparkle", "bell"],
     },
     density: { bass: 0.15, harmony: 0.40, counter: 0.30, accent: 0.70 },
@@ -32,7 +32,7 @@ const PRESETS: Record<string, Preset> = {
     tempo: 52, reverbDecay: 7.0, reverbWet: 0.55, registerShift: -1,
     instruments: {
       bass: ["sub"], harmony: ["strings", "pad"],
-      counter: ["choir", "swell"], percussion: ["tom"],
+      counter: ["choir", "swell"], percussion: ["tom", "kick"],
     },
     density: { bass: 0.20, harmony: 0.50, counter: 0.40, percussion: 0.15 },
   },
@@ -47,10 +47,10 @@ const PRESETS: Record<string, Preset> = {
   drift: {
     tempo: 58, reverbDecay: 8.0, reverbWet: 0.60, registerShift: 1,
     instruments: {
-      harmony: ["strings", "choir"], counter: ["swell", "strings"],
-      lead: ["winds"], accent: ["bell", "sparkle"],
+      harmony: ["strings", "choir", "pad"], counter: ["swell", "strings"],
+      accent: ["bell", "sparkle"],
     },
-    density: { harmony: 0.45, counter: 0.35, lead: 0.40, accent: 0.60 },
+    density: { harmony: 0.45, counter: 0.35, accent: 0.60 },
   },
   chamber: {
     tempo: 72, reverbDecay: 2.5, reverbWet: 0.30, registerShift: 0,

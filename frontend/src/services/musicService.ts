@@ -23,7 +23,7 @@ const pickSet = (seed: Seed, sets: readonly InstrumentSet[]): InstrumentSet =>
     deriveSeed(seed, `set:${set.name}`) > deriveSeed(seed, `set:${best.name}`) ? set : best,
   );
 
-// sets whose voices satisfy every role the preset needs
+/** sets whose voices satisfy every role the preset needs. */
 const setsForPreset = (preset: Preset): InstrumentSet[] =>
   INSTRUMENT_SETS.filter((set) =>
     (Object.entries(preset.instruments) as [Role, readonly string[]][]).every(
@@ -93,8 +93,11 @@ const buildScore = (density: number, steps: number, bars = LOOP_BARS): [number, 
   const count = Math.min(Math.round(density * bars), bars * 4); // ceiling: one event per beat
   const events: [number, number, number][] = [];
   const span = (bars * 4) / count; // one event per even segment
+  const used = new Set<number>();
   for (let index = 0; index < count; index++) {
     const position = Math.max(1, Math.floor((index + Math.random()) * span)); // skip seam
+    if (used.has(position)) continue; // one event per slot; voices can't stack
+    used.add(position);
     events.push([Math.floor(position / 4), position % 4, Math.floor(Math.random() * steps)]);
   }
   return events;
@@ -200,7 +203,7 @@ const playSky = (seed: Seed): (() => void) => {
     if (filling) return;
     filling = true;
     while (!stopped && nextTime < context.currentTime + chunkSeconds(LOOP_BARS)) {
-      const bars = firstChunk ? 2 : LOOP_BARS; // short first chunk plays sooner
+      const bars = firstChunk ? 4 : LOOP_BARS; // short first chunk plays sooner
       const buffer = await renderChunk(bars);
       if (stopped) break;
       const source = context.createBufferSource();
@@ -241,4 +244,5 @@ export {
   deClick,
   describeSky,
   playSky,
+  setsForPreset,
 };

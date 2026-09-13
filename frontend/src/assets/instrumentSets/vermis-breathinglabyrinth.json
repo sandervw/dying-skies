@@ -26,7 +26,7 @@
     "filter": { "type": "lowpass", "frequency": 500, "rolloff": -24, "Q": 2.5 },
     "effects": [
       ["Distortion", { "distortion": 0.15, "wet": 0.2 }],
-      ["StereoDelay", { "delayTime": "8n", "feedback": 0.25, "wet": 0.2 }]
+      ["FeedbackDelay", { "delayTime": "8n", "feedback": 0.25, "wet": 0.2 }]
     ]
   },
   "percussion": {

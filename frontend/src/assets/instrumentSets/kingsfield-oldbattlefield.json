@@ -45,7 +45,7 @@
     ]
   },
   "lead": {
-    "type": "strings",
+    "type": "keys",
     "synth": "DuoSynth",
     "options": {
       "oscillator": { "type": "sawtooth" },
@@ -56,7 +56,7 @@
     "filter": { "type": "lowpass", "frequency": 2400, "rolloff": -12, "Q": 1.5 },
     "effects": [
       ["Vibrato", { "frequency": 5.2, "depth": 0.18, "wet": 0.6 }],
-      ["StereoFeedbackEffect", { "feedback": 0.3, "wet": 0.25 }],
+      ["PingPongDelay", { "delayTime": "8n.", "feedback": 0.3, "wet": 0.25 }],
       ["Reverb", { "decay": 3.5, "wet": 0.45 }]
     ]
   }

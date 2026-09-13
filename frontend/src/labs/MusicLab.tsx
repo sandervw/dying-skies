@@ -18,14 +18,18 @@ import {
   buildScore,
   buildPart,
   deClick,
+  setsForPreset,
 } from "../services/musicService";
 import type { InstrumentSpec, Role } from "../types/music";
 
 const BEATS_PER_BAR = 4;
 
-const SET_NAMES = INSTRUMENT_SETS.map((set) => set.name);
 const MODE_NAMES = Object.keys(MODES);
 const PRESET_NAMES = Object.keys(PRESETS);
+
+// set names that match a given preset, per the engine's own rule.
+const matchingSets = (presetName: string): string[] =>
+  setsForPreset(PRESETS[presetName]).map((set) => set.name);
 
 // one distinct colour per instrument slot, reused by audio + visuals.
 const ROLE_COLORS: Record<Role, string> = {
@@ -541,9 +545,10 @@ const drawFrame = (canvas: HTMLCanvasElement, playback: Playback): void => {
 };
 
 const MusicLab = (): ReactElement => {
-  const [setName, setSetName] = useState<string>("kingsfield");
   const [presetName, setPresetName] = useState<string>("cavern");
+  const [setName, setSetName] = useState<string>(() => matchingSets("cavern")[0]);
   const [modeName, setModeName] = useState<string>("majorPentatonic");
+  const setNames = matchingSets(presetName);
   const [playing, setPlaying] = useState(false);
   const [playback, setPlayback] = useState<Playback | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -586,9 +591,16 @@ const MusicLab = (): ReactElement => {
     setPlaying(false);
   };
 
+  // changing preset resets the set to its first match.
+  const handlePreset = (name: string): void => {
+    setPresetName(name);
+    setSetName(matchingSets(name)[0]);
+  };
+
   const handleRandom = (): void => {
-    setSetName(pick(SET_NAMES));
-    setPresetName(pick(PRESET_NAMES));
+    const preset = pick(PRESET_NAMES);
+    setPresetName(preset);
+    setSetName(pick(matchingSets(preset)));
     setModeName(pick(MODE_NAMES));
   };
 
@@ -597,14 +609,14 @@ const MusicLab = (): ReactElement => {
       <aside style={styles.panel}>
         <h1 style={styles.title}>Music Lab</h1>
 
-        <h2 style={styles.section}>Instrument Set</h2>
+        <h2 style={styles.section}>Preset</h2>
         <label style={styles.label}>
           <select
             style={styles.select}
-            value={setName}
-            onChange={(e) => setSetName(e.target.value)}
+            value={presetName}
+            onChange={(e) => handlePreset(e.target.value)}
           >
-            {SET_NAMES.map((name) => (
+            {PRESET_NAMES.map((name) => (
               <option key={name} value={name}>
                 {name}
               </option>
@@ -612,14 +624,14 @@ const MusicLab = (): ReactElement => {
           </select>
         </label>
 
-        <h2 style={styles.section}>Preset</h2>
+        <h2 style={styles.section}>Instrument Set ({setNames.length} match)</h2>
         <label style={styles.label}>
           <select
             style={styles.select}
-            value={presetName}
-            onChange={(e) => setPresetName(e.target.value)}
+            value={setName}
+            onChange={(e) => setSetName(e.target.value)}
           >
-            {PRESET_NAMES.map((name) => (
+            {setNames.map((name) => (
               <option key={name} value={name}>
                 {name}
               </option>

@@ -31,7 +31,7 @@
     ]
   },
   "lead": {
-    "type": "strings",
+    "type": "keys",
     "synth": "MonoSynth",
     "options": {
       "oscillator": { "type": "sawtooth" },

@@ -56,7 +56,7 @@
     "filter": { "type": "bandpass", "frequency": 1100, "rolloff": -24, "Q": 3.0 },
     "effects": [
       ["StereoWidener", { "width": 0.7, "wet": 0.5 }],
-      ["Delay", { "delayTime": "4n", "feedback": 0.4, "wet": 0.35 }],
+      ["FeedbackDelay", { "delayTime": "4n", "feedback": 0.4, "wet": 0.35 }],
       ["Reverb", { "decay": 5.0, "preDelay": 0.05, "wet": 0.5 }]
     ]
   },
