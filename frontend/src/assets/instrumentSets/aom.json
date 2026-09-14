@@ -140,7 +140,7 @@
     },
     "register": 4,
     "hold": 2,
-    "gain": 0.35,
+    "gain": 0.45,
     "filter": {
       "type": "lowpass",
       "frequency": 1800,

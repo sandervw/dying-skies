@@ -173,6 +173,7 @@ const playSky = (seed: Seed): (() => void) => {
 
   let stopped = false;
   let filling = false;
+  let normalized = false; // first chunk sets loudness for the whole sky
   let nextTime = context.currentTime + 0.2;
   const active = new Set<AudioBufferSourceNode>();
 
@@ -203,6 +204,14 @@ const playSky = (seed: Seed): (() => void) => {
       const bars = firstChunk ? 2 : LOOP_BARS; // short first chunk plays sooner
       const buffer = await renderChunk(bars);
       if (stopped) break;
+      if (!normalized) { // scale to a target RMS, ignoring the reverb tail
+        const data = buffer.getChannelData(0);
+        const end = Math.floor(chunkSeconds(bars) * buffer.sampleRate);
+        let sum = 0;
+        for (let index = 0; index < end; index++) sum += data[index] * data[index];
+        headroom.gain.value = Math.min(0.6, 0.045 / Math.sqrt(sum / end));
+        normalized = true;
+      }
       const source = context.createBufferSource();
       source.buffer = buffer;
       source.connect(headroom);

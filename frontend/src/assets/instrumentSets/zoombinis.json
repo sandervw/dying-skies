@@ -25,7 +25,7 @@
     "gain": 0.85,
     "filter": {
       "type": "lowpass",
-      "frequency": 180,
+      "frequency": 240,
       "rolloff": -24
     },
     "effects": [
@@ -128,7 +128,7 @@
   },
   "lead": {
     "synth": "MonoSynth",
-    "polyphony": 4,
+    "polyphony": 6,
     "options": {
       "oscillator": {
         "type": "sine"
@@ -190,7 +190,7 @@
       }
     },
     "hold": 8,
-    "gain": 0.25,
+    "gain": 0.45,
     "filter": {
       "type": "bandpass",
       "frequency": 2200,

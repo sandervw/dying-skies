@@ -154,7 +154,7 @@
       },
       "portamento": 0.05
     },
-    "register": 5,
+    "register": 4,
     "hold": 4,
     "gain": 0.7,
     "filter": {
