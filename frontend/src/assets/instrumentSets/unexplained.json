@@ -1,0 +1,227 @@
+{
+  "bass": {
+    "synth": "MonoSynth",
+    "options": {
+      "oscillator": {
+        "type": "sawtooth"
+      },
+      "envelope": {
+        "attack": 1.2,
+        "decay": 2.0,
+        "sustain": 0.85,
+        "release": 3.0
+      },
+      "filterEnvelope": {
+        "attack": 0.8,
+        "decay": 2.5,
+        "sustain": 0.4,
+        "release": 3.0,
+        "octaves": 2
+      }
+    },
+    "register": 1,
+    "hold": 12,
+    "gain": 0.8,
+    "filter": {
+      "type": "lowpass",
+      "frequency": 160,
+      "rolloff": -24
+    },
+    "effects": [
+      [
+        "Distortion",
+        {
+          "distortion": 0.35,
+          "wet": 0.4
+        }
+      ],
+      [
+        "Reverb",
+        {
+          "decay": 4.5,
+          "preDelay": 0.05,
+          "wet": 0.3
+        }
+      ]
+    ]
+  },
+  "harmony": {
+    "synth": "Synth",
+    "polyphony": 4,
+    "options": {
+      "oscillator": {
+        "type": "fatsawtooth",
+        "count": 3,
+        "spread": 20
+      },
+      "envelope": {
+        "attack": 0.005,
+        "decay": 0.25,
+        "sustain": 0.2,
+        "release": 0.2
+      }
+    },
+    "register": 4,
+    "hold": 1,
+    "gain": 0.65,
+    "filter": {
+      "type": "bandpass",
+      "frequency": 1800,
+      "rolloff": -12,
+      "Q": 1.5
+    },
+    "effects": [
+      [
+        "Chorus",
+        {
+          "frequency": 2.0,
+          "delayTime": 2.5,
+          "depth": 0.6,
+          "wet": 0.4
+        }
+      ],
+      [
+        "Reverb",
+        {
+          "decay": 1.8,
+          "wet": 0.3
+        }
+      ]
+    ]
+  },
+  "lead": {
+    "synth": "MonoSynth",
+    "options": {
+      "oscillator": {
+        "type": "sawtooth"
+      },
+      "envelope": {
+        "attack": 0.01,
+        "decay": 0.15,
+        "sustain": 0.7,
+        "release": 0.3
+      },
+      "filterEnvelope": {
+        "attack": 0.01,
+        "decay": 0.2,
+        "sustain": 0.5,
+        "release": 0.3,
+        "octaves": 3.0
+      },
+      "portamento": 0.02
+    },
+    "register": 5,
+    "hold": 2,
+    "gain": 0.6,
+    "filter": {
+      "type": "lowpass",
+      "frequency": 3500,
+      "rolloff": -12,
+      "Q": 3
+    },
+    "effects": [
+      [
+        "FeedbackDelay",
+        {
+          "delayTime": "8n.",
+          "feedback": 0.35,
+          "wet": 0.3
+        }
+      ],
+      [
+        "Reverb",
+        {
+          "decay": 2.5,
+          "wet": 0.35
+        }
+      ]
+    ]
+  },
+  "accent": {
+    "synth": "Synth",
+    "options": {
+      "oscillator": {
+        "type": "sawtooth"
+      },
+      "envelope": {
+        "attack": 0.05,
+        "decay": 1.2,
+        "sustain": 0.1,
+        "release": 1.0
+      },
+      "portamento": 0.3
+    },
+    "register": 5,
+    "hold": 4,
+    "gain": 0.55,
+    "filter": {
+      "type": "highpass",
+      "frequency": 1200,
+      "rolloff": -12,
+      "Q": 4
+    },
+    "effects": [
+      [
+        "FeedbackDelay",
+        {
+          "delayTime": "4n",
+          "feedback": 0.5,
+          "wet": 0.45
+        }
+      ],
+      [
+        "Reverb",
+        {
+          "decay": 4.0,
+          "wet": 0.5
+        }
+      ]
+    ]
+  },
+  "counter": {
+    "synth": "FMSynth",
+    "options": {
+      "oscillator": {
+        "type": "sine"
+      },
+      "envelope": {
+        "attack": 0.002,
+        "decay": 0.22,
+        "sustain": 0.0,
+        "release": 0.2
+      },
+      "modulation": {
+        "type": "sine"
+      },
+      "harmonicity": 2.0,
+      "modulationIndex": 1.8
+    },
+    "register": 5,
+    "hold": 1,
+    "gain": 0.65,
+    "filter": {
+      "type": "highpass",
+      "frequency": 800,
+      "rolloff": -12,
+      "Q": 0.7
+    },
+    "effects": [
+      [
+        "PingPongDelay",
+        {
+          "delayTime": "8n",
+          "feedback": 0.3,
+          "wet": 0.35
+        }
+      ],
+      [
+        "Reverb",
+        {
+          "decay": 2.5,
+          "preDelay": 0.01,
+          "wet": 0.4
+        }
+      ]
+    ]
+  }
+}

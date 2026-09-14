@@ -31,19 +31,22 @@ def mulberry32(s):
         yield ((mixed ^ (mixed >> 14)) & 0xffffffff) / 4294967296.0
 
 preset, instrument_set, mode = sys.argv[1], sys.argv[2], sys.argv[3]
-UTILS = pathlib.Path(__file__).resolve().parent.parent / "src" / "utils"
+SRC = pathlib.Path(__file__).resolve().parent.parent / "src"
+UTILS, ASSETS = SRC / "utils", SRC / "assets" / "instrumentSets"
 
-def order(filename, const, pattern):
+def order(filename, const):
     body = (UTILS / filename).read_text().split(f"const {const}", 1)[1].split("= {", 1)[1].split("\n};", 1)[0]
-    return re.findall(pattern, body, re.M)
+    return re.findall(r"^  (\w+):", body, re.M)
 
-# draw order in musicService.playSky: set, preset, mode
-targets = [
+# set names are the JSON filenames; the seed picks the highest derive_seed
+SET_NAMES = sorted(p.stem for p in ASSETS.glob("*.json"))
+
+# random draw order in musicService.playSky: preset, mode (set is rendezvous-hashed)
+stream = [
     (names.index(name), len(names))
     for names, name in (
-        (order("instrumentSets.ts", "INSTRUMENT_SETS", r"\w+"), instrument_set),
-        (order("presets.ts", "PRESETS", r"^  (\w+):"), preset),
-        (order("modes.ts", "MODES", r"^  (\w+):"), mode),
+        (order("presets.ts", "PRESETS"), preset),
+        (order("modes.ts", "MODES"), mode),
     )
 ]
 
@@ -53,9 +56,11 @@ rng = random.Random(0)
 
 for i in range(ITERS):
     seed_bytes = bytes(rng.randint(0, 255) for _ in range(32))
+    if max(SET_NAMES, key=lambda n: derive_seed(seed_bytes, f"set:{n}")) != instrument_set:
+        continue
     gen = mulberry32(derive_seed(seed_bytes, "music"))
-    draws = [next(gen) for _ in targets]
-    if all(index / count <= r < (index + 1) / count for r, (index, count) in zip(draws, targets)):
+    draws = [next(gen) for _ in stream]
+    if all(index / count <= r < (index + 1) / count for r, (index, count) in zip(draws, stream)):
         matches.append(seed_bytes)
 
 print(f"Tried {ITERS} seeds, found {len(matches)} matches for {preset}+{instrument_set}+{mode}")

@@ -19,11 +19,11 @@ import {
   buildPart,
   deClick,
 } from "../services/musicService";
-import type { InstrumentSetName, InstrumentSpec, Role } from "../types/music";
+import type { InstrumentSpec, Role } from "../types/music";
 
 const BEATS_PER_BAR = 4;
 
-const SET_NAMES = Object.keys(INSTRUMENT_SETS) as InstrumentSetName[];
+const SET_NAMES = Object.keys(INSTRUMENT_SETS);
 const MODE_NAMES = Object.keys(MODES);
 const PRESET_NAMES = Object.keys(PRESETS);
 
@@ -134,7 +134,7 @@ const clamp = (value: number, low: number, high: number): number =>
   Math.min(high, Math.max(low, value));
 
 const buildPlan = (
-  setName: InstrumentSetName,
+  setName: string,
   presetName: string,
   modeName: string,
 ) => {
@@ -148,7 +148,7 @@ const buildPlan = (
   const voices = roles.map((role) => {
     const spec = set[role];
     const register = clamp(
-      (spec.register ?? 3) + preset.registerShift,
+      (spec.register ?? 2) + preset.registerShift,
       MIN_REGISTER,
       MAX_REGISTER,
     );
@@ -168,7 +168,7 @@ type ScoredVoice = {
 const scoreVoices = (plan: ReturnType<typeof buildPlan>, bars: number): ScoredVoice[] =>
   plan.voices.map((voice) => ({
     ...voice,
-    events: buildScore(plan.preset.density[voice.role], plan.offsets.length + 1, bars),
+    events: buildScore(plan.preset.density[voice.role], plan.offsets.length + 1, voice.spec.hold, bars),
   }));
 
 // flatten scored voices into per-note visual data mirroring the triggers.
@@ -176,6 +176,7 @@ const scoredToNotes = (
   voices: ScoredVoice[],
   offsets: readonly number[],
   secPerBeat: number,
+  chunkSec: number,
 ): VizNote[] => {
   const notes: VizNote[] = [];
   for (const voice of voices) {
@@ -196,7 +197,7 @@ const scoredToNotes = (
         role: voice.role,
         color: ROLE_COLORS[voice.role],
         timeSec,
-        durSec,
+        durSec: Math.min(durSec, chunkSec - timeSec),
         midi,
         gain: voice.spec.gain,
       });
@@ -206,7 +207,7 @@ const scoredToNotes = (
 };
 
 const startPlayback = (
-  setName: InstrumentSetName,
+  setName: string,
   presetName: string,
   modeName: string,
 ): Playback => {
@@ -272,7 +273,7 @@ const startPlayback = (
     Tone.Offline(({ transport }) => {
       const master = buildMaster(plan.preset);
       for (const voice of voices) {
-        const synth = buildVoice(voice.spec, voice.register, master[0])[0];
+        const synth = buildVoice(voice.spec, master[0])[0];
         buildPart(
           voice.spec,
           synth,
@@ -280,6 +281,7 @@ const startPlayback = (
           plan.offsets,
           voice.register,
           plan.tempo,
+          chunkSeconds(bars),
         );
       }
       transport.bpm.value = plan.tempo;
@@ -310,7 +312,7 @@ const startPlayback = (
       source.start(nextTime);
       playback.schedule.push({
         startTime: nextTime,
-        notes: scoredToNotes(voices, plan.offsets, plan.secPerBeat),
+        notes: scoredToNotes(voices, plan.offsets, plan.secPerBeat, chunkSeconds(bars)),
       });
       nextTime += chunkSeconds(bars);
       firstChunk = false;
@@ -536,7 +538,7 @@ const drawFrame = (canvas: HTMLCanvasElement, playback: Playback): void => {
 };
 
 const MusicLab = (): ReactElement => {
-  const [setName, setSetName] = useState<InstrumentSetName>("kingsfield");
+  const [setName, setSetName] = useState<string>("lunacid");
   const [presetName, setPresetName] = useState<string>("cavern");
   const [modeName, setModeName] = useState<string>("majorPentatonic");
   const [playing, setPlaying] = useState(false);
@@ -597,7 +599,7 @@ const MusicLab = (): ReactElement => {
           <select
             style={styles.select}
             value={setName}
-            onChange={(e) => setSetName(e.target.value as InstrumentSetName)}
+            onChange={(e) => setSetName(e.target.value)}
           >
             {SET_NAMES.map((name) => (
               <option key={name} value={name}>
