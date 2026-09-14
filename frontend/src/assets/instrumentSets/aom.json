@@ -7,19 +7,19 @@
       },
       "portamento": 0.05,
       "filterEnvelope": {
-        "attack": 0.01,
+        "attack": 0.1,
         "decay": 0.2,
         "sustain": 0.6,
         "release": 0.3,
         "octaves": 1
       },
       "envelope": {
-        "attack": 0.01
+        "attack": 0.1
       }
     },
     "register": 1,
     "hold": 8,
-    "gain": 0.9,
+    "gain": 0.5,
     "filter": {
       "type": "lowpass",
       "frequency": 180,
@@ -30,7 +30,7 @@
         "Distortion",
         {
           "distortion": 0.08,
-          "wet": 0.15
+          "wet": 0.35
         }
       ]
     ]
@@ -94,10 +94,10 @@
     },
     "register": 4,
     "hold": 2,
-    "gain": 0.45,
+    "gain": 0.35,
     "filter": {
       "type": "lowpass",
-      "frequency": 3200,
+      "frequency": 1800,
       "rolloff": -12
     },
     "effects": [
@@ -115,7 +115,7 @@
         {
           "delayTime": "8n.",
           "feedback": 0.22,
-          "wet": 0.25
+          "wet": 0.3
         }
       ]
     ]
@@ -140,7 +140,7 @@
     },
     "register": 4,
     "hold": 2,
-    "gain": 0.45,
+    "gain": 0.35,
     "filter": {
       "type": "lowpass",
       "frequency": 1800,

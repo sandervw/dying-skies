@@ -3,11 +3,6 @@ import type * as Tone from "tone";
 /** the five instrument slots every set fills. */
 type Role = "bass" | "harmony" | "lead" | "counter" | "accent";
 
-/** the instrument sets, one voice per role. */
-type InstrumentSetName =
-  | "kingsfield" | "majorasmask" | "deusex" | "zoombinis"
-  | "aom" | "ogresound";
-
 /** any Tone voice class; options are checked by Tone at runtime. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type SynthClass = new (options?: any) => Tone.Synth | Tone.FMSynth | Tone.AMSynth | Tone.MonoSynth | Tone.DuoSynth | Tone.NoiseSynth;
@@ -28,4 +23,4 @@ interface InstrumentSpec {
   readonly effects: readonly EffectEntry[];
 }
 
-export type { Role, InstrumentSetName, SynthClass, EffectEntry, InstrumentSpec };
+export type { Role, SynthClass, EffectEntry, InstrumentSpec };

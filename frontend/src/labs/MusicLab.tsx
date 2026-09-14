@@ -19,11 +19,11 @@ import {
   buildPart,
   deClick,
 } from "../services/musicService";
-import type { InstrumentSetName, InstrumentSpec, Role } from "../types/music";
+import type { InstrumentSpec, Role } from "../types/music";
 
 const BEATS_PER_BAR = 4;
 
-const SET_NAMES = Object.keys(INSTRUMENT_SETS) as InstrumentSetName[];
+const SET_NAMES = Object.keys(INSTRUMENT_SETS);
 const MODE_NAMES = Object.keys(MODES);
 const PRESET_NAMES = Object.keys(PRESETS);
 
@@ -134,7 +134,7 @@ const clamp = (value: number, low: number, high: number): number =>
   Math.min(high, Math.max(low, value));
 
 const buildPlan = (
-  setName: InstrumentSetName,
+  setName: string,
   presetName: string,
   modeName: string,
 ) => {
@@ -207,7 +207,7 @@ const scoredToNotes = (
 };
 
 const startPlayback = (
-  setName: InstrumentSetName,
+  setName: string,
   presetName: string,
   modeName: string,
 ): Playback => {
@@ -273,7 +273,7 @@ const startPlayback = (
     Tone.Offline(({ transport }) => {
       const master = buildMaster(plan.preset);
       for (const voice of voices) {
-        const synth = buildVoice(voice.spec, voice.register, master[0])[0];
+        const synth = buildVoice(voice.spec, master[0])[0];
         buildPart(
           voice.spec,
           synth,
@@ -538,7 +538,7 @@ const drawFrame = (canvas: HTMLCanvasElement, playback: Playback): void => {
 };
 
 const MusicLab = (): ReactElement => {
-  const [setName, setSetName] = useState<InstrumentSetName>("kingsfield");
+  const [setName, setSetName] = useState<string>("lunacid");
   const [presetName, setPresetName] = useState<string>("cavern");
   const [modeName, setModeName] = useState<string>("majorPentatonic");
   const [playing, setPlaying] = useState(false);
@@ -599,7 +599,7 @@ const MusicLab = (): ReactElement => {
           <select
             style={styles.select}
             value={setName}
-            onChange={(e) => setSetName(e.target.value as InstrumentSetName)}
+            onChange={(e) => setSetName(e.target.value)}
           >
             {SET_NAMES.map((name) => (
               <option key={name} value={name}>
