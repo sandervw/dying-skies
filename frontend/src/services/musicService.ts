@@ -40,22 +40,22 @@ const channel = (): Tone.ToneAudioNode[] => [
   new Tone.Filter({ type: "lowpass", frequency: 10000, rolloff: -12 }),
 ];
 
-/** master glue chain; ends at the destination. */
+/** master audio signal chain; ends at the destination. */
 const masterBus = (): Tone.ToneAudioNode => {
   const nodes = [
-    new Tone.Gain(db(-6)),
-    new Tone.Filter({ type: "highpass", frequency: 25, rolloff: -24 }),
+    new Tone.Gain(db(-6)), // headroom trim (turn down input signal to 1/2 audio; give effects "working room")
+    new Tone.Filter({ type: "highpass", frequency: 25, rolloff: -24 }), // strip subsonic rumble
     new Tone.Filter({ type: "peaking", frequency: 250, Q: 0.7, gain: -1 }),
-    new Tone.Compressor({ ratio: 2, threshold: -12, attack: 0.03, release: 0.2, knee: 6 }),
-    new Tone.Gain(db(-1)),
+    new Tone.Compressor({ ratio: 2, threshold: -12, attack: 0.03, release: 0.2, knee: 6 }), // "glues" audio together
+    new Tone.Gain(db(-1)), // Turn the gain back up post-compression
     new Tone.Filter({ type: "highshelf", frequency: 10000, gain: 1 }),
-    new Tone.Limiter(-3), // safety net, not the ceiling
+    new Tone.Limiter(-3), // soft safety net, not the ceiling
   ];
   nodes[0].chain(...nodes.slice(1), Tone.getDestination());
   return nodes[0];
 };
 
-/** reverb send bus: level, wet reverb, return filters, master. */
+/** reverb chain: wet reverb > filters > master. */
 const reverbBus = async (
   master: Tone.ToneAudioNode,
   decay: number,
@@ -170,6 +170,7 @@ const playSky = (seed: Seed): (() => void) => {
 
   const chunkSeconds = (bars: number): number => (bars * 4 * 60) / preset.tempo;
 
+  // Tone context manages timing, scheduling, start/stop
   const context = Tone.getContext().rawContext as AudioContext;
   let stopped = false;
   let filling = false;
@@ -178,19 +179,24 @@ const playSky = (seed: Seed): (() => void) => {
 
   // render `bars` bars plus tail offline with a fresh random score
   const renderChunk = (bars: number): Promise<AudioBuffer> =>
+    // Tone.Offline spins up an audio context with no speaker
     Tone.Offline(async ({ transport }) => {
+      // Construction is opposite of actual flow
+      // Actual flow: voices > reverb send > master bus > speakers
       const master = masterBus();
       const send = await reverbBus(master, preset.reverbDecay, preset.reverbWet);
       for (const role of roles) {
-        const spec = set[role];
+        const spec = set[role]; // spec for one instrument
         const register = Math.min(MAX_REGISTER, Math.max(MIN_REGISTER, (spec.register ?? 2) + preset.registerShift));
         const events = buildScore(preset.density[role], mode.length + 1, spec.hold, bars);
         const synth = buildVoice(spec, master, send)[0];
+        //place notes on the transport's timeline
         buildPart(spec, synth, events, mode, register, preset.tempo, chunkSeconds(bars));
       }
       transport.bpm.value = preset.tempo;
-      transport.start();
+      transport.start(); // puts the synth sounds into the chunk
     }, chunkSeconds(bars) + TAIL, 2, 48000)
+      // After callback resolves, return the finished buffer
       .then((buffer): AudioBuffer => finalize(buffer.get() as AudioBuffer));
 
   // keep one chunk queued ahead; tails overlap for a seamless seam
@@ -200,8 +206,8 @@ const playSky = (seed: Seed): (() => void) => {
     filling = true;
     while (!stopped && nextTime < context.currentTime + chunkSeconds(LOOP_BARS)) {
       const bars = firstChunk ? 2 : LOOP_BARS; // short first chunk plays sooner
-      const buffer = await renderChunk(bars);
-      if (stopped) break;
+      const buffer = await renderChunk(bars); // renders the chunk when the callback resolves
+      if (stopped) break; // If audio was stopped during rendering, quit
       const source = context.createBufferSource();
       source.buffer = buffer;
       source.connect(context.destination);
@@ -227,7 +233,7 @@ const playSky = (seed: Seed): (() => void) => {
   };
 };
 
-/** name the instrument set, mode, and preset a seed plays. */
+/** name the instrument-set, mode, and preset a seed plays. */
 const describeSky = (seed: Seed): { set: string; mode: string; preset: string; } => {
   // mirrors playSky's first three picks; keep this order.
   const random = createSeededRandom(deriveSeed(seed, "music"));
