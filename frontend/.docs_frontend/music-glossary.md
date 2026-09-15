@@ -53,13 +53,14 @@ synth --> filter --> effects --> gain --> speakers
 - **Effect**: a processor placed after the synth that alters the sound on its way out.
 - **wet**: how much of the effect is mixed in. 0 = none, 1 = effect only, 0.4 = mostly dry with a touch.
 - **Reverb**: makes it sound like the music plays in a big room or cave; echoes smeared into a wash.
+- **preDelay (Reverb)**: the short gap before the reverb wash blooms. Lets the dry note land; 0.05 = 50 milliseconds.
 - **Chorus**: plays slightly detuned, slightly delayed copies alongside; makes one voice sound like several. Watery, shimmering.
 - **Delay**: records the sound and replays it after a short wait; a distinct echo.
 - **delayTime**: how long until the echo. Written in note lengths: "4n" = a quarter note, "8n." = a dotted eighth (longer).
 - **feedback**: how loudly each echo repeats the last. 0 = one echo, 0.5 = echoing tail, near 1 = endless runaway.
 - **PingPongDelay**: echoes bounce left speaker, right speaker, left, like a ping-pong ball.
 - **FeedbackDelay**: a normal echo that stays centered.
-- **Distortion**: deliberately overdrives the wave; gritty, growling, guitar-amp crackle. `distortion` is the amount.
+- **Distortion**: deliberately overdrives the wave; gritty, growling, guitar-amp crackle. 0 = clean, 1 = fully mangled and fuzzy.
 - **StereoWidener**: spreads the sound wider between left and right speakers. `width` 0 = mono, 1 = very wide.
 - **AutoPanner**: automatically sweeps the sound left and right. `frequency` is sweeps per second; `depth` is how far.
 - **AutoFilter**: automatically opens and closes a lowpass filter; slow rhythmic "wah wah". `baseFrequency` is the middle position.

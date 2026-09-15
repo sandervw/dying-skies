@@ -31,7 +31,7 @@
       [
         "Distortion",
         {
-          "distortion": 0.05,
+          "distortion": 0.15,
           "wet": 0.15
         }
       ],
@@ -39,7 +39,7 @@
         "Reverb",
         {
           "decay": 3.5,
-          "preDelay": 0.02,
+          "preDelay": 0.05,
           "wet": 0.22
         }
       ]
