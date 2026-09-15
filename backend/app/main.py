@@ -8,7 +8,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from app.db import close_pool, ensure_analytics_role, ensure_schema, get_pool
+from app.db import (
+    close_pool,
+    ensure_admin_role,
+    ensure_analytics_role,
+    ensure_schema,
+    get_pool,
+)
 from app.rate_limit import limiter
 from app.routes.auth import router as auth_router
 from app.routes.health import router as health_router
@@ -24,6 +30,7 @@ async def lifespan(app: FastAPI):
     pool = await get_pool()
     await ensure_schema(pool)
     await ensure_analytics_role(pool)
+    await ensure_admin_role(pool)
     yield
     await close_pool()
 

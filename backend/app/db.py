@@ -100,3 +100,75 @@ async def ensure_analytics_role(pool: asyncpg.Pool) -> None:
             await connection.execute(
                 "ALTER SCHEMA analytics OWNER TO analytics_reader"
             )
+
+
+_ENSURE_ADMIN_ROLE = """
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'skies_admin') THEN
+    EXECUTE format(
+      'CREATE ROLE skies_admin LOGIN PASSWORD %L',
+      current_setting('admin.password'));
+  ELSE
+    EXECUTE format(
+      'ALTER ROLE skies_admin WITH PASSWORD %L',
+      current_setting('admin.password'));
+  END IF;
+  -- Membership grants write on the analytics_reader-owned schema.
+  IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'analytics_reader') THEN
+    GRANT analytics_reader TO skies_admin;
+  END IF;
+END $$
+"""
+
+
+_ENSURE_DAGSTER_WRITE = """
+DO $$
+BEGIN
+  IF EXISTS (SELECT FROM information_schema.schemata WHERE schema_name = 'dagster') THEN
+    GRANT USAGE, CREATE ON SCHEMA dagster TO skies_admin;
+    GRANT ALL ON ALL TABLES IN SCHEMA dagster TO skies_admin;
+    GRANT ALL ON ALL SEQUENCES IN SCHEMA dagster TO skies_admin;
+    ALTER DEFAULT PRIVILEGES FOR ROLE skies IN SCHEMA dagster
+      GRANT ALL ON TABLES TO skies_admin;
+    ALTER DEFAULT PRIVILEGES FOR ROLE skies IN SCHEMA dagster
+      GRANT ALL ON SEQUENCES TO skies_admin;
+  END IF;
+END $$
+"""
+
+
+async def ensure_admin_role(pool: asyncpg.Pool) -> None:
+    """Create skies_admin, a read/write login across app, analytics, dagster."""
+    password = os.environ.get("ADMIN_DB_PASSWORD")
+    if not password:
+        return
+    async with pool.acquire() as connection:
+        async with connection.transaction():
+            # Pass password via a session setting; role DDL cannot bind params.
+            await connection.execute(
+                "SELECT set_config('admin.password', $1, true)", password
+            )
+            await connection.execute(_ENSURE_ADMIN_ROLE)
+            await connection.execute(
+                "GRANT CONNECT ON DATABASE dying_skies TO skies_admin"
+            )
+            await connection.execute(
+                "GRANT USAGE, CREATE ON SCHEMA public TO skies_admin"
+            )
+            await connection.execute(
+                "GRANT ALL ON ALL TABLES IN SCHEMA public TO skies_admin"
+            )
+            await connection.execute(
+                "GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO skies_admin"
+            )
+            # Cover tables the app creates later.
+            await connection.execute(
+                "ALTER DEFAULT PRIVILEGES FOR ROLE skies IN SCHEMA public "
+                "GRANT ALL ON TABLES TO skies_admin"
+            )
+            await connection.execute(
+                "ALTER DEFAULT PRIVILEGES FOR ROLE skies IN SCHEMA public "
+                "GRANT ALL ON SEQUENCES TO skies_admin"
+            )
+            await connection.execute(_ENSURE_DAGSTER_WRITE)
