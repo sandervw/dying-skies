@@ -6,9 +6,9 @@
         "type": "sawtooth"
       },
       "envelope": {
-        "attack": 1.2,
-        "decay": 2.0,
-        "sustain": 0.85,
+        "attack": 7,
+        "decay": 4,
+        "sustain": 0.4,
         "release": 3.0
       },
       "filterEnvelope": {
@@ -20,8 +20,8 @@
       }
     },
     "register": 1,
-    "hold": 12,
-    "gain": 0.8,
+    "hold": 11,
+    "gain": 0.5,
     "filter": {
       "type": "lowpass",
       "frequency": 160,
@@ -151,9 +151,9 @@
       },
       "portamento": 0.3
     },
-    "register": 5,
+    "register": 4,
     "hold": 4,
-    "gain": 0.55,
+    "gain": 0.4,
     "filter": {
       "type": "highpass",
       "frequency": 1200,
@@ -165,7 +165,7 @@
         "FeedbackDelay",
         {
           "delayTime": "4n",
-          "feedback": 0.5,
+          "feedback": 0.65,
           "wet": 0.45
         }
       ],

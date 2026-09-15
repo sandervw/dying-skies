@@ -13,11 +13,13 @@ import {
   LOOP_BARS,
   MIN_REGISTER,
   MAX_REGISTER,
-  buildMaster,
+  TAIL,
+  masterBus,
+  reverbBus,
   buildVoice,
   buildScore,
   buildPart,
-  deClick,
+  finalize,
 } from "../services/musicService";
 import type { InstrumentSpec, Role } from "../types/music";
 
@@ -214,20 +216,10 @@ const startPlayback = (
   const plan = buildPlan(setName, presetName, modeName);
   const context = Tone.getContext().rawContext as unknown as AudioContext;
 
-  // halve then tanh: smooth ceiling, then analyser tap
-  const headroom = context.createGain();
-  headroom.gain.value = 0.18;
-  const shaper = context.createWaveShaper();
-  const curve = new Float32Array(1024);
-  for (let index = 0; index < curve.length; index++) {
-    curve[index] = Math.tanh((index / (curve.length - 1)) * 8 - 4);
-  }
-  shaper.curve = curve;
+  // analyser tap for visuals; audio is finalized per chunk
   const analyser = context.createAnalyser();
   analyser.fftSize = 1024;
   analyser.smoothingTimeConstant = 0.82;
-  headroom.connect(shaper);
-  shaper.connect(analyser);
   analyser.connect(context.destination);
 
   const active = new Set<AudioBufferSourceNode>();
@@ -260,8 +252,6 @@ const startPlayback = (
           /* already ended */
         }
       }
-      headroom.disconnect();
-      shaper.disconnect();
       analyser.disconnect();
     },
   };
@@ -270,10 +260,11 @@ const startPlayback = (
 
   // render `bars` bars plus tail offline with a fresh random score
   const renderChunk = (voices: ScoredVoice[], bars: number): Promise<AudioBuffer> =>
-    Tone.Offline(({ transport }) => {
-      const master = buildMaster(plan.preset);
+    Tone.Offline(async ({ transport }) => {
+      const master = masterBus();
+      const send = await reverbBus(master, plan.preset.reverbDecay, plan.preset.reverbWet);
       for (const voice of voices) {
-        const synth = buildVoice(voice.spec, master[0])[0];
+        const synth = buildVoice(voice.spec, master, send)[0];
         buildPart(
           voice.spec,
           synth,
@@ -286,10 +277,8 @@ const startPlayback = (
       }
       transport.bpm.value = plan.tempo;
       transport.start();
-      return (master.find((node) => node instanceof Tone.Reverb) as Tone.Reverb)
-        .ready;
-    }, chunkSeconds(bars) + 6).then(
-      (buffer): AudioBuffer => deClick(buffer.get() as AudioBuffer),
+    }, chunkSeconds(bars) + TAIL, 2, 48000).then(
+      (buffer): AudioBuffer => finalize(buffer.get() as AudioBuffer),
     );
 
   // keep one chunk queued ahead; tails overlap for a seamless seam
@@ -307,7 +296,7 @@ const startPlayback = (
       if (playback.stopped) break;
       const source = context.createBufferSource();
       source.buffer = buffer;
-      source.connect(headroom);
+      source.connect(analyser);
       if (nextTime < context.currentTime) nextTime = context.currentTime + 0.05;
       source.start(nextTime);
       playback.schedule.push({
