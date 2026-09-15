@@ -151,15 +151,17 @@ const deClick = (audio: AudioBuffer): AudioBuffer => {
 
 /** play this sky as endless fresh chunks; the returned call stops it. */
 const playSky = (seed: Seed): (() => void) => {
+  // generate music settings based on seed value
   const random = createSeededRandom(deriveSeed(seed, "music"));
   const set = INSTRUMENT_SETS[pickSet(seed)];
   const preset = PRESETS[pick(random, PRESET_NAMES)];
-  const offsets = MODES[pick(random, MODE_NAMES)];
+  const mode = MODES[pick(random, MODE_NAMES)];
   const roles = [...preset.instruments];
+
   const chunkSeconds = (bars: number): number => (bars * 4 * 60) / preset.tempo;
 
   // halve then tanh: smooth ceiling on any summed level
-  const context = Tone.getContext().rawContext as unknown as AudioContext;
+  const context = Tone.getContext().rawContext as AudioContext;
   const headroom = context.createGain();
   headroom.gain.value = 0.18;
   const shaper = context.createWaveShaper();
@@ -184,9 +186,9 @@ const playSky = (seed: Seed): (() => void) => {
       for (const role of roles) {
         const spec = set[role];
         const register = Math.min(MAX_REGISTER, Math.max(MIN_REGISTER, (spec.register ?? 2) + preset.registerShift));
-        const events = buildScore(preset.density[role], offsets.length + 1, spec.hold, bars);
+        const events = buildScore(preset.density[role], mode.length + 1, spec.hold, bars);
         const synth = buildVoice(spec, master[0])[0];
-        buildPart(spec, synth, events, offsets, register, preset.tempo, chunkSeconds(bars));
+        buildPart(spec, synth, events, mode, register, preset.tempo, chunkSeconds(bars));
       }
       transport.bpm.value = preset.tempo;
       transport.start();

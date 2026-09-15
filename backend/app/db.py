@@ -129,9 +129,9 @@ BEGIN
     GRANT USAGE, CREATE ON SCHEMA dagster TO skies_admin;
     GRANT ALL ON ALL TABLES IN SCHEMA dagster TO skies_admin;
     GRANT ALL ON ALL SEQUENCES IN SCHEMA dagster TO skies_admin;
-    ALTER DEFAULT PRIVILEGES FOR ROLE skies IN SCHEMA dagster
+    ALTER DEFAULT PRIVILEGES IN SCHEMA dagster
       GRANT ALL ON TABLES TO skies_admin;
-    ALTER DEFAULT PRIVILEGES FOR ROLE skies IN SCHEMA dagster
+    ALTER DEFAULT PRIVILEGES IN SCHEMA dagster
       GRANT ALL ON SEQUENCES TO skies_admin;
   END IF;
 END $$
@@ -164,11 +164,11 @@ async def ensure_admin_role(pool: asyncpg.Pool) -> None:
             )
             # Cover tables the app creates later.
             await connection.execute(
-                "ALTER DEFAULT PRIVILEGES FOR ROLE skies IN SCHEMA public "
+                "ALTER DEFAULT PRIVILEGES IN SCHEMA public "
                 "GRANT ALL ON TABLES TO skies_admin"
             )
             await connection.execute(
-                "ALTER DEFAULT PRIVILEGES FOR ROLE skies IN SCHEMA public "
+                "ALTER DEFAULT PRIVILEGES IN SCHEMA public "
                 "GRANT ALL ON SEQUENCES TO skies_admin"
             )
             await connection.execute(_ENSURE_DAGSTER_WRITE)
