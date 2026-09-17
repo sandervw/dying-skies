@@ -119,21 +119,33 @@ const buildScore = (density: number, steps: number, hold: number, bars = LOOP_BA
   return events;
 };
 
-/** re-roll pitch and slot of a fraction of a role's notes, in place. */
-const slip = (hold: number, events: [number, number, number][], steps: number): void => {
+/** re-roll a fraction of a role's notes; drift count around its density. */
+const slip = (
+  hold: number,
+  events: [number, number, number][],
+  steps: number,
+  density: number,
+): void => {
   const total = LOOP_BARS * 4;
   const latest = total - Math.min(Math.ceil(hold), total / 2);
-  const used = new Set(events.map((event) => event[0] * 4 + event[1]));
-  for (const event of events) {
-    if (Math.random() >= SLIP_CHANCE) continue;
-    event[2] = Math.floor(Math.random() * steps);
-    const slot = 1 + Math.floor(Math.random() * (latest - 1));
-    if (used.has(slot)) continue;
-    used.delete(event[0] * 4 + event[1]);
-    used.add(slot);
-    event[0] = Math.floor(slot / 4);
-    event[1] = slot % 4;
-  }
+
+  // drift the count around the average this instrument's density implies
+  const average = Math.min(density, MAX_DENSITY) * LOOP_BARS;
+  const goal = Math.max(1, Math.floor(average) + (Math.random() < average % 1 ? 1 : 0));
+  let drifted = false;
+  if (events.length > goal) { events.pop(); drifted = true; }
+  else if (events.length < goal) { events.push([0, 0, Math.floor(Math.random() * steps)]); drifted = true; }
+
+  // a count change re-spaces every note; else slip a random few
+  const count = events.length;
+  const span = total / count;
+  events.forEach((event, index) => {
+    if (!drifted && Math.random() >= SLIP_CHANCE) return;
+    if (!drifted) event[2] = Math.floor(Math.random() * steps);
+    const position = Math.min(Math.max(1, Math.floor((index + Math.random()) * span)), latest);
+    event[0] = Math.floor(position / 4);
+    event[1] = position % 4;
+  });
 };
 
 /** schedule one role's looping part; steps wrap octaves. */
@@ -191,7 +203,8 @@ const playSky = (seed: Seed): (() => void) => {
   const score = roles.map((role) => {
     const spec = set[role];
     const register = Math.min(MAX_REGISTER, Math.max(MIN_REGISTER, (spec.register ?? 2) + preset.registerShift));
-    return { spec, register, events: buildScore(preset.density[role], steps, spec.hold, LOOP_BARS) };
+    const events = buildScore(preset.density[role], steps, spec.hold, LOOP_BARS);
+    return { spec, register, events, density: preset.density[role] };
   });
 
   const chunkSeconds = (bars: number): number => (bars * 4 * 60) / preset.tempo;
@@ -227,7 +240,7 @@ const playSky = (seed: Seed): (() => void) => {
     if (filling) return;
     filling = true;
     while (!stopped && nextTime < context.currentTime + chunkSeconds(LOOP_BARS)) {
-      if (!firstChunk) for (const voice of score) slip(voice.spec.hold, voice.events, steps);
+      if (!firstChunk) for (const voice of score) slip(voice.spec.hold, voice.events, steps, voice.density);
       const buffer = await renderChunk(); // renders the chunk when the callback resolves
       if (stopped) break; // If audio was stopped during rendering, quit
       const source = context.createBufferSource();
@@ -274,6 +287,7 @@ export {
   reverbBus,
   buildVoice,
   buildScore,
+  slip,
   buildPart,
   finalize,
   describeSky,

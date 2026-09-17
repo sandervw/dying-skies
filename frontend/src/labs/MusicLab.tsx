@@ -18,6 +18,7 @@ import {
   reverbBus,
   buildVoice,
   buildScore,
+  slip,
   buildPart,
   finalize,
 } from "../services/musicService";
@@ -166,11 +167,11 @@ type ScoredVoice = {
   events: [number, number, number][];
 };
 
-// a fresh random score for every voice, used by one chunk
-const scoreVoices = (plan: ReturnType<typeof buildPlan>, bars: number): ScoredVoice[] =>
+// the locked score: one random score per voice, slipped each repeat
+const scoreVoices = (plan: ReturnType<typeof buildPlan>): ScoredVoice[] =>
   plan.voices.map((voice) => ({
     ...voice,
-    events: buildScore(plan.preset.density[voice.role], plan.offsets.length + 1, voice.spec.hold, bars),
+    events: buildScore(plan.preset.density[voice.role], plan.offsets.length + 1, voice.spec.hold, LOOP_BARS),
   }));
 
 // flatten scored voices into per-note visual data mirroring the triggers.
@@ -256,14 +257,16 @@ const startPlayback = (
     },
   };
 
-  const chunkSeconds = (bars: number): number => (bars * BEATS_PER_BAR * 60) / plan.tempo;
+  // locked score: built once, a fraction of notes slips each repeat
+  const steps = plan.offsets.length + 1;
+  const score = scoreVoices(plan);
 
-  // render `bars` bars plus tail offline with a fresh random score
-  const renderChunk = (voices: ScoredVoice[], bars: number): Promise<AudioBuffer> =>
+  // render the locked (then slipped) loop plus tail offline
+  const renderChunk = (): Promise<AudioBuffer> =>
     Tone.Offline(async ({ transport }) => {
       const master = masterBus();
       const send = await reverbBus(master, plan.preset.reverbDecay, plan.preset.reverbWet);
-      for (const voice of voices) {
+      for (const voice of score) {
         const synth = buildVoice(voice.spec, master, send)[0];
         buildPart(
           voice.spec,
@@ -272,12 +275,12 @@ const startPlayback = (
           plan.offsets,
           voice.register,
           plan.tempo,
-          chunkSeconds(bars),
+          plan.loopSeconds,
         );
       }
       transport.bpm.value = plan.tempo;
       transport.start();
-    }, chunkSeconds(bars) + TAIL, 2, 48000).then(
+    }, plan.loopSeconds + TAIL, 2, 48000).then(
       (buffer): AudioBuffer => finalize(buffer.get() as AudioBuffer),
     );
 
@@ -290,9 +293,8 @@ const startPlayback = (
       !playback.stopped &&
       nextTime < context.currentTime + plan.loopSeconds
     ) {
-      const bars = firstChunk ? 2 : LOOP_BARS; // short first chunk plays sooner
-      const voices = scoreVoices(plan, bars);
-      const buffer = await renderChunk(voices, bars);
+      if (!firstChunk) for (const voice of score) slip(voice.spec.hold, voice.events, steps, plan.preset.density[voice.role]);
+      const buffer = await renderChunk();
       if (playback.stopped) break;
       const source = context.createBufferSource();
       source.buffer = buffer;
@@ -301,9 +303,9 @@ const startPlayback = (
       source.start(nextTime);
       playback.schedule.push({
         startTime: nextTime,
-        notes: scoredToNotes(voices, plan.offsets, plan.secPerBeat, chunkSeconds(bars)),
+        notes: scoredToNotes(score, plan.offsets, plan.secPerBeat, plan.loopSeconds),
       });
-      nextTime += chunkSeconds(bars);
+      nextTime += plan.loopSeconds;
       firstChunk = false;
       active.add(source);
       source.onended = (): void => {
