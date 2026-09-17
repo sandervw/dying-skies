@@ -7,6 +7,7 @@ import type { Seed } from "./randomService";
 import type { InstrumentSpec } from "../types/music";
 
 const LOOP_BARS = 8;
+const SLIP_CHANCE = 0.2; // fraction of notes re-rolled each repeat
 const MAX_DENSITY = 2.5; // events per bar; caps loudness and overlap
 const MIN_REGISTER = 1; // no subsonic rumble
 const MAX_REGISTER = 6; // no piercing highs
@@ -118,6 +119,23 @@ const buildScore = (density: number, steps: number, hold: number, bars = LOOP_BA
   return events;
 };
 
+/** re-roll pitch and slot of a fraction of a role's notes, in place. */
+const slip = (hold: number, events: [number, number, number][], steps: number): void => {
+  const total = LOOP_BARS * 4;
+  const latest = total - Math.min(Math.ceil(hold), total / 2);
+  const used = new Set(events.map((event) => event[0] * 4 + event[1]));
+  for (const event of events) {
+    if (Math.random() >= SLIP_CHANCE) continue;
+    event[2] = Math.floor(Math.random() * steps);
+    const slot = 1 + Math.floor(Math.random() * (latest - 1));
+    if (used.has(slot)) continue;
+    used.delete(event[0] * 4 + event[1]);
+    used.add(slot);
+    event[0] = Math.floor(slot / 4);
+    event[1] = slot % 4;
+  }
+};
+
 /** schedule one role's looping part; steps wrap octaves. */
 const buildPart = (
   spec: InstrumentSpec,
@@ -167,6 +185,14 @@ const playSky = (seed: Seed): (() => void) => {
   const preset = PRESETS[pick(random, PRESET_NAMES)];
   const mode = MODES[pick(random, MODE_NAMES)];
   const roles = [...preset.instruments];
+  const steps = mode.length + 1;
+
+  // locked score: built once, a fraction of notes slips each repeat
+  const score = roles.map((role) => {
+    const spec = set[role];
+    const register = Math.min(MAX_REGISTER, Math.max(MIN_REGISTER, (spec.register ?? 2) + preset.registerShift));
+    return { spec, register, events: buildScore(preset.density[role], steps, spec.hold, LOOP_BARS) };
+  });
 
   const chunkSeconds = (bars: number): number => (bars * 4 * 60) / preset.tempo;
 
@@ -178,24 +204,20 @@ const playSky = (seed: Seed): (() => void) => {
   const active = new Set<AudioBufferSourceNode>();
 
   // render `bars` bars plus tail offline with a fresh random score
-  const renderChunk = (bars: number): Promise<AudioBuffer> =>
+  const renderChunk = (): Promise<AudioBuffer> =>
     // Tone.Offline spins up an audio context with no speaker
     Tone.Offline(async ({ transport }) => {
       // Construction is opposite of actual flow
       // Actual flow: voices > reverb send > master bus > speakers
       const master = masterBus();
       const send = await reverbBus(master, preset.reverbDecay, preset.reverbWet);
-      for (const role of roles) {
-        const spec = set[role]; // spec for one instrument
-        const register = Math.min(MAX_REGISTER, Math.max(MIN_REGISTER, (spec.register ?? 2) + preset.registerShift));
-        const events = buildScore(preset.density[role], mode.length + 1, spec.hold, bars);
-        const synth = buildVoice(spec, master, send)[0];
-        //place notes on the transport's timeline
-        buildPart(spec, synth, events, mode, register, preset.tempo, chunkSeconds(bars));
+      for (const voice of score) {
+        const synth = buildVoice(voice.spec, master, send)[0];
+        buildPart(voice.spec, synth, voice.events, mode, voice.register, preset.tempo, chunkSeconds(LOOP_BARS));
       }
       transport.bpm.value = preset.tempo;
       transport.start(); // puts the synth sounds into the chunk
-    }, chunkSeconds(bars) + TAIL, 2, 48000)
+    }, chunkSeconds(LOOP_BARS) + TAIL, 2, 48000)
       // After callback resolves, return the finished buffer
       .then((buffer): AudioBuffer => finalize(buffer.get() as AudioBuffer));
 
@@ -205,15 +227,15 @@ const playSky = (seed: Seed): (() => void) => {
     if (filling) return;
     filling = true;
     while (!stopped && nextTime < context.currentTime + chunkSeconds(LOOP_BARS)) {
-      const bars = firstChunk ? 2 : LOOP_BARS; // short first chunk plays sooner
-      const buffer = await renderChunk(bars); // renders the chunk when the callback resolves
+      if (!firstChunk) for (const voice of score) slip(voice.spec.hold, voice.events, steps);
+      const buffer = await renderChunk(); // renders the chunk when the callback resolves
       if (stopped) break; // If audio was stopped during rendering, quit
       const source = context.createBufferSource();
       source.buffer = buffer;
       source.connect(context.destination);
       if (nextTime < context.currentTime) nextTime = context.currentTime + 0.05;
       source.start(nextTime);
-      nextTime += chunkSeconds(bars);
+      nextTime += chunkSeconds(LOOP_BARS);
       firstChunk = false;
       active.add(source);
       source.onended = (): void => { active.delete(source); };

@@ -173,34 +173,6 @@ const scoreVoices = (plan: ReturnType<typeof buildPlan>, bars: number): ScoredVo
     events: buildScore(plan.preset.density[voice.role], plan.offsets.length + 1, voice.spec.hold, bars),
   }));
 
-// slip: re-roll pitch, optionally rhythm, for notes that pass `chance`.
-const mutateScore = (
-  voices: ScoredVoice[],
-  stepCount: number,
-  chance: number,
-  varyRhythm: boolean,
-  bars: number,
-): void => {
-  const total = bars * BEATS_PER_BAR;
-  for (const voice of voices) {
-    const latest = total - Math.min(Math.ceil(voice.spec.hold), total / 2);
-    const used = new Set(voice.events.map((event) => event[0] * BEATS_PER_BAR + event[1]));
-    for (const event of voice.events) {
-      if (Math.random() >= chance) continue;
-      event[2] = Math.floor(Math.random() * stepCount);
-      if (!varyRhythm) continue;
-      used.delete(event[0] * BEATS_PER_BAR + event[1]);
-      const free: number[] = [];
-      for (let slot = 1; slot <= latest; slot++) if (!used.has(slot)) free.push(slot);
-      if (free.length === 0) continue;
-      const slot = free[Math.floor(Math.random() * free.length)];
-      used.add(slot);
-      event[0] = Math.floor(slot / BEATS_PER_BAR);
-      event[1] = slot % BEATS_PER_BAR;
-    }
-  }
-};
-
 // flatten scored voices into per-note visual data mirroring the triggers.
 const scoredToNotes = (
   voices: ScoredVoice[],
@@ -240,8 +212,6 @@ const startPlayback = (
   setName: string,
   presetName: string,
   modeName: string,
-  getSwapChance: () => number,
-  getVaryRhythm: () => boolean,
 ): Playback => {
   const plan = buildPlan(setName, presetName, modeName);
   const context = Tone.getContext().rawContext as unknown as AudioContext;
@@ -311,10 +281,6 @@ const startPlayback = (
       (buffer): AudioBuffer => finalize(buffer.get() as AudioBuffer),
     );
 
-  // locked score: the loop everything slips away from
-  const voices = scoreVoices(plan, LOOP_BARS);
-  const stepCount = plan.offsets.length + 1;
-
   // keep one chunk queued ahead; tails overlap for a seamless seam
   let firstChunk = true;
   const fill = async (): Promise<void> => {
@@ -324,8 +290,8 @@ const startPlayback = (
       !playback.stopped &&
       nextTime < context.currentTime + plan.loopSeconds
     ) {
-      const bars = LOOP_BARS;
-      if (!firstChunk) mutateScore(voices, stepCount, getSwapChance(), getVaryRhythm(), LOOP_BARS);
+      const bars = firstChunk ? 2 : LOOP_BARS; // short first chunk plays sooner
+      const voices = scoreVoices(plan, bars);
       const buffer = await renderChunk(voices, bars);
       if (playback.stopped) break;
       const source = context.createBufferSource();
@@ -566,10 +532,6 @@ const MusicLab = (): ReactElement => {
   const [modeName, setModeName] = useState<string>("majorPentatonic");
   const [playing, setPlaying] = useState(false);
   const [playback, setPlayback] = useState<Playback | null>(null);
-  const [swapChance, setSwapChance] = useState(0.06);
-  const swapChanceRef = useRef(0.06);
-  const [varyRhythm, setVaryRhythm] = useState(false);
-  const varyRhythmRef = useRef(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect((): (() => void) | void => {
@@ -600,7 +562,7 @@ const MusicLab = (): ReactElement => {
   const handlePlay = async (): Promise<void> => {
     playback?.stop();
     await Tone.start();
-    setPlayback(startPlayback(setName, presetName, modeName, () => swapChanceRef.current, () => varyRhythmRef.current));
+    setPlayback(startPlayback(setName, presetName, modeName));
     setPlaying(true);
   };
 
@@ -664,34 +626,6 @@ const MusicLab = (): ReactElement => {
               </option>
             ))}
           </select>
-        </label>
-
-        <h2 style={styles.section}>Slip Chance</h2>
-        <label style={styles.label}>
-          <input
-            type="range"
-            min={0}
-            max={0.4}
-            step={0.01}
-            value={swapChance}
-            onChange={(e) => {
-              const value = Number(e.target.value);
-              swapChanceRef.current = value;
-              setSwapChance(value);
-            }}
-          />
-          <span>{Math.round(swapChance * 100)}% per note each repeat</span>
-        </label>
-        <label style={{ ...styles.label, flexDirection: "row", alignItems: "center", gap: 8 }}>
-          <input
-            type="checkbox"
-            checked={varyRhythm}
-            onChange={(e) => {
-              varyRhythmRef.current = e.target.checked;
-              setVaryRhythm(e.target.checked);
-            }}
-          />
-          <span>Vary rhythm (full drift)</span>
         </label>
 
         <div
