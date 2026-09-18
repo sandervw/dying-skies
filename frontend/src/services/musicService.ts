@@ -159,6 +159,9 @@ const buildPart = (
   chunkLength: number,
 ): void => {
   const seconds = (spec.hold * 60) / tempo;
+  const seen = new Set<string>(); // drop ties; two notes per slot crash Tone
+  const slots = events.flatMap(([bar, beat, step]): [string, number][] =>
+    seen.has(`${bar}:${beat}`) ? [] : (seen.add(`${bar}:${beat}`), [[`${bar}:${beat}:0`, step]]));
   const part = new Tone.Part((time, step: number): void => {
     const held = Math.min(seconds, chunkLength - time); // stop notes at the seam
     if (synth instanceof Tone.NoiseSynth) {
@@ -168,7 +171,7 @@ const buildPart = (
       const note = Tone.Frequency(`C${register}`).transpose(semitone).toFrequency();
       (synth as Tone.PolySynth).triggerAttackRelease(note, held, time);
     }
-  }, events.map(([bar, beat, step]): [string, number] => [`${bar}:${beat}:0`, step]));
+  }, slots);
   part.start(0);
 };
 

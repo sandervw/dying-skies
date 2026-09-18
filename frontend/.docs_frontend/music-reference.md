@@ -4,7 +4,7 @@ Values for the three seed-picked axes.
 
 ## Axes
 
-The seed picks one mode, one preset, and one instrument set. Five modes times six presets times six sets give 180 combinations.
+The seed picks one mode, one preset, and one instrument set. Eight modes times six presets times six sets give 288 combinations.
 
 ## Modes
 
@@ -17,6 +17,9 @@ Semitone offsets from the root. Five notes each, six for whole-tone.
 | dorian-pentatonic | `[0,2,3,7,9]`    | minor, hopeful     |
 | lydian-pentatonic | `[0,2,4,6,11]`   | floating, ethereal |
 | whole-tone        | `[0,2,4,6,8,10]` | weightless, hazy   |
+| egyptian          | `[0,2,5,7,10]`   | open, suspended    |
+| ritusen           | `[0,2,5,7,9]`    | bright, folk       |
+| man-gong          | `[0,3,5,8,10]`   | dark, wistful      |
 
 ## Presets
 

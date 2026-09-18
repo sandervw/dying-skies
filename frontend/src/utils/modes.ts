@@ -5,6 +5,9 @@ const MODES: Record<string, readonly number[]> = {
   dorianPentatonic: [0, 2, 3, 7, 9],
   lydianPentatonic: [0, 2, 4, 6, 11],
   wholeTone: [0, 2, 4, 6, 8, 10],
+  egyptian: [0, 2, 5, 7, 10],
+  ritusen: [0, 2, 5, 7, 9],
+  manGong: [0, 3, 5, 8, 10],
 };
 
 export { MODES };
