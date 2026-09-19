@@ -233,7 +233,7 @@ const playSky = (seed: Seed): (() => void) => {
       }
       transport.bpm.value = preset.tempo;
       transport.start(); // puts the synth sounds into the chunk
-    }, chunkSeconds(LOOP_BARS) + TAIL, 2, 48000)
+    }, chunkSeconds(LOOP_BARS) + TAIL)
       // After callback resolves, return the finished buffer
       .then((buffer): AudioBuffer => finalize(buffer.get() as AudioBuffer));
 

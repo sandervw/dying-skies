@@ -263,34 +263,47 @@ const startPlayback = (
   const score = scoreVoices(plan);
 
   // render the locked (then slipped) loop plus tail offline
-  const renderChunk = (): Promise<AudioBuffer> =>
-    Tone.Offline(
-      async ({ transport }) => {
-        const master = masterBus();
-        const send = await reverbBus(
-          master,
-          plan.preset.reverbDecay,
-          plan.preset.reverbWet,
+  const renderChunk = async (): Promise<AudioBuffer> => {
+    let busMs = 0;
+    let voicesMs = 0;
+    const offlineStart = performance.now();
+    const rendered = await Tone.Offline(async ({ transport }) => {
+      const busStart = performance.now();
+      const master = masterBus();
+      const send = await reverbBus(
+        master,
+        plan.preset.reverbDecay,
+        plan.preset.reverbWet,
+      );
+      busMs = performance.now() - busStart;
+      const voicesStart = performance.now();
+      for (const voice of score) {
+        const synth = buildVoice(voice.spec, master, send)[0];
+        buildPart(
+          voice.spec,
+          synth,
+          voice.events,
+          plan.offsets,
+          voice.register,
+          plan.tempo,
+          plan.loopSeconds,
         );
-        for (const voice of score) {
-          const synth = buildVoice(voice.spec, master, send)[0];
-          buildPart(
-            voice.spec,
-            synth,
-            voice.events,
-            plan.offsets,
-            voice.register,
-            plan.tempo,
-            plan.loopSeconds,
-          );
-        }
-        transport.bpm.value = plan.tempo;
-        transport.start();
-      },
-      plan.loopSeconds + TAIL,
-      2,
-      48000,
-    ).then((buffer): AudioBuffer => finalize(buffer.get() as AudioBuffer));
+      }
+      voicesMs = performance.now() - voicesStart;
+      transport.bpm.value = plan.tempo;
+      transport.start();
+    }, plan.loopSeconds + TAIL);
+    const offlineMs = performance.now() - offlineStart;
+    const finalizeStart = performance.now();
+    const buffer = finalize(rendered.get() as AudioBuffer);
+    const finalizeMs = performance.now() - finalizeStart;
+    console.log(
+      `[chunk] offline ${offlineMs.toFixed(1)}ms ` +
+        `(bus ${busMs.toFixed(1)}ms, voices ${voicesMs.toFixed(1)}ms) | ` +
+        `finalize ${finalizeMs.toFixed(1)}ms`,
+    );
+    return buffer;
+  };
 
   // keep one chunk queued ahead; tails overlap for a seamless seam
   let firstChunk = true;
@@ -301,7 +314,10 @@ const startPlayback = (
       !playback.stopped &&
       nextTime < context.currentTime + plan.loopSeconds
     ) {
-      if (!firstChunk)
+      const chunkStart = performance.now();
+      let slipMs = 0;
+      if (!firstChunk) {
+        const slipStart = performance.now();
         for (const voice of score)
           slip(
             voice.spec.hold,
@@ -309,6 +325,8 @@ const startPlayback = (
             steps,
             plan.preset.density[voice.role],
           );
+        slipMs = performance.now() - slipStart;
+      }
       const buffer = await renderChunk();
       if (playback.stopped) break;
       const source = context.createBufferSource();
@@ -316,15 +334,20 @@ const startPlayback = (
       source.connect(analyser);
       if (nextTime < context.currentTime) nextTime = context.currentTime + 0.05;
       source.start(nextTime);
-      playback.schedule.push({
-        startTime: nextTime,
-        notes: scoredToNotes(
-          score,
-          plan.offsets,
-          plan.secPerBeat,
-          plan.loopSeconds,
-        ),
-      });
+      const notesStart = performance.now();
+      const notes = scoredToNotes(
+        score,
+        plan.offsets,
+        plan.secPerBeat,
+        plan.loopSeconds,
+      );
+      const notesMs = performance.now() - notesStart;
+      playback.schedule.push({ startTime: nextTime, notes });
+      console.log(
+        `[chunk] slip ${slipMs.toFixed(1)}ms | ` +
+          `scoredToNotes ${notesMs.toFixed(1)}ms | ` +
+          `total ${(performance.now() - chunkStart).toFixed(1)}ms`,
+      );
       nextTime += plan.loopSeconds;
       firstChunk = false;
       active.add(source);
