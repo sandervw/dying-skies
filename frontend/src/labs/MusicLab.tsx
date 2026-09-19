@@ -13,14 +13,12 @@ import {
   LOOP_BARS,
   MIN_REGISTER,
   MAX_REGISTER,
-  TAIL,
   masterBus,
   reverbBus,
   buildVoice,
   buildScore,
   slip,
   buildPart,
-  finalize,
 } from "../services/musicService";
 import type { InstrumentSpec, Role } from "../types/music";
 
@@ -49,17 +47,15 @@ interface VizNote {
   gain: number;
 }
 
-// everything the canvas needs to animate the currently sounding chunk.
+// everything the canvas needs to animate the live loop.
 interface Playback {
-  context: AudioContext;
-  chunkStartTime: number;
   loopSeconds: number;
   tempo: number;
   secPerBeat: number;
   notes: VizNote[];
-  schedule: { startTime: number; notes: VizNote[] }[];
   voices: { role: Role; color: string; gain: number }[];
   analyser: AnalyserNode | null;
+  transport: ReturnType<typeof Tone.getTransport>;
   stopped: boolean;
   stop: () => void;
 }
@@ -216,152 +212,64 @@ const startPlayback = (
   modeName: string,
 ): Playback => {
   const plan = buildPlan(setName, presetName, modeName);
-  const context = Tone.getContext().rawContext as unknown as AudioContext;
+  const steps = plan.offsets.length + 1;
+  const score = scoreVoices(plan);
+  const transport = Tone.getTransport();
 
-  // analyser tap for visuals; audio is finalized per chunk
+  const context = Tone.getContext().rawContext as unknown as AudioContext;
   const analyser = context.createAnalyser();
   analyser.fftSize = 1024;
   analyser.smoothingTimeConstant = 0.82;
-  analyser.connect(context.destination);
 
-  const active = new Set<AudioBufferSourceNode>();
-  let filling = false;
-  let nextTime = context.currentTime + 0.2;
-  let timer: ReturnType<typeof setInterval>;
+  const nodes: Tone.ToneAudioNode[] = [];
+  let repeatId = -1;
 
   const playback: Playback = {
-    context,
-    chunkStartTime: context.currentTime,
     loopSeconds: plan.loopSeconds,
     tempo: plan.tempo,
     secPerBeat: plan.secPerBeat,
-    notes: [],
-    schedule: [],
+    notes: scoredToNotes(score, plan.offsets, plan.secPerBeat, plan.loopSeconds),
     voices: plan.voices.map((voice) => ({
       role: voice.role,
       color: ROLE_COLORS[voice.role],
       gain: voice.spec.gain,
     })),
     analyser,
+    transport,
     stopped: false,
     stop: (): void => {
       playback.stopped = true;
-      clearInterval(timer);
-      for (const source of active) {
-        try {
-          source.stop();
-        } catch {
-          /* already ended */
-        }
-      }
+      if (repeatId !== -1) transport.clear(repeatId);
+      transport.stop();
+      for (const node of nodes) node.dispose();
       analyser.disconnect();
     },
   };
 
-  // locked score: built once, a fraction of notes slips each repeat
-  const steps = plan.offsets.length + 1;
-  const score = scoreVoices(plan);
-
-  // render the locked (then slipped) loop plus tail offline
-  const renderChunk = async (): Promise<AudioBuffer> => {
-    let busMs = 0;
-    let voicesMs = 0;
-    const offlineStart = performance.now();
-    const rendered = await Tone.Offline(async ({ transport }) => {
-      const busStart = performance.now();
-      const master = masterBus();
-      const send = await reverbBus(
-        master,
-        plan.preset.reverbDecay,
-        plan.preset.reverbWet,
-      );
-      busMs = performance.now() - busStart;
-      const voicesStart = performance.now();
-      for (const voice of score) {
-        const synth = buildVoice(voice.spec, master, send)[0];
-        buildPart(
-          voice.spec,
-          synth,
-          voice.events,
-          plan.offsets,
-          voice.register,
-          plan.tempo,
-          plan.loopSeconds,
-        );
-      }
-      voicesMs = performance.now() - voicesStart;
-      transport.bpm.value = plan.tempo;
-      transport.start();
-    }, plan.loopSeconds + TAIL);
-    const offlineMs = performance.now() - offlineStart;
-    const finalizeStart = performance.now();
-    const buffer = finalize(rendered.get() as AudioBuffer);
-    const finalizeMs = performance.now() - finalizeStart;
-    console.log(
-      `[chunk] offline ${offlineMs.toFixed(1)}ms ` +
-        `(bus ${busMs.toFixed(1)}ms, voices ${voicesMs.toFixed(1)}ms) | ` +
-        `finalize ${finalizeMs.toFixed(1)}ms`,
-    );
-    return buffer;
+  // build the live graph once, then loop it
+  const build = async (): Promise<void> => {
+    const master = masterBus();
+    const send = await reverbBus(master[0], plan.preset.reverbDecay, plan.preset.reverbWet);
+    if (playback.stopped) { for (const node of [...master, ...send]) node.dispose(); return; }
+    transport.bpm.value = plan.tempo; // set before voices so delays sync
+    master[master.length - 1].connect(analyser); // tap the master for visuals
+    nodes.push(...master, ...send);
+    const synths = score.map((voice): Tone.ToneAudioNode => {
+      const voiceNodes = buildVoice(voice.spec, master[0], send[0]);
+      nodes.push(...voiceNodes);
+      return voiceNodes[0];
+    });
+    let first = true;
+    repeatId = transport.scheduleRepeat((time): void => {
+      if (!first) for (const voice of score) slip(voice.spec.hold, voice.events, steps, plan.preset.density[voice.role]);
+      first = false;
+      score.forEach((voice, index) =>
+        buildPart(voice.spec, synths[index], voice.events, plan.offsets, voice.register, plan.tempo, time));
+      playback.notes = scoredToNotes(score, plan.offsets, plan.secPerBeat, plan.loopSeconds);
+    }, `${LOOP_BARS}m`);
+    transport.start();
   };
-
-  // keep one chunk queued ahead; tails overlap for a seamless seam
-  let firstChunk = true;
-  const fill = async (): Promise<void> => {
-    if (filling) return;
-    filling = true;
-    while (
-      !playback.stopped &&
-      nextTime < context.currentTime + plan.loopSeconds
-    ) {
-      const chunkStart = performance.now();
-      let slipMs = 0;
-      if (!firstChunk) {
-        const slipStart = performance.now();
-        for (const voice of score)
-          slip(
-            voice.spec.hold,
-            voice.events,
-            steps,
-            plan.preset.density[voice.role],
-          );
-        slipMs = performance.now() - slipStart;
-      }
-      const buffer = await renderChunk();
-      if (playback.stopped) break;
-      const source = context.createBufferSource();
-      source.buffer = buffer;
-      source.connect(analyser);
-      if (nextTime < context.currentTime) nextTime = context.currentTime + 0.05;
-      source.start(nextTime);
-      const notesStart = performance.now();
-      const notes = scoredToNotes(
-        score,
-        plan.offsets,
-        plan.secPerBeat,
-        plan.loopSeconds,
-      );
-      const notesMs = performance.now() - notesStart;
-      playback.schedule.push({ startTime: nextTime, notes });
-      console.log(
-        `[chunk] slip ${slipMs.toFixed(1)}ms | ` +
-          `scoredToNotes ${notesMs.toFixed(1)}ms | ` +
-          `total ${(performance.now() - chunkStart).toFixed(1)}ms`,
-      );
-      nextTime += plan.loopSeconds;
-      firstChunk = false;
-      active.add(source);
-      source.onended = (): void => {
-        active.delete(source);
-      };
-    }
-    filling = false;
-  };
-
-  timer = setInterval((): void => {
-    void fill();
-  }, 500);
-  void fill();
+  void build();
 
   return playback;
 };
@@ -392,9 +300,7 @@ const drawFrame = (canvas: HTMLCanvasElement, playback: Playback): void => {
   const rollTop = top;
   const rollHeight = Math.max(20, rollBottom - rollTop);
   const spanX = Math.max(1, right - left);
-  const now =
-    (playback.context.currentTime - playback.chunkStartTime) %
-    playback.loopSeconds;
+  const now = playback.transport.seconds % playback.loopSeconds;
   const xOf = (timeSec: number): number =>
     left + (timeSec / playback.loopSeconds) * spanX;
 
@@ -585,18 +491,6 @@ const MusicLab = (): ReactElement => {
     if (canvas === null) return;
     let frame = 0;
     const loop = (): void => {
-      const now = playback.context.currentTime;
-      while (
-        playback.schedule.length > 0 &&
-        playback.schedule[0].startTime <= now
-      ) {
-        const entry = playback.schedule.shift() as {
-          startTime: number;
-          notes: VizNote[];
-        };
-        playback.notes = entry.notes;
-        playback.chunkStartTime = entry.startTime;
-      }
       drawFrame(canvas, playback);
       frame = requestAnimationFrame(loop);
     };

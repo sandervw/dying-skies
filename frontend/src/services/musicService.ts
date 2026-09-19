@@ -13,9 +13,7 @@ const MIN_REGISTER = 1; // no subsonic rumble
 const MAX_REGISTER = 6; // no piercing highs
 
 const db = Tone.dbToGain;
-const CEILING = db(-6); // final "loudness" ceiling everythings gets mult. by: -1 = normal, -6 = half as loud
-const FADE = 0.01; // seconds, edge declick
-const TAIL = 6; // seconds, release + reverb decay tail
+const CEILING = db(-6); // master loudness ceiling, folded into the bus
 
 const SET_NAMES = Object.keys(INSTRUMENT_SETS);
 const MODE_NAMES = Object.keys(MODES);
@@ -41,8 +39,8 @@ const channel = (): Tone.ToneAudioNode[] => [
   new Tone.Filter({ type: "lowpass", frequency: 10000, rolloff: -12 }),
 ];
 
-/** master audio signal chain; ends at the destination. */
-const masterBus = (): Tone.ToneAudioNode => {
+/** master signal chain; nodes[0] is the input, chain ends at destination. */
+const masterBus = (): Tone.ToneAudioNode[] => {
   const nodes = [
     new Tone.Gain(db(-6)), // headroom trim (turn down input signal to 1/2 audio; give effects "working room")
     new Tone.Filter({ type: "highpass", frequency: 25, rolloff: -24 }), // strip subsonic rumble
@@ -50,28 +48,29 @@ const masterBus = (): Tone.ToneAudioNode => {
     new Tone.Compressor({ ratio: 2, threshold: -12, attack: 0.03, release: 0.2, knee: 6 }), // "glues" audio together
     new Tone.Gain(db(-1)), // Turn the gain back up post-compression
     new Tone.Filter({ type: "highshelf", frequency: 10000, gain: 1 }),
+    new Tone.Gain(CEILING), // mastering ceiling; replaces the old buffer peak-normalize
     new Tone.Limiter(-3), // soft safety net, not the ceiling
   ];
   nodes[0].chain(...nodes.slice(1), Tone.getDestination());
-  return nodes[0];
+  return nodes;
 };
 
-/** reverb chain: wet reverb > filters > master. */
+/** reverb chain: send > reverb > filters > master. nodes[0] is the input. */
 const reverbBus = async (
   master: Tone.ToneAudioNode,
   decay: number,
   wet: number,
-): Promise<Tone.ToneAudioNode> => {
+): Promise<Tone.ToneAudioNode[]> => {
   const verb = new Tone.Reverb({ decay, preDelay: 0.03, wet });
   await verb.ready; // IR generated async; silent until ready
-  const send = new Tone.Gain(db(-18));
-  send.chain(
+  const nodes = [
+    new Tone.Gain(db(-18)),
     verb,
     new Tone.Filter({ type: "highpass", frequency: 250 }),
     new Tone.Filter({ type: "lowpass", frequency: 8000 }),
-    master,
-  );
-  return send;
+  ];
+  nodes[0].chain(...nodes.slice(1), master);
+  return nodes;
 };
 
 /** build one instrument voice; fan dry to master, post to reverb send. */
@@ -88,7 +87,8 @@ const buildVoice = (
     nodes.push(new Tone.Filter(spec.filter));
   }
   for (const [Effect, options] of spec.effects) {
-    const effect = new Effect(options);
+    const isDelay = Effect === Tone.FeedbackDelay || Effect === Tone.PingPongDelay;
+    const effect = new Effect(isDelay ? { maxDelay: 2, ...options } : options);
     effect.start?.();
     nodes.push(effect);
   }
@@ -148,7 +148,7 @@ const slip = (
   });
 };
 
-/** schedule one role's looping part; steps wrap octaves. */
+/** trigger one role's notes for this loop, timed off the passed time. */
 const buildPart = (
   spec: InstrumentSpec,
   synth: Tone.ToneAudioNode,
@@ -156,43 +156,26 @@ const buildPart = (
   offsets: readonly number[],
   register: number,
   tempo: number,
-  chunkLength: number,
+  time: number,
 ): void => {
-  const seconds = (spec.hold * 60) / tempo;
+  const beat = 60 / tempo;
+  const seconds = spec.hold * beat;
   const seen = new Set<string>(); // drop ties; two notes per slot crash Tone
-  const slots = events.flatMap(([bar, beat, step]): [string, number][] =>
-    seen.has(`${bar}:${beat}`) ? [] : (seen.add(`${bar}:${beat}`), [[`${bar}:${beat}:0`, step]]));
-  const part = new Tone.Part((time, step: number): void => {
-    const held = Math.min(seconds, chunkLength - time); // stop notes at the seam
+  for (const [bar, position, step] of events) {
+    if (seen.has(`${bar}:${position}`)) continue;
+    seen.add(`${bar}:${position}`);
+    const at = time + (bar * 4 + position) * beat;
     if (synth instanceof Tone.NoiseSynth) {
-      synth.triggerAttackRelease(held, time); // pink noise has no pitch
+      synth.triggerAttackRelease(seconds, at); // pink noise has no pitch
     } else {
       const semitone = offsets[step % offsets.length] + 12 * Math.floor(step / offsets.length);
       const note = Tone.Frequency(`C${register}`).transpose(semitone).toFrequency();
-      (synth as Tone.PolySynth).triggerAttackRelease(note, held, time);
-    }
-  }, slots);
-  part.start(0);
-};
-
-/** peak-normalize the render to the ceiling, then fade both edges. */
-const finalize = (buffer: AudioBuffer): AudioBuffer => {
-  const channels = [...Array(buffer.numberOfChannels)].map((_, index) => buffer.getChannelData(index));
-  const peak = Math.max(...channels.map((data) =>
-    data.reduce((max, sample) => Math.max(max, Math.abs(sample)), 0)));
-  const scale = peak > 0 ? CEILING / peak : 1;
-  const fade = Math.round(FADE * buffer.sampleRate);
-  for (const data of channels) {
-    for (let index = 0; index < data.length; index++) data[index] *= scale;
-    for (let index = 0; index < fade; index++) {
-      data[index] *= index / fade;
-      data[data.length - 1 - index] *= index / fade;
+      (synth as Tone.PolySynth).triggerAttackRelease(note, seconds, at);
     }
   }
-  return buffer;
 };
 
-/** play this sky as endless fresh chunks; the returned call stops it. */
+/** play this sky on a live looping transport; the returned call stops it. */
 const playSky = (seed: Seed): (() => void) => {
   // generate music settings based on seed value
   const random = createSeededRandom(deriveSeed(seed, "music"));
@@ -210,64 +193,40 @@ const playSky = (seed: Seed): (() => void) => {
     return { spec, register, events, density: preset.density[role] };
   });
 
-  const chunkSeconds = (bars: number): number => (bars * 4 * 60) / preset.tempo;
-
-  // Tone context manages timing, scheduling, start/stop
-  const context = Tone.getContext().rawContext as AudioContext;
+  const transport = Tone.getTransport();
   let stopped = false;
-  let filling = false;
-  let nextTime = context.currentTime + 0.2;
-  const active = new Set<AudioBufferSourceNode>();
+  const nodes: Tone.ToneAudioNode[] = []; // every node built, for disposal
+  let repeatId = -1;
 
-  // render `bars` bars plus tail offline with a fresh random score
-  const renderChunk = (): Promise<AudioBuffer> =>
-    // Tone.Offline spins up an audio context with no speaker
-    Tone.Offline(async ({ transport }) => {
-      // Construction is opposite of actual flow
-      // Actual flow: voices > reverb send > master bus > speakers
-      const master = masterBus();
-      const send = await reverbBus(master, preset.reverbDecay, preset.reverbWet);
-      for (const voice of score) {
-        const synth = buildVoice(voice.spec, master, send)[0];
-        buildPart(voice.spec, synth, voice.events, mode, voice.register, preset.tempo, chunkSeconds(LOOP_BARS));
-      }
-      transport.bpm.value = preset.tempo;
-      transport.start(); // puts the synth sounds into the chunk
-    }, chunkSeconds(LOOP_BARS) + TAIL)
-      // After callback resolves, return the finished buffer
-      .then((buffer): AudioBuffer => finalize(buffer.get() as AudioBuffer));
-
-  // keep one chunk queued ahead; tails overlap for a seamless seam
-  let firstChunk = true;
-  const fill = async (): Promise<void> => {
-    if (filling) return;
-    filling = true;
-    while (!stopped && nextTime < context.currentTime + chunkSeconds(LOOP_BARS)) {
-      if (!firstChunk) for (const voice of score) slip(voice.spec.hold, voice.events, steps, voice.density);
-      const buffer = await renderChunk(); // renders the chunk when the callback resolves
-      if (stopped) break; // If audio was stopped during rendering, quit
-      const source = context.createBufferSource();
-      source.buffer = buffer;
-      source.connect(context.destination);
-      if (nextTime < context.currentTime) nextTime = context.currentTime + 0.05;
-      source.start(nextTime);
-      nextTime += chunkSeconds(LOOP_BARS);
-      firstChunk = false;
-      active.add(source);
-      source.onended = (): void => { active.delete(source); };
-    }
-    filling = false;
+  // build the live graph once, then loop it
+  const start = async (): Promise<void> => {
+    const master = masterBus();
+    const send = await reverbBus(master[0], preset.reverbDecay, preset.reverbWet);
+    if (stopped) { for (const node of [...master, ...send]) node.dispose(); return; }
+    transport.bpm.value = preset.tempo; // set before voices so delays sync
+    nodes.push(...master, ...send);
+    const synths = score.map((voice): Tone.ToneAudioNode => {
+      const voiceNodes = buildVoice(voice.spec, master[0], send[0]);
+      nodes.push(...voiceNodes);
+      return voiceNodes[0];
+    });
+    // each repeat: slip a fraction, then trigger from the passed time
+    let first = true;
+    repeatId = transport.scheduleRepeat((time): void => {
+      if (!first) for (const voice of score) slip(voice.spec.hold, voice.events, steps, voice.density);
+      first = false;
+      score.forEach((voice, index) =>
+        buildPart(voice.spec, synths[index], voice.events, mode, voice.register, preset.tempo, time));
+    }, `${LOOP_BARS}m`);
+    transport.start();
   };
-
-  const timer = setInterval((): void => { void fill(); }, 500);
-  void fill();
+  void start();
 
   return (): void => {
     stopped = true;
-    clearInterval(timer);
-    for (const source of active) {
-      try { source.stop(); } catch { /* already ended */ }
-    }
+    if (repeatId !== -1) transport.clear(repeatId);
+    transport.stop();
+    for (const node of nodes) node.dispose();
   };
 };
 
@@ -285,14 +244,12 @@ export {
   LOOP_BARS,
   MIN_REGISTER,
   MAX_REGISTER,
-  TAIL,
   masterBus,
   reverbBus,
   buildVoice,
   buildScore,
   slip,
   buildPart,
-  finalize,
   describeSky,
   playSky,
 };
