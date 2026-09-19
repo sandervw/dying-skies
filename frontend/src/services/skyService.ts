@@ -190,7 +190,6 @@ const generateSky = (seed: Seed): Sky => {
 // RENDERING
 ////////////////////////////////////////////////////////////
 
-const FULL_CIRCLE_RADIANS = Math.PI * 2;
 const DOT_RADIUS = 1;
 const LINE_WIDTH = 1;
 const LINE_OPACITY = 0.5;
@@ -206,7 +205,7 @@ const drawDots = (
   context.fillStyle = "#ffffff";
   for (const dot of dots) {
     context.beginPath();
-    context.arc(dot.x * width, dot.y * height, DOT_RADIUS, 0, FULL_CIRCLE_RADIANS);
+    context.arc(dot.x * width, dot.y * height, DOT_RADIUS, 0, Math.PI * 2);
     context.fill();
   }
 };

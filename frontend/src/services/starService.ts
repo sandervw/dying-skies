@@ -20,7 +20,6 @@ const HIT_PADDING = 6;
 // fall speed in pixels per second; the spread gives free parallax depth.
 const SPEED_MINIMUM = 70;
 const SPEED_MAXIMUM = 130;
-const AVERAGE_SPEED = (SPEED_MINIMUM + SPEED_MAXIMUM) / 2;
 
 // how many stars we aim to keep alive on screen at once.
 const TARGET_STAR_COUNT = 40;
@@ -28,13 +27,11 @@ const TARGET_STAR_COUNT = 40;
 // fall direction; degrees measured clockwise from the positive x-axis.
 const FALL_ANGLE_MINIMUM_DEGREES = 70;
 const FALL_ANGLE_MAXIMUM_DEGREES = 110;
-const DEGREES_TO_RADIANS = Math.PI / 180;
 
 // clamp a frame's elapsed time so hidden tabs cannot teleport stars.
 const MAXIMUM_DELTA_SECONDS = 0.05;
 
 // per-star wobble phase and tail-wag shape.
-const TWO_PI = Math.PI * 2;
 const WAG_AMPLITUDE = 1;
 const WAG_FREQUENCY = 40;
 const WAG_WAVENUMBER = 0.1;
@@ -91,7 +88,7 @@ const buildCometPixels = (
 // draw one shared fall angle for the whole field.
 const pickFallAngle = (random: RandomNumberGenerator): number =>
   randomInRange(random, FALL_ANGLE_MINIMUM_DEGREES, FALL_ANGLE_MAXIMUM_DEGREES) *
-  DEGREES_TO_RADIANS;
+  (Math.PI / 180);
 
 /** derive the sky's deterministic palette and fall angle from one seed. */
 const generateSkyProfile = (seed: Seed): SkyProfile => {
@@ -138,7 +135,7 @@ const buildStar = (
     velocityY: Math.sin(profile.fallAngle) * speed,
     pixelSize: PIXEL_SIZE,
     halfLength: length / 2,
-    wobblePhase: shape() * TWO_PI,
+    wobblePhase: shape() * Math.PI * 2,
     pixels,
   };
 };
@@ -176,7 +173,7 @@ const spawnStar = (
 
 // spawn rate that, at steady state, holds the target on-screen count.
 const spawnRatePerSecond = (fallAngle: number, height: number): number => {
-  const verticalSpeed = Math.max(1, Math.abs(Math.sin(fallAngle)) * AVERAGE_SPEED);
+  const verticalSpeed = Math.max(1, Math.abs(Math.sin(fallAngle)) * ((SPEED_MINIMUM + SPEED_MAXIMUM) / 2));
   const lifetimeSeconds = height / verticalSpeed;
   return TARGET_STAR_COUNT / lifetimeSeconds;
 };
