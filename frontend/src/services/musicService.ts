@@ -55,14 +55,14 @@ const masterBus = (): Tone.ToneAudioNode[] => {
   return nodes;
 };
 
-/** reverb chain: send > reverb > filters > master. nodes[0] is the input. */
-const reverbBus = async (
+/** reverb chain: send > reverb > filters > master. */
+const reverbBus = (
   master: Tone.ToneAudioNode,
   decay: number,
   wet: number,
-): Promise<Tone.ToneAudioNode[]> => {
-  const verb = new Tone.Reverb({ decay, preDelay: 0.03, wet });
-  await verb.ready; // IR generated async; silent until ready
+): Tone.ToneAudioNode[] => {
+  const roomSize = Math.min(1, decay / 3); // map decay seconds to 0-1 room size
+  const verb = new Tone.JCReverb({ roomSize, wet });
   const nodes = [
     new Tone.Gain(db(-18)),
     verb,
@@ -77,7 +77,7 @@ const reverbBus = async (
 const buildVoice = (
   spec: InstrumentSpec,
   master: Tone.ToneAudioNode,
-  _send: Tone.ToneAudioNode,
+  send: Tone.ToneAudioNode,
 ): Tone.ToneAudioNode[] => {
   const synth = spec.polyphony === undefined
     ? new spec.synth(spec.options)
@@ -96,9 +96,7 @@ const buildVoice = (
   nodes.reduce((previous, node): Tone.ToneAudioNode => {
     previous.connect(node);
     return node;
-  }).connect(master);
-  // DIAGNOSTIC: reverb send bypassed to test for ConvolverNode static on mobile
-  // }).fan(master, send);
+  }).fan(master, send);
   return nodes;
 };
 
@@ -203,7 +201,7 @@ const playSky = (seed: Seed): (() => void) => {
   // build the live graph once, then loop it
   const start = async (): Promise<void> => {
     const master = masterBus();
-    const send = await reverbBus(master[0], preset.reverbDecay, preset.reverbWet);
+    const send = reverbBus(master[0], preset.reverbDecay, preset.reverbWet);
     if (stopped) { for (const node of [...master, ...send]) node.dispose(); return; }
     transport.bpm.value = preset.tempo; // set before voices so delays sync
     nodes.push(...master, ...send);
