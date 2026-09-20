@@ -77,7 +77,7 @@ const reverbBus = async (
 const buildVoice = (
   spec: InstrumentSpec,
   master: Tone.ToneAudioNode,
-  send: Tone.ToneAudioNode,
+  _send: Tone.ToneAudioNode,
 ): Tone.ToneAudioNode[] => {
   const synth = spec.polyphony === undefined
     ? new spec.synth(spec.options)
