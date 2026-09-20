@@ -40,7 +40,7 @@
   },
   "harmony": {
     "synth": "MonoSynth",
-    "polyphony": 6,
+    "polyphony": 3,
     "options": {
       "oscillator": {
         "type": "fatsawtooth",
@@ -90,7 +90,7 @@
   },
   "accent": {
     "synth": "FMSynth",
-    "polyphony": 4,
+    "polyphony": 3,
     "options": {
       "oscillator": {
         "type": "sine"
