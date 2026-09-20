@@ -194,6 +194,10 @@ const playSky = (seed: Seed): (() => void) => {
   });
 
   const transport = Tone.getTransport();
+  const audioContext = new AudioContext({ sampleRate: 48000 });
+  audioContext.destination.channelCount = 2;
+  audioContext.destination.channelCountMode = "explicit";
+  Tone.setContext(new Tone.Context(audioContext));
   let stopped = false;
   const nodes: Tone.ToneAudioNode[] = []; // every node built, for disposal
   let repeatId = -1;
