@@ -156,7 +156,7 @@
     },
     "register": 4,
     "hold": 4,
-    "gain": 0.7,
+    "gain": 0.55,
     "filter": {
       "type": "lowpass",
       "frequency": 2800,
@@ -209,7 +209,7 @@
     },
     "register": 4,
     "hold": 4,
-    "gain": 0.55,
+    "gain": 0.6,
     "filter": {
       "type": "bandpass",
       "frequency": 2400,
