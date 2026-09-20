@@ -6,6 +6,9 @@ import { createSeededRandom, deriveSeed } from "./randomService";
 import type { Seed } from "./randomService";
 import type { InstrumentSpec } from "../types/music";
 
+// prefer a larger buffer so mobile CPUs avoid underrun static
+Tone.setContext(new Tone.Context({ latencyHint: "playback" }));
+
 const LOOP_BARS = 8;
 const SLIP_CHANCE = 0.2; // fraction of notes re-rolled each repeat
 const MAX_DENSITY = 2.5; // events per bar; caps loudness and overlap
