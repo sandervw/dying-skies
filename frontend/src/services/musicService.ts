@@ -221,7 +221,7 @@ const playSky = (seed: Seed): (() => void) => {
       score.forEach((voice, index) =>
         buildPart(voice.spec, synths[index], voice.events, mode, voice.register, preset.tempo, time));
     }, `${LOOP_BARS}m`);
-    transport.start();
+    transport.start("+0.1"); // offset clears any same-block stop from a prior play
   };
   void start();
 

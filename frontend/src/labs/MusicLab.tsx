@@ -267,7 +267,7 @@ const startPlayback = (
         buildPart(voice.spec, synths[index], voice.events, plan.offsets, voice.register, plan.tempo, time));
       playback.notes = scoredToNotes(score, plan.offsets, plan.secPerBeat, plan.loopSeconds);
     }, `${LOOP_BARS}m`);
-    transport.start();
+    transport.start("+0.1"); // offset clears any same-block stop from a prior play
   };
   void build();
 
