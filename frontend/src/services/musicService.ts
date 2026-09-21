@@ -64,7 +64,7 @@ const reverbBus = (
   decay: number,
   wet: number,
 ): Tone.ToneAudioNode[] => {
-  const roomSize = Math.min(1, decay / 3); // map decay seconds to 0-1 room size
+  const roomSize = Math.min(0.85, decay / 14);
   const verb = new Tone.JCReverb({ roomSize, wet });
   const nodes = [
     new Tone.Gain(db(-18)),
