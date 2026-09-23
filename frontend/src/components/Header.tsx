@@ -18,8 +18,7 @@ const Header = ({
   toggleMusic,
 }: HeaderProps): ReactElement => {
   const { seed } = useSkySeed();
-  // dev-only readout; tree-shaken from production builds.
-  const readout = import.meta.env.DEV ? describeSky(seed) : null;
+  const readout = describeSky(seed);
   return (
     <header className="header">
       <ButtonBox
@@ -29,9 +28,7 @@ const Header = ({
         toggleMusic={toggleMusic}
       />
       <h1 className="title font-large">DYING SKIES</h1>
-      {readout ? (
-        <p className="tagline text-center">{`${readout.set} · ${readout.mode} · ${readout.preset}`}</p>
-      ) : null}
+      <p className="tagline text-center">{`${readout.set} · ${readout.mode} · ${readout.preset}`}</p>
     </header>
   );
 };
