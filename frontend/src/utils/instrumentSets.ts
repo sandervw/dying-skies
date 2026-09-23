@@ -14,7 +14,7 @@ const TONE_REGISTRY: Record<string, unknown> = {
   Distortion: Tone.Distortion, Chorus: Tone.Chorus, StereoWidener: Tone.StereoWidener,
   PingPongDelay: Tone.PingPongDelay, FeedbackDelay: Tone.FeedbackDelay, Reverb: Tone.Reverb,
   Chebyshev: Tone.Chebyshev, Vibrato: Tone.Vibrato, AutoPanner: Tone.AutoPanner,
-  AutoFilter: Tone.AutoFilter,
+  AutoFilter: Tone.AutoFilter, Compressor: Tone.Compressor, Tremolo: Tone.Tremolo,
 };
 
 // one spec as stored in JSON: class refs are class-name strings.

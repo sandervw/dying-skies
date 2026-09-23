@@ -266,8 +266,8 @@ const startPlayback = (
       score.forEach((voice, index) =>
         buildPart(voice.spec, synths[index], voice.events, plan.offsets, voice.register, plan.tempo, time));
       playback.notes = scoredToNotes(score, plan.offsets, plan.secPerBeat, plan.loopSeconds);
-    }, `${LOOP_BARS}m`);
-    transport.start("+0.1"); // offset clears any same-block stop from a prior play
+    }, `${LOOP_BARS}m`, 0); // explicit 0; implicit start can be -1e-15 and never fire
+    transport.start();
   };
   void build();
 

@@ -54,9 +54,9 @@ Events per bar, per preset, per role. Fixed values, no jitter.
 | lunacid     | hazy and moonlit, warm sub, saw pad, FM bells, breathy lead       |
 | unexplained | eerie and raw, distorted saw sub, buzzy pad, reedy leads, FM haze |
 | deusex      | synthetic, supersaw bed, FM strikes, reedy lead, noise shimmer    |
-| zoombinis   | bright and buoyant, music box, soft flute, chord pad, misty swell |
 | aom         | driven and gritty, distorted sub, bright FM bell, biting saw lead |
 | ogresound   | cinematic and cavernous, saw swell, glassy pluck, kinetic lead    |
+| enchantment | wistful and grand, gritty sub, lush pad, overdriven lead, FM shimmer |
 
 ## Score
 

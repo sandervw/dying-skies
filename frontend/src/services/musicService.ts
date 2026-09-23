@@ -220,8 +220,8 @@ const playSky = (seed: Seed): (() => void) => {
       first = false;
       score.forEach((voice, index) =>
         buildPart(voice.spec, synths[index], voice.events, mode, voice.register, preset.tempo, time));
-    }, `${LOOP_BARS}m`);
-    transport.start("+0.1"); // offset clears any same-block stop from a prior play
+    }, `${LOOP_BARS}m`, 0); // explicit 0; implicit start can be -1e-15 and never fire
+    transport.start();
   };
   void start();
 
