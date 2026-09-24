@@ -30,7 +30,7 @@ const trends = (await FileAttachment("./data/trends.json").json())
 
 ```js
 const signupTrends = trends.filter((d) => d.event_type === "signup");
-signupTrends.length
+display(signupTrends.length
   ? Plot.plot({
       width,
       height: 200,
@@ -42,7 +42,7 @@ signupTrends.length
         Plot.ruleY([0])
       ]
     })
-  : html`<p class="empty">No activity yet.</p>`
+  : html`<p class="empty">No activity yet.</p>`)
 ```
 
   </div>
@@ -51,7 +51,7 @@ signupTrends.length
 
 ```js
 const savedTrends = trends.filter((d) => d.event_type === "saved");
-savedTrends.length
+display(savedTrends.length
   ? Plot.plot({
       width,
       height: 200,
@@ -63,7 +63,7 @@ savedTrends.length
         Plot.ruleY([0])
       ]
     })
-  : html`<p class="empty">No activity yet.</p>`
+  : html`<p class="empty">No activity yet.</p>`)
 ```
 
   </div>
@@ -72,7 +72,7 @@ savedTrends.length
 
 ```js
 const destroyedTrends = trends.filter((d) => d.event_type === "destroyed");
-destroyedTrends.length
+display(destroyedTrends.length
   ? Plot.plot({
       width,
       height: 200,
@@ -84,7 +84,7 @@ destroyedTrends.length
         Plot.ruleY([0])
       ]
     })
-  : html`<p class="empty">No activity yet.</p>`
+  : html`<p class="empty">No activity yet.</p>`)
 ```
 
   </div>
