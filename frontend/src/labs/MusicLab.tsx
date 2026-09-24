@@ -135,7 +135,7 @@ const clamp = (value: number, low: number, high: number): number =>
 const buildPlan = (setName: string, presetName: string, modeName: string) => {
   const set = INSTRUMENT_SETS[setName];
   const preset = PRESETS[presetName];
-  const offsets = MODES[modeName];
+  const offsets = MODES[modeName].offsets;
   const roles = [...preset.instruments];
   const tempo = preset.tempo;
   const secPerBeat = 60 / tempo;

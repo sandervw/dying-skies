@@ -184,7 +184,7 @@ const playSky = (seed: Seed): (() => void) => {
   const random = createSeededRandom(deriveSeed(seed, "music"));
   const set = INSTRUMENT_SETS[pickSet(seed)];
   const preset = PRESETS[pick(random, PRESET_NAMES)];
-  const mode = MODES[pick(random, MODE_NAMES)];
+  const mode = MODES[pick(random, MODE_NAMES)].offsets;
   const roles = [...preset.instruments];
   const steps = mode.length + 1;
 
@@ -240,7 +240,7 @@ const describeSky = (seed: Seed): { set: string; mode: string; preset: string; }
   const set = pickSet(seed);
   const preset = pick(random, PRESET_NAMES);
   const mode = pick(random, MODE_NAMES);
-  return { set, mode, preset };
+  return { set, mode: MODES[mode].displayName, preset };
 };
 
 export {
