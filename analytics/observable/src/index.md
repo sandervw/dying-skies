@@ -36,9 +36,9 @@ display(signupTrends.length
       height: 200,
       marginLeft: 48,
       x: { label: null, type: "utc" },
-      y: { label: null, grid: true, tickFormat: "d" },
+      y: { label: null, grid: true, tickFormat: "d", ticks: Math.min(d3.sum(signupTrends, (d) => d.event_count), 5) },
       marks: [
-        Plot.lineY(signupTrends, { x: "event_day", y: "event_count", stroke: "#b87333", curve: "step" }),
+        Plot.lineY(signupTrends, Plot.mapY("cumsum", { x: "event_day", y: "event_count", stroke: "#b87333", curve: "step-after" })),
         Plot.ruleY([0])
       ]
     })
@@ -57,9 +57,9 @@ display(savedTrends.length
       height: 200,
       marginLeft: 48,
       x: { label: null, type: "utc" },
-      y: { label: null, grid: true, tickFormat: "d" },
+      y: { label: null, grid: true, tickFormat: "d", ticks: Math.min(d3.sum(savedTrends, (d) => d.event_count), 5) },
       marks: [
-        Plot.lineY(savedTrends, { x: "event_day", y: "event_count", stroke: "#ffffff", curve: "step" }),
+        Plot.lineY(savedTrends, Plot.mapY("cumsum", { x: "event_day", y: "event_count", stroke: "#ffffff", curve: "step-after" })),
         Plot.ruleY([0])
       ]
     })
@@ -78,9 +78,9 @@ display(destroyedTrends.length
       height: 200,
       marginLeft: 48,
       x: { label: null, type: "utc" },
-      y: { label: null, grid: true, tickFormat: "d" },
+      y: { label: null, grid: true, tickFormat: "d", ticks: Math.min(d3.sum(destroyedTrends, (d) => d.event_count), 5) },
       marks: [
-        Plot.lineY(destroyedTrends, { x: "event_day", y: "event_count", stroke: "#808080", curve: "step" }),
+        Plot.lineY(destroyedTrends, Plot.mapY("cumsum", { x: "event_day", y: "event_count", stroke: "#808080", curve: "step-after" })),
         Plot.ruleY([0])
       ]
     })
