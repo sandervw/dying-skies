@@ -1,5 +1,5 @@
 import * as Tone from "tone";
-import { INSTRUMENT_SETS } from "../utils/instrumentSets";
+import { INSTRUMENT_SETS, INSTRUMENT_SET_DISPLAY_NAMES } from "../utils/instrumentSets";
 import { MODES } from "../utils/modes";
 import { PRESETS } from "../utils/presets";
 import { createSeededRandom, deriveSeed } from "./randomService";
@@ -240,7 +240,7 @@ const describeSky = (seed: Seed): { set: string; mode: string; preset: string; }
   const set = pickSet(seed);
   const preset = pick(random, PRESET_NAMES);
   const mode = pick(random, MODE_NAMES);
-  return { set, mode: MODES[mode].displayName, preset };
+  return { set: INSTRUMENT_SET_DISPLAY_NAMES[set], mode: MODES[mode].displayName, preset: PRESETS[preset].displayName };
 };
 
 export {

@@ -58,4 +58,14 @@ const INSTRUMENT_SETS = Object.fromEntries(
   Object.keys(modules).sort().map((path) => [nameOf(path), hydrateSet(modules[path].default)]),
 ) as Record<string, Record<Role, InstrumentSpec>>;
 
-export { INSTRUMENT_SETS };
+/** human-readable name for each instrument set. */
+const INSTRUMENT_SET_DISPLAY_NAMES: Record<string, string> = {
+  aom: "AOM",
+  deusex: "Deus Ex",
+  enchantment: "Enchantment",
+  lunacid: "Lunacid",
+  ogresound: "Ogre Sound",
+  unexplained: "Unexplained",
+};
+
+export { INSTRUMENT_SETS, INSTRUMENT_SET_DISPLAY_NAMES };

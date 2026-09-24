@@ -1,4 +1,4 @@
-/** displayName plus semitone offsets from the root; the seed picks one mode. */
+/** displayName plus semitone offsets from the root; seed picks one mode. */
 const MODES: Record<string, { readonly displayName: string; readonly offsets: readonly number[] }> = {
   majorPentatonic: { displayName: "Major Pentatonic", offsets: [0, 2, 4, 7, 9] },
   minorPentatonic: { displayName: "Minor Pentatonic", offsets: [0, 3, 5, 7, 10] },

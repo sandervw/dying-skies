@@ -2,6 +2,7 @@ import type { Role } from "../types/music";
 
 /** space and arrangement for one sky: tempo, reverb, register, roles, density. */
 interface Preset {
+  readonly displayName: string;
   readonly tempo: number;
   readonly reverbDecay: number;
   readonly reverbWet: number;
@@ -13,31 +14,37 @@ interface Preset {
 /** the six presets; the seed picks one. */
 const PRESETS: Record<string, Preset> = {
   cavern: {
+    displayName: "Cavern",
     tempo: 56, reverbDecay: 9.0, reverbWet: 0.65, registerShift: 0,
     instruments: ["bass", "harmony", "accent", "counter"],
     density: { bass: 0.3, harmony: 0.60, accent: 0.80, lead: 0.30, counter: 0.60 },
   },
   chamber: {
+    displayName: "Chamber",
     tempo: 80, reverbDecay: 2.5, reverbWet: 0.30, registerShift: 1,
     instruments: ["bass", "harmony", "accent", "lead"],
     density: { bass: 0.25, harmony: 0.80, accent: 1.60, lead: 0.80, counter: 0.60 },
   },
   expanse: {
+    displayName: "Expanse",
     tempo: 66, reverbDecay: 6.0, reverbWet: 0.50, registerShift: 1,
     instruments: ["bass", "harmony", "accent", "lead", "counter"],
     density: { bass: 0.20, harmony: 0.60, accent: 1.00, lead: 0.50, counter: 0.40 },
   },
   veil: {
+    displayName: "Veil",
     tempo: 52, reverbDecay: 12.0, reverbWet: 0.75, registerShift: 2,
     instruments: ["harmony", "accent", "counter"],
     density: { bass: 0.2, harmony: 0.60, accent: 0.50, lead: 0.20, counter: 0.5 },
   },
   scatter: {
+    displayName: "Scatter",
     tempo: 92, reverbDecay: 4.0, reverbWet: 0.45, registerShift: 2,
     instruments: ["harmony", "accent", "lead", "counter"],
     density: { bass: 0.25, harmony: 0.80, accent: 2.20, lead: 1.20, counter: 0.50 },
   },
   undertow: {
+    displayName: "Undertow",
     tempo: 60, reverbDecay: 7.0, reverbWet: 0.55, registerShift: 0,
     instruments: ["bass", "harmony", "lead", "counter"],
     density: { bass: 0.20, harmony: 0.50, accent: 0.60, lead: 0.35, counter: 0.40 },
