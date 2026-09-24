@@ -24,22 +24,71 @@ const trends = (await FileAttachment("./data/trends.json").json())
   <div class="card"><h2>Total Users</h2><span class="big">${metrics.total_users.toLocaleString("en-US")}</span></div>
 </div>
 
+<div class="grid grid-cols-1">
+  <div class="card">
+    <h2>Users</h2>
+
 ```js
-trends.length
+const signupTrends = trends.filter((d) => d.event_type === "signup");
+signupTrends.length
   ? Plot.plot({
       width,
-      height: 360,
+      height: 200,
       marginLeft: 48,
       x: { label: null, type: "utc" },
       y: { label: null, grid: true, tickFormat: "d" },
-      color: { domain: ["saved", "destroyed", "signup"], range: ["#ffffff", "#808080", "#b87333"] },
       marks: [
-        Plot.lineY(trends, { x: "event_day", y: "event_count", stroke: "event_type", z: "event_type", curve: "step" }),
+        Plot.lineY(signupTrends, { x: "event_day", y: "event_count", stroke: "#b87333", curve: "step" }),
         Plot.ruleY([0])
       ]
     })
   : html`<p class="empty">No activity yet.</p>`
 ```
+
+  </div>
+  <div class="card">
+    <h2>Saved Skies</h2>
+
+```js
+const savedTrends = trends.filter((d) => d.event_type === "saved");
+savedTrends.length
+  ? Plot.plot({
+      width,
+      height: 200,
+      marginLeft: 48,
+      x: { label: null, type: "utc" },
+      y: { label: null, grid: true, tickFormat: "d" },
+      marks: [
+        Plot.lineY(savedTrends, { x: "event_day", y: "event_count", stroke: "#ffffff", curve: "step" }),
+        Plot.ruleY([0])
+      ]
+    })
+  : html`<p class="empty">No activity yet.</p>`
+```
+
+  </div>
+  <div class="card">
+    <h2>Destroyed Skies</h2>
+
+```js
+const destroyedTrends = trends.filter((d) => d.event_type === "destroyed");
+destroyedTrends.length
+  ? Plot.plot({
+      width,
+      height: 200,
+      marginLeft: 48,
+      x: { label: null, type: "utc" },
+      y: { label: null, grid: true, tickFormat: "d" },
+      marks: [
+        Plot.lineY(destroyedTrends, { x: "event_day", y: "event_count", stroke: "#808080", curve: "step" }),
+        Plot.ruleY([0])
+      ]
+    })
+  : html`<p class="empty">No activity yet.</p>`
+```
+
+  </div>
+</div>
 
 <style>
 .hero { text-align: center; margin: 4rem 0 2rem; }

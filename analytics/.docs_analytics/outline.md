@@ -29,7 +29,7 @@ Assets (`assets.py`): `dbt_models` runs `dbt build` (each dbt node is its own as
 ## Observable Framework site
 Project in `observable/`, config `observablehq.config.js`: root `src`, output `dist/analytics`, base `/analytics/`, dark theme, pure-black background, no sidebar/toc/pager, favicon from `logo.png`.
 
-`src/index.md` renders four counter cards (saved, destroyed, dead, users) and a stepped line chart of the trends. `src/components/starfield.js` draws the static seeded starfield backdrop.
+`src/index.md` renders four counter cards (saved, destroyed, dead, users) and three stacked, labeled stepped line charts of the trends (Users, Saved Skies, Destroyed Skies). `src/components/starfield.js` draws the static seeded starfield backdrop.
 
 Data loaders `src/data/metrics.json.js` and `src/data/trends.json.js` query the marts through `db.js`, a shared `pg` pool reading `ANALYTICS_DB_*` from `.env`. When the database is unavailable the loaders emit zeros.
 
