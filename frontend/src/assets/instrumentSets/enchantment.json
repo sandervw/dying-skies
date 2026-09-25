@@ -24,7 +24,7 @@
     },
     "register": 1,
     "hold": 4,
-    "gain": 0.85,
+    "gain": 0.65,
     "filter": {
       "type": "lowpass",
       "frequency": 350,
@@ -114,7 +114,7 @@
     },
     "register": 2,
     "hold": 3,
-    "gain": 0.9,
+    "gain": 0.55,
     "filter": {
       "type": "lowpass",
       "frequency": 3000,
@@ -161,7 +161,7 @@
     },
     "register": 3,
     "hold": 1,
-    "gain": 0.65,
+    "gain": 0.45,
     "filter": {
       "type": "lowpass",
       "frequency": 1800,
@@ -196,7 +196,7 @@
         "type": "sawtooth"
       },
       "harmonicity": 3.01,
-      "modulationIndex": 12.0,
+      "modulationIndex": 8.0,
       "envelope": {
         "attack": 0.8,
         "decay": 1.5,
@@ -206,7 +206,7 @@
     },
     "register": 5,
     "hold": 4,
-    "gain": 0.5,
+    "gain": 0.3,
     "filter": {
       "type": "highpass",
       "frequency": 1500,

@@ -167,8 +167,8 @@
       [
         "Vibrato",
         {
-          "frequency": 4.5,
-          "depth": 0.15,
+          "frequency": 7,
+          "depth": 0.05,
           "wet": 0.4
         }
       ],
