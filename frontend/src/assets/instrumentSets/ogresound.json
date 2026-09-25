@@ -1,4 +1,5 @@
 {
+  "displayName": "Ogre Sound",
   "bass": {
     "synth": "MonoSynth",
     "options": {

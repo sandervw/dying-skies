@@ -37,14 +37,17 @@ const hydrateSpec = (raw: RawSpec): InstrumentSpec => ({
   effects: raw.effects.map(([name, options]): EffectEntry => [resolve(name), options]),
 });
 
+// one set as stored in JSON: display name plus every role.
+type RawSet = Record<Role, RawSpec> & { displayName: string };
+
 // hydrate every role in one raw set.
-const hydrateSet = (raw: Record<Role, RawSpec>): Record<Role, InstrumentSpec> =>
+const hydrateSet = ({ displayName: _, ...roles }: RawSet): Record<Role, InstrumentSpec> =>
   Object.fromEntries(
-    Object.entries(raw).map(([role, spec]) => [role, hydrateSpec(spec)]),
+    Object.entries(roles).map(([role, spec]) => [role, hydrateSpec(spec)]),
   ) as Record<Role, InstrumentSpec>;
 
 // every set JSON, bundled at build time.
-const modules = import.meta.glob<{ default: Record<Role, RawSpec> }>(
+const modules = import.meta.glob<{ default: RawSet }>(
   "../assets/instrumentSets/*.json",
   { eager: true },
 );
@@ -58,14 +61,9 @@ const INSTRUMENT_SETS = Object.fromEntries(
   Object.keys(modules).sort().map((path) => [nameOf(path), hydrateSet(modules[path].default)]),
 ) as Record<string, Record<Role, InstrumentSpec>>;
 
-/** human-readable name for each instrument set. */
-const INSTRUMENT_SET_DISPLAY_NAMES: Record<string, string> = {
-  aom: "AOM",
-  deusex: "Deus Ex",
-  enchantment: "Enchantment",
-  lunacid: "Lunacid",
-  ogresound: "Ogre Sound",
-  unexplained: "Unexplained",
-};
+/** human-readable name for each instrument set, read from its JSON. */
+const INSTRUMENT_SET_DISPLAY_NAMES = Object.fromEntries(
+  Object.keys(modules).map((path) => [nameOf(path), modules[path].default.displayName]),
+) as Record<string, string>;
 
 export { INSTRUMENT_SETS, INSTRUMENT_SET_DISPLAY_NAMES };
