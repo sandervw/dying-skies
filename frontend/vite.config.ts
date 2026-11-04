@@ -6,7 +6,7 @@ import react from "@vitejs/plugin-react";
 const buildContentSecurityPolicy = (apiBaseUrl: string): string =>
   [
     "default-src 'self'",
-    "script-src 'self' https://static.cloudflareinsights.com",
+    "script-src 'self' 'wasm-unsafe-eval' https://static.cloudflareinsights.com",
     "worker-src 'self' blob:",
     "media-src 'self' blob:",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
@@ -40,5 +40,8 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react(), contentSecurityPolicyPlugin(env.VITE_API_BASE_URL ?? "")],
     server: { open: true },
+    optimizeDeps: { exclude: ["webmusic-engine"] },
+    // CSP blocks data: scripts, so the worklet stays a file
+    build: { assetsInlineLimit: (file: string) => (file.endsWith("processor.js") ? false : undefined) },
   };
 });

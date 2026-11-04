@@ -5,7 +5,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactElement } from "react";
-import * as Tone from "tone";
+import { createEngine, toneSetToPatch } from "webmusic-engine";
+import type { Transport } from "webmusic-engine";
 import { INSTRUMENT_SETS } from "../utils/instrumentSets";
 import { MODES } from "../utils/modes";
 import { PRESETS } from "../utils/presets";
@@ -13,9 +14,6 @@ import {
   LOOP_BARS,
   MIN_REGISTER,
   MAX_REGISTER,
-  masterBus,
-  reverbBus,
-  buildVoice,
   buildScore,
   slip,
   buildPart,
@@ -27,6 +25,14 @@ const BEATS_PER_BAR = 4;
 const SET_NAMES = Object.keys(INSTRUMENT_SETS);
 const MODE_NAMES = Object.keys(MODES);
 const PRESET_NAMES = Object.keys(PRESETS);
+
+// lab context whose destination is an analyser tap for visuals
+const labContext = new AudioContext({ latencyHint: "playback" });
+const analyser = labContext.createAnalyser();
+analyser.fftSize = 1024;
+analyser.smoothingTimeConstant = 0.82;
+analyser.connect(labContext.destination);
+Object.defineProperty(labContext, "destination", { value: analyser });
 
 // one distinct colour per instrument slot, reused by audio + visuals.
 const ROLE_COLORS: Record<Role, string> = {
@@ -55,8 +61,7 @@ interface Playback {
   notes: VizNote[];
   voices: { role: Role; color: string; gain: number }[];
   analyser: AnalyserNode | null;
-  transport: ReturnType<typeof Tone.getTransport>;
-  stopped: boolean;
+  transport: Transport;
   stop: () => void;
 }
 
@@ -180,7 +185,7 @@ const scoredToNotes = (
 ): VizNote[] => {
   const notes: VizNote[] = [];
   for (const voice of voices) {
-    const isNoise = voice.spec.synth === Tone.NoiseSynth;
+    const isNoise = voice.spec.synth === "NoiseSynth";
     const durSec = voice.spec.hold * secPerBeat;
     for (const [bar, beat, step] of voice.events) {
       const timeSec = (bar * BEATS_PER_BAR + beat) * secPerBeat;
@@ -189,9 +194,7 @@ const scoredToNotes = (
         const semitone =
           offsets[step % offsets.length] +
           12 * Math.floor(step / offsets.length);
-        midi = Tone.Frequency(`C${voice.register}`)
-          .transpose(semitone)
-          .toMidi();
+        midi = 12 * (voice.register + 1) + semitone;
       }
       notes.push({
         role: voice.role,
@@ -206,23 +209,22 @@ const scoredToNotes = (
   return notes;
 };
 
-const startPlayback = (
+const startPlayback = async (
   setName: string,
   presetName: string,
   modeName: string,
-): Playback => {
+): Promise<Playback> => {
   const plan = buildPlan(setName, presetName, modeName);
   const steps = plan.offsets.length + 1;
   const score = scoreVoices(plan);
-  const transport = Tone.getTransport();
-
-  const context = Tone.getContext().rawContext as unknown as AudioContext;
-  const analyser = context.createAnalyser();
-  analyser.fftSize = 1024;
-  analyser.smoothingTimeConstant = 0.82;
-
-  const nodes: Tone.ToneAudioNode[] = [];
-  let repeatId = -1;
+  const { patch, roles } = toneSetToPatch(INSTRUMENT_SETS[setName], {
+    reverbSend: plan.preset.reverbWet,
+    roomSize: Math.min(0.85, plan.preset.reverbDecay / 14),
+  });
+  const engine = await createEngine({ patch, roles, context: labContext });
+  await engine.unlock();
+  const transport = engine.transport;
+  const instruments = score.map((voice) => engine.instrument(voice.role));
 
   const playback: Playback = {
     loopSeconds: plan.loopSeconds,
@@ -236,41 +238,19 @@ const startPlayback = (
     })),
     analyser,
     transport,
-    stopped: false,
-    stop: (): void => {
-      playback.stopped = true;
-      if (repeatId !== -1) transport.clear(repeatId);
-      transport.stop();
-      for (const node of nodes) node.dispose();
-      analyser.disconnect();
-    },
+    stop: (): void => engine.dispose(),
   };
 
-  // build the live graph once, then loop it
-  const build = async (): Promise<void> => {
-    const master = masterBus();
-    const send = await reverbBus(master[0], plan.preset.reverbDecay, plan.preset.reverbWet);
-    if (playback.stopped) { for (const node of [...master, ...send]) node.dispose(); return; }
-    transport.bpm.value = plan.tempo; // set before voices so delays sync
-    master[master.length - 1].connect(analyser); // tap the master for visuals
-    nodes.push(...master, ...send);
-    const synths = score.map((voice): Tone.ToneAudioNode => {
-      const voiceNodes = buildVoice(voice.spec, master[0], send[0]);
-      nodes.push(...voiceNodes);
-      return voiceNodes[0];
-    });
-    let first = true;
-    repeatId = transport.scheduleRepeat((time): void => {
-      if (!first) for (const voice of score) slip(voice.spec.hold, voice.events, steps, plan.preset.density[voice.role]);
-      first = false;
-      score.forEach((voice, index) =>
-        buildPart(voice.spec, synths[index], voice.events, plan.offsets, voice.register, plan.tempo, time));
-      playback.notes = scoredToNotes(score, plan.offsets, plan.secPerBeat, plan.loopSeconds);
-    }, `${LOOP_BARS}m`, 0); // explicit 0; implicit start can be -1e-15 and never fire
-    transport.start();
-  };
-  void build();
-
+  transport.bpm = plan.tempo;
+  let first = true;
+  transport.scheduleRepeat((time): void => {
+    if (!first) for (const voice of score) slip(voice.spec.hold, voice.events, steps, plan.preset.density[voice.role]);
+    first = false;
+    score.forEach((voice, index) =>
+      buildPart(voice.spec, instruments[index], voice.events, plan.offsets, voice.register, plan.tempo, time));
+    playback.notes = scoredToNotes(score, plan.offsets, plan.secPerBeat, plan.loopSeconds);
+  }, `${LOOP_BARS}m`, 0);
+  transport.start();
   return playback;
 };
 
@@ -500,8 +480,7 @@ const MusicLab = (): ReactElement => {
 
   const handlePlay = async (): Promise<void> => {
     playback?.stop();
-    await Tone.start();
-    setPlayback(startPlayback(setName, presetName, modeName));
+    setPlayback(await startPlayback(setName, presetName, modeName));
     setPlaying(true);
   };
 

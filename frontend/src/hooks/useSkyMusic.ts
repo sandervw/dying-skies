@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import * as Tone from "tone";
+import type { Engine } from "webmusic-engine";
 import { playSky } from "../services/musicService";
 import { useSkySeed } from "./useSkySeed";
 
@@ -7,20 +7,25 @@ import { useSkySeed } from "./useSkySeed";
 const useSkyMusic = (muted: boolean): void => {
   const { seed } = useSkySeed();
 
-  // the context stays suspended until a gesture; every click retries it.
-  useEffect((): (() => void) => {
-    const unlock = (): void => {
-      void Tone.start();
-    };
-    window.addEventListener("pointerdown", unlock);
-    return (): void => {
-      window.removeEventListener("pointerdown", unlock);
-    };
-  }, []);
-
   // runs after render, or when `seed` or `muted` changes
   useEffect((): (() => void) | undefined => {
-    return muted ? undefined : playSky(seed);
+    if (muted) return undefined;
+    let engine: Engine | undefined;
+    let disposed = false;
+    const unlock = (): void => {
+      void engine?.unlock();
+    };
+    window.addEventListener("pointerdown", unlock);
+    void playSky(seed).then((created): void => {
+      if (disposed) return created.dispose();
+      engine = created;
+      void engine.unlock(); // resumes when an earlier gesture already allowed audio
+    });
+    return (): void => {
+      disposed = true;
+      window.removeEventListener("pointerdown", unlock);
+      engine?.dispose();
+    };
   }, [seed, muted]);
 };
 

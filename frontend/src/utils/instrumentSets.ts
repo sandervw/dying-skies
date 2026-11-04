@@ -4,47 +4,10 @@
  *   Treat instruments as raw sound sources - fixes must go in musicService.ts
  */
 
-import * as Tone from "tone";
-import type { EffectEntry, InstrumentSpec, Role, SynthClass } from "../types/music";
-
-// Tone voice and effect classes the set JSON references by name.
-const TONE_REGISTRY: Record<string, unknown> = {
-  MonoSynth: Tone.MonoSynth, Synth: Tone.Synth, FMSynth: Tone.FMSynth,
-  AMSynth: Tone.AMSynth, DuoSynth: Tone.DuoSynth, NoiseSynth: Tone.NoiseSynth,
-  Distortion: Tone.Distortion, Chorus: Tone.Chorus, StereoWidener: Tone.StereoWidener,
-  PingPongDelay: Tone.PingPongDelay, FeedbackDelay: Tone.FeedbackDelay, Reverb: Tone.Reverb,
-  Chebyshev: Tone.Chebyshev, Vibrato: Tone.Vibrato, AutoPanner: Tone.AutoPanner,
-  AutoFilter: Tone.AutoFilter, Compressor: Tone.Compressor, Tremolo: Tone.Tremolo,
-};
-
-// one spec as stored in JSON: class refs are class-name strings.
-type RawSpec = Omit<InstrumentSpec, "synth" | "effects"> & {
-  synth: string;
-  effects: [string, object][];
-};
-
-// look up a Tone class by name, or fail loudly.
-const resolve = <T>(name: string): T => {
-  const found = TONE_REGISTRY[name];
-  if (found === undefined) throw new Error(`unknown Tone class: ${name}`);
-  return found as T;
-};
-
-// swap a raw spec's class-name strings for live Tone constructors.
-const hydrateSpec = (raw: RawSpec): InstrumentSpec => ({
-  ...raw,
-  synth: resolve<SynthClass>(raw.synth),
-  effects: raw.effects.map(([name, options]): EffectEntry => [resolve(name), options]),
-});
+import type { InstrumentSpec, Role } from "../types/music";
 
 // one set as stored in JSON: display name plus every role.
-type RawSet = Record<Role, RawSpec> & { displayName: string };
-
-// hydrate every role in one raw set.
-const hydrateSet = ({ displayName: _, ...roles }: RawSet): Record<Role, InstrumentSpec> =>
-  Object.fromEntries(
-    Object.entries(roles).map(([role, spec]) => [role, hydrateSpec(spec)]),
-  ) as Record<Role, InstrumentSpec>;
+type RawSet = Record<Role, InstrumentSpec> & { displayName: string };
 
 // every set JSON, bundled at build time.
 const modules = import.meta.glob<{ default: RawSet }>(
@@ -56,10 +19,10 @@ const modules = import.meta.glob<{ default: RawSet }>(
 const nameOf = (path: string): string =>
   path.split("/").pop()!.replace(".json", "");
 
-/** the instrument sets, keyed by name; each fills all five roles. */
+/** the instrument sets as stored in JSON, keyed by name. */
 const INSTRUMENT_SETS = Object.fromEntries(
-  Object.keys(modules).sort().map((path) => [nameOf(path), hydrateSet(modules[path].default)]),
-) as Record<string, Record<Role, InstrumentSpec>>;
+  Object.keys(modules).sort().map((path) => [nameOf(path), modules[path].default]),
+) as Record<string, RawSet>;
 
 /** human-readable name for each instrument set, read from its JSON. */
 const INSTRUMENT_SET_DISPLAY_NAMES = Object.fromEntries(
