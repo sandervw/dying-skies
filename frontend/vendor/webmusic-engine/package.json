@@ -1,6 +1,6 @@
 {
   "name": "webmusic-engine",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Engine 5 (WebAssembly AudioWorklet) with best-practice mastering and a Dying Skies set converter.",
   "private": true,
   "type": "module",
