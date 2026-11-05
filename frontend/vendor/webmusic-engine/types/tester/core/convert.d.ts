@@ -10,7 +10,7 @@ export interface ToneInstrument {
   readonly hold?: number;
   readonly gain: number;
   readonly filter?: object;
-  readonly effects: readonly (readonly (string | object)[])[];
+  readonly effects?: readonly (readonly (string | object)[])[];
   readonly name?: string;
   readonly note?: string;
 }
@@ -21,7 +21,7 @@ export const REVERB_ROOM: number;
 /** One spec instrument from a set role or kit piece. */
 export function instrumentSpec(id: string, raw: ToneInstrument, reverbSend: number): InstrumentSpec;
 
-/** Patch, roles and pre-render hints for a set role or a kit. */
+/** Patch, roles and pre-render hints for a set role or a set's kit ({ pieces }). */
 export function testRig(raw: object, role: string, notes: readonly string[], reverbSend: number): {
   patch: Patch;
   roles: Record<string, string>;
