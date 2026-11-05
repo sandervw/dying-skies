@@ -5,7 +5,7 @@ import type { Engine, Patch } from "./api.js";
 export type Role = "bass" | "kick" | "harmony" | "lead" | "counter" | "accent" | "snare" | "hat" | "perc";
 
 /** Engine folders that best practice knows the capabilities of. */
-export type EngineName = "0-original" | "1-live-hardened" | "2-baked-notes" | "3-stem-loops" | "5-wasm-worklet";
+export type EngineName = "5-wasm-worklet";
 
 /** Returns a new patch with best practices this engine honours. */
 export function applyBestPractice(patch: Patch, options: { engine: EngineName; roles: Record<string, Role> }): { patch: Patch; notes: string[] };

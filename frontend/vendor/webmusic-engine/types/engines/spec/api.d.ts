@@ -81,6 +81,32 @@ export interface NoiseSynthSpec {
     noise: "white" | "pink" | "brown";
     envelope: EnvelopeSpec;
 }
+/** AM: modulator at carrier times harmonicity scales carrier 0 to 1. */
+export interface AmSynthSpec {
+    kind: "am";
+    oscillator: OscillatorSpec;
+    modulator: OscillatorSpec;
+    harmonicity: number;
+    envelope: EnvelopeSpec;
+    modulationEnvelope: EnvelopeSpec;
+}
+/** Karplus-Strong: pink noise burst rings at resonance feedback, release fades. */
+export interface PluckSynthSpec {
+    kind: "pluck";
+    attackNoise: number;
+    dampening: number;
+    resonance: number;
+    release: number;
+}
+/** Six FM squares, cymbal ratios, highpass swept from resonance by octaves. */
+export interface MetalSynthSpec {
+    kind: "metal";
+    harmonicity: number;
+    modulationIndex: number;
+    resonance: number;
+    octaves: number;
+    envelope: Omit<EnvelopeSpec, "sustain">;
+}
 /** Repitches the nearest recorded note; fades in and out in seconds. */
 export interface SamplerSpec {
     kind: "sampler";
@@ -89,7 +115,7 @@ export interface SamplerSpec {
     release: number;
 }
 /** Every sound source an instrument can use. */
-export type SourceSpec = BasicSynthSpec | MonoSynthSpec | FmSynthSpec | DuoSynthSpec | MembraneSynthSpec | NoiseSynthSpec | SamplerSpec;
+export type SourceSpec = BasicSynthSpec | MonoSynthSpec | FmSynthSpec | DuoSynthSpec | MembraneSynthSpec | NoiseSynthSpec | SamplerSpec | AmSynthSpec | PluckSynthSpec | MetalSynthSpec;
 /** Insert effects; wet is 0 to 1 and defaults to 1. */
 export type EffectSpec = {
     type: "filter";
