@@ -13,6 +13,7 @@ export interface ToneInstrument {
   readonly effects?: readonly (readonly (string | object)[])[];
   readonly name?: string;
   readonly note?: string;
+  readonly role?: string;
 }
 
 /** Room size matching the old tester's six-second reverb. */

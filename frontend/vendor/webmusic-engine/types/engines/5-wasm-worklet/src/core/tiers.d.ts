@@ -9,6 +9,7 @@ export interface TierSettings {
     readonly shaperOversample: number;
     readonly fatCountLimit: number;
     readonly controlInterval: number;
+    readonly partialLimit: number;
 }
 /** Settings for each tier. */
 export declare const TIERS: Readonly<Record<QualityTier, TierSettings>>;

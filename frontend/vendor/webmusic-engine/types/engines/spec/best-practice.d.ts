@@ -2,7 +2,7 @@
 import type { Engine, Patch } from "./api.js";
 
 /** Mix roles that best practice has rules for. */
-export type Role = "bass" | "kick" | "harmony" | "lead" | "counter" | "accent" | "snare" | "hat" | "perc";
+export type Role = "bass" | "kick" | "harmony" | "lead" | "counter" | "accent" | "snare" | "hat" | "perc" | "solo";
 
 /** Engine folders that best practice knows the capabilities of. */
 export type EngineName = "5-wasm-worklet";
