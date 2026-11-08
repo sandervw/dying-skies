@@ -22,7 +22,7 @@ export interface EnvelopeSpec {
 }
 /** Filter; gain applies to peaking and shelves, rolloff to the rest. */
 export interface FilterSpec {
-    type: "lowpass" | "highpass" | "bandpass" | "peaking" | "highshelf" | "lowshelf";
+    type: "lowpass" | "highpass" | "bandpass" | "peaking" | "highshelf" | "lowshelf" | "notch";
     frequency: number;
     Q?: number;
     gain?: number;
@@ -114,8 +114,53 @@ export interface SamplerSpec {
     attack: number;
     release: number;
 }
+/** One pure tone: ratio to the note, level, seconds to fade in. */
+export interface PartialSpec {
+    ratio: number;
+    level: number;
+    attack?: number;
+    /** Seconds to fall 60 dB; leave out to hold until release. */
+    decay?: number;
+}
+/** Pure tones with own envelopes; release is seconds to fall 60 dB. */
+export interface ModalSynthSpec {
+    kind: "modal";
+    partials: PartialSpec[];
+    release: number;
+    /** Octaves of decay lost per octave above middle C. */
+    decayTracking?: number;
+    /** Octaves of attack lost per octave above middle C. */
+    attackTracking?: number;
+    /** Decibels per octave of ratio, gained per octave above middle C. */
+    brightnessTracking?: number;
+    /** Starts a share of full level below, rising over the seconds. */
+    swell?: {
+        depth: number;
+        seconds: number;
+    };
+    /** Share of level each tone slowly wanders by, separately. */
+    drift?: number;
+    /** How far tones start in step, 0 to 1; peaks the wave. */
+    aligned?: number;
+}
+/** One sound in a layered source; level and transpose offset its note. */
+export interface LayerSpec {
+    source: Exclude<SourceSpec, SamplerSpec | LayeredSynthSpec>;
+    level?: number;
+    transpose?: number;
+    filter?: FilterSpec;
+    /** Decibels of level gained per octave above middle C. */
+    levelTracking?: number;
+    /** Octaves the filter moves per octave above middle C. */
+    filterTracking?: number;
+}
+/** Several sounds started by one note, such as an attack and sustain. */
+export interface LayeredSynthSpec {
+    kind: "layered";
+    layers: LayerSpec[];
+}
 /** Every sound source an instrument can use. */
-export type SourceSpec = BasicSynthSpec | MonoSynthSpec | FmSynthSpec | DuoSynthSpec | MembraneSynthSpec | NoiseSynthSpec | SamplerSpec | AmSynthSpec | PluckSynthSpec | MetalSynthSpec;
+export type SourceSpec = BasicSynthSpec | MonoSynthSpec | FmSynthSpec | DuoSynthSpec | MembraneSynthSpec | NoiseSynthSpec | SamplerSpec | AmSynthSpec | PluckSynthSpec | MetalSynthSpec | ModalSynthSpec | LayeredSynthSpec;
 /** Insert effects; wet is 0 to 1 and defaults to 1. */
 export type EffectSpec = {
     type: "filter";
@@ -192,6 +237,8 @@ export interface InstrumentSpec {
     pan?: number;
     effects?: EffectSpec[];
     reverbSend?: number;
+    /** The set entry's own room share, included in reverbSend. */
+    space?: number;
 }
 /** Whole graph: instruments, shared JCReverb send, then master chain. */
 export interface Patch {
