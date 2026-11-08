@@ -165,3 +165,6 @@ crash.*.log
 # frontend/scripts: track only Python sources
 frontend/scripts/*
 !frontend/scripts/*.py
+
+# Claude hook counters
+.claude/hooks/.state/
