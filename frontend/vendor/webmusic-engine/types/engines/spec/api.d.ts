@@ -309,6 +309,8 @@ export interface EngineOptions {
     patch: Patch;
     hints?: Record<string, PlayHint>;
     context?: AudioContext;
+    /** Node the engine plays into; defaults to the context's destination. */
+    output?: AudioNode;
     latencyHint?: AudioContextLatencyCategory | number;
     baseUrl?: string;
 }

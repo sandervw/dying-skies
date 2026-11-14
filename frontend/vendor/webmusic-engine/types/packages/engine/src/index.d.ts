@@ -28,6 +28,7 @@ export interface MixedPatch {
 export interface MasteredEngineOptions extends MixedPatch {
     quality?: QualityTier | "auto";
     context?: AudioContext;
+    output?: AudioNode;
     latencyHint?: AudioContextLatencyCategory | number;
     baseUrl?: string;
 }

@@ -44,7 +44,8 @@ engine.dispose();
 ## API
 
 - `toneSetToPatch(set, { reverbSend?, roomSize? })` returns `{ patch, roles }`. It takes a set as stored in its JSON file (`synth` is a Tone class name). Instrument ids are the role names: `bass`, `harmony`, `lead`, `counter`, `accent`. It throws on a synth or effect class it can't convert.
-- `createEngine({ patch, roles, quality?, context?, latencyHint?, baseUrl? })` returns a ready `Engine`.
+- `createEngine({ patch, roles, quality?, context?, output?, latencyHint?, baseUrl? })` returns a ready `Engine`.
+  - `output` is the node the engine plays into (default: the context's destination). It must belong to `context`.
   - It applies best practice for engine 5: envelope floors, role high-passes, distortion oversampling, reverb-return filters, a rumble guard, a −1.5 dBTP limiter, and a −84 dBFS noise floor.
   - Stopping and disposing fade out.
   - `quality` is `"high"`, `"medium"`, `"low"` or `"auto"` (the default, picked per device).

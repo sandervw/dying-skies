@@ -10,6 +10,7 @@ export declare enum ContextOwnership {
 /** Engine on a real AudioContext, driven by a lookahead timer. */
 export declare class LiveEngine extends Session {
     private readonly audioContext;
+    private readonly output;
     private readonly assets;
     private readonly ownership;
     private readonly timer;
@@ -19,6 +20,7 @@ export declare class LiveEngine extends Session {
     private readonly onGesture;
     constructor(parts: SessionParts & {
         readonly context: AudioContext;
+        readonly output: AudioNode;
     }, assets: EngineAssets, ownership: ContextOwnership);
     get state(): AudioContextState | "interrupted";
     unlock(): Promise<void>;

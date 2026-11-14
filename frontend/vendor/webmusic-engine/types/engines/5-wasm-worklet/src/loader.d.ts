@@ -21,5 +21,5 @@ export interface DspNode {
 }
 /** Loads the WASM bytes and decodes every sampler recording in parallel. */
 export declare function loadAssets(compiled: CompiledPatch, baseUrl: string | undefined, decoder: BaseAudioContext): Promise<EngineAssets>;
-/** Builds a loaded DSP node and connects it to the destination. */
-export declare function createDspNode(context: BaseAudioContext, assets: EngineAssets): Promise<DspNode>;
+/** Builds a loaded DSP node and connects it to the output. */
+export declare function createDspNode(context: BaseAudioContext, assets: EngineAssets, output?: AudioNode): Promise<DspNode>;

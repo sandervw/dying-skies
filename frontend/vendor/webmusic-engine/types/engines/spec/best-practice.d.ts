@@ -11,4 +11,4 @@ export type EngineName = "5-wasm-worklet";
 export function applyBestPractice(patch: Patch, options: { engine: EngineName; roles: Record<string, Role> }): { patch: Patch; notes: string[] };
 
 /** Wraps an engine with a noise floor and faded suspend and dispose. */
-export function wrapEngine(engine: Engine, options: { engine: EngineName }): Engine;
+export function wrapEngine(engine: Engine, options: { engine: EngineName; output?: AudioNode }): Engine;

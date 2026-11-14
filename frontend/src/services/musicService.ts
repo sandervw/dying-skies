@@ -10,6 +10,18 @@ import type { InstrumentSpec } from "../types/music";
 // one shared context, so a single unlock covers every sky
 const audioContext = new AudioContext({ latencyHint: "playback" });
 
+/** phones only: media element that keeps locked tabs playing. */
+const phoneAudio = matchMedia("(pointer: coarse)").matches ? new Audio() : undefined;
+
+// phones suspend idle Web Audio tabs; route through phoneAudio
+const phoneOutput = phoneAudio ? audioContext.createMediaStreamDestination() : undefined;
+if (phoneAudio && phoneOutput) {
+  phoneAudio.srcObject = phoneOutput.stream;
+  // lock-screen buttons drive the element; App mirrors it into mute
+  navigator.mediaSession.setActionHandler("play", (): void => void phoneAudio.play());
+  navigator.mediaSession.setActionHandler("pause", (): void => phoneAudio.pause());
+}
+
 const LOOP_BARS = 8;
 const SLIP_CHANCE = 0.2; // fraction of notes re-rolled each repeat
 const MAX_DENSITY = 2.5; // events per bar; caps loudness and overlap
@@ -122,7 +134,7 @@ const playSky = async (seed: Seed): Promise<Engine> => {
     reverbSend: preset.reverbWet,
     roomSize: Math.min(0.85, preset.reverbDecay / 14),
   });
-  const engine = await createEngine({ patch, roles: mixRoles, context: audioContext });
+  const engine = await createEngine({ patch, roles: mixRoles, context: audioContext, output: phoneOutput });
   const instruments = roles.map((role) => engine.instrument(role));
   engine.transport.bpm = preset.tempo;
 
@@ -156,5 +168,6 @@ export {
   slip,
   buildPart,
   describeSky,
+  phoneAudio,
   playSky,
 };

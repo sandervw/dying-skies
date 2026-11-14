@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ReactElement } from "react";
 import { Routes, Route } from "react-router-dom";
 import { Sky } from "./components/Sky";
@@ -7,11 +7,26 @@ import { Footer } from "./components/Footer";
 import { GalleryView } from "./components/GalleryView";
 import { AuthOverlay } from "./components/AuthOverlay";
 import { useImmersion } from "./hooks/useImmersion";
+import { phoneAudio } from "./services/musicService";
 
 const App = (): ReactElement => {
   const { immersive, toggleImmersion } = useImmersion();
   const [open, setOpen] = useState<boolean>(false);
   const [muted, setMuted] = useState<boolean>(true);
+
+  // phone pauses (lock screen, calls) flip the mute button
+  useEffect((): (() => void) | undefined => {
+    if (!phoneAudio) return undefined;
+    const audio = phoneAudio;
+    const mute = (): void => setMuted(true);
+    const unmute = (): void => setMuted(false);
+    audio.addEventListener("pause", mute);
+    audio.addEventListener("play", unmute);
+    return (): void => {
+      audio.removeEventListener("pause", mute);
+      audio.removeEventListener("play", unmute);
+    };
+  }, []);
 
   return (
     <div className={immersive ? "immersive" : undefined}>
