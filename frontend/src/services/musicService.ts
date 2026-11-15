@@ -13,10 +13,19 @@ const audioContext = new AudioContext({ latencyHint: "playback" });
 /** phones only: media element that keeps locked tabs playing. */
 const phoneAudio = matchMedia("(pointer: coarse)").matches ? new Audio() : undefined;
 
-// phones suspend idle Web Audio tabs; route through phoneAudio
-const phoneOutput = phoneAudio ? audioContext.createMediaStreamDestination() : undefined;
-if (phoneAudio && phoneOutput) {
-  phoneAudio.srcObject = phoneOutput.stream;
+const SILENCE_BYTES = 80000; // 10 s of 8 kHz 8-bit audio
+
+// silent looping WAV; Android shows lock-screen controls past 5 s
+if (phoneAudio) {
+  const silence = new Uint8Array(44 + SILENCE_BYTES).fill(128);
+  const header = new DataView(silence.buffer);
+  [[0, 0x52494646], [8, 0x57415645], [12, 0x666d7420], [36, 0x64617461]]
+    .forEach(([offset, tag]) => header.setUint32(offset, tag));
+  [[4, 36 + SILENCE_BYTES], [16, 16], [24, 8000], [28, 8000], [40, SILENCE_BYTES]]
+    .forEach(([offset, value]) => header.setUint32(offset, value, true));
+  [[20, 1], [22, 1], [32, 1], [34, 8]].forEach(([offset, value]) => header.setUint16(offset, value, true));
+  phoneAudio.src = URL.createObjectURL(new Blob([silence], { type: "audio/wav" }));
+  phoneAudio.loop = true;
   // lock-screen buttons drive the element; App mirrors it into mute
   navigator.mediaSession.setActionHandler("play", (): void => void phoneAudio.play());
   navigator.mediaSession.setActionHandler("pause", (): void => phoneAudio.pause());
@@ -134,7 +143,7 @@ const playSky = async (seed: Seed): Promise<Engine> => {
     reverbSend: preset.reverbWet,
     roomSize: Math.min(0.85, preset.reverbDecay / 14),
   });
-  const engine = await createEngine({ patch, roles: mixRoles, context: audioContext, output: phoneOutput });
+  const engine = await createEngine({ patch, roles: mixRoles, context: audioContext });
   const instruments = roles.map((role) => engine.instrument(role));
   engine.transport.bpm = preset.tempo;
 
