@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@observablehq/framework": "^1.13.4",
-    "dotenv": "^16.4.7",
+    "dotenv": "^18.0.10",
     "pg": "^8.13.1"
   },
   "devDependencies": {
