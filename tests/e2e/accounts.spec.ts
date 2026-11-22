@@ -9,13 +9,12 @@ import {
   signUp,
   submitSignUp,
 } from "./account-steps";
-import { fallIntoStar, readout } from "./sky-steps";
+import { button, fallIntoStar, readout } from "./sky-steps";
 
 const WARNING = "Write down your username and password. Forget them and they are lost forever.";
 const WRONG_LOGIN = "Wrong username or password.";
 const LOGIN_ATTEMPTS = 11;
 
-const button = (page: Page, name: string) => page.getByRole("button", { name, exact: true });
 const usernameField = (page: Page) => page.getByRole("textbox", { name: "username" });
 const passwordField = (page: Page) => page.getByRole("textbox", { name: "password" });
 const rule = (page: Page, text: string) => page.getByRole("listitem").filter({ hasText: text });

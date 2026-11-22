@@ -1,7 +1,8 @@
 import type { Locator, Page } from "@playwright/test";
 import { expect } from "./harness";
 
-const SKY_ADDRESS = /\/sky\/[^/]+$/;
+/** The address pattern of a Sky reached through a Star. */
+export const SKY_ADDRESS = /\/sky\/[^/]+$/;
 const GRID_STEP = 16;
 const SEARCH_MILLISECONDS = 45_000;
 
@@ -14,6 +15,20 @@ export const readout = (page: Page): Locator =>
 
 /** The footer that holds the Counter. */
 export const footer = (page: Page): Locator => page.getByRole("contentinfo");
+
+/** A control found by its exact label. */
+export const button = (page: Page, name: string): Locator =>
+  page.getByRole("button", { name, exact: true });
+
+/** Read one Counter number: saved, destroyed, or allowed. */
+export const counterNumber = async (page: Page, word: string): Promise<number> => {
+  const text = await footer(page).innerText();
+  const found = new RegExp(`${word} (\\d+) skies`).exec(text);
+  if (found === null) {
+    throw new Error(`No Counter number in: ${text}`);
+  }
+  return Number(found[1]);
+};
 
 /** Stop the API from issuing Stars, so only static art shows. */
 export const blockStars = async (page: Page): Promise<void> => {

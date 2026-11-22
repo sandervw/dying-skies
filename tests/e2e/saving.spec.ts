@@ -1,23 +1,17 @@
 import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "./harness";
 import { logOut, signUp } from "./account-steps";
-import { fallIntoStar, footer, pointerIsHand, readout } from "./sky-steps";
+import {
+  SKY_ADDRESS,
+  button,
+  counterNumber,
+  fallIntoStar,
+  pointerIsHand,
+  readout,
+} from "./sky-steps";
 
 const ROOT_ADDRESS = /\/$/;
-const SKY_ADDRESS = /\/sky\/[^/]+$/;
 const COUNTER_WAIT = { timeout: 30_000, intervals: [1_000] };
-
-const button = (page: Page, name: string): Locator =>
-  page.getByRole("button", { name, exact: true });
-
-const counterNumber = async (page: Page, word: string): Promise<number> => {
-  const text = await footer(page).innerText();
-  const found = new RegExp(`${word} (\\d+) skies`).exec(text);
-  if (found === null) {
-    throw new Error(`No Counter number in: ${text}`);
-  }
-  return Number(found[1]);
-};
 
 const tiles = (page: Page): Locator => page.locator("canvas");
 

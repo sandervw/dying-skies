@@ -1,8 +1,8 @@
-import type { Page } from "@playwright/test";
 import { expect, test } from "./harness";
 import {
   allowStars,
   blockStars,
+  counterNumber,
   fallIntoStar,
   footer,
   hoverStar,
@@ -13,15 +13,6 @@ import {
 
 const COUNTER_TEXT =
   /^So far, man has saved \d+ skies, destroyed \d+ skies, and allowed \d+ skies to die\.$/;
-
-const diedCount = async (page: Page): Promise<number> => {
-  const text = await footer(page).innerText();
-  const found = /allowed (\d+) skies to die/.exec(text);
-  if (found === null) {
-    throw new Error(`No Counter number in: ${text}`);
-  }
-  return Number(found[1]);
-};
 
 const isStarRequest = (address: string): boolean => address.includes("/stars/");
 
@@ -152,8 +143,8 @@ test("UC-09 Analytics link", async ({ page }) => {
 test("UC-10 Counter stays live", async ({ page }) => {
   await page.goto("/");
   await expect(footer(page)).toHaveText(COUNTER_TEXT);
-  const startCount = await diedCount(page);
+  const startCount = await counterNumber(page, "allowed");
   await expect
-    .poll(() => diedCount(page), { timeout: 40_000, intervals: [1_000] })
+    .poll(() => counterNumber(page, "allowed"), { timeout: 40_000, intervals: [1_000] })
     .toBeGreaterThan(startCount);
 });
