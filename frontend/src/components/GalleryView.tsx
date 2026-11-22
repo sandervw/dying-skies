@@ -26,11 +26,11 @@ const GallerySkyBox = ({
   seed: Seed;
   onSelect: (seed: Seed) => void;
 }): ReactElement => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const starRef = useRef<FallingStar | null>(null);
-  const profileRef = useRef<SkyProfile | null>(null);
+  const canvasReference = useRef<HTMLCanvasElement | null>(null);
+  const starReference = useRef<FallingStar | null>(null);
+  const profileReference = useRef<SkyProfile | null>(null);
   useEffect((): (() => void) => {
-    const canvas = canvasRef.current;
+    const canvas = canvasReference.current;
     const context = canvas?.getContext("2d") ?? null;
     if (canvas === null || context === null) {
       return (): void => {};
@@ -43,8 +43,8 @@ const GallerySkyBox = ({
     const { constellation } = generateSky(seed);
     const profile = generateSkyProfile(seed);
     const star = buildStar(seed, null, 0, profile, 0, 0);
-    starRef.current = star;
-    profileRef.current = profile;
+    starReference.current = star;
+    profileReference.current = profile;
     let frame = 0;
     const startedAt = performance.now();
 
@@ -80,9 +80,9 @@ const GallerySkyBox = ({
 
   // true when the pointer is over the star itself, not the backdrop.
   const isPointerOnStar = (event: MouseEvent<HTMLCanvasElement>): boolean => {
-    const canvas = canvasRef.current;
-    const star = starRef.current;
-    const profile = profileRef.current;
+    const canvas = canvasReference.current;
+    const star = starReference.current;
+    const profile = profileReference.current;
     if (canvas === null || star === null || profile === null) {
       return false;
     }
@@ -101,7 +101,7 @@ const GallerySkyBox = ({
 
   // pointer cursor over the star, default elsewhere on the tile.
   const handleMouseMove = (event: MouseEvent<HTMLCanvasElement>): void => {
-    const canvas = canvasRef.current;
+    const canvas = canvasReference.current;
     if (canvas !== null) {
       canvas.style.cursor = isPointerOnStar(event) ? "pointer" : "default";
     }
@@ -110,7 +110,7 @@ const GallerySkyBox = ({
   return (
     <div className="gallery-box">
       <canvas
-        ref={canvasRef}
+        ref={canvasReference}
         onClick={handleClick}
         onMouseMove={handleMouseMove}
         aria-label="Open sky"

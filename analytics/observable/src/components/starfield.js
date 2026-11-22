@@ -9,10 +9,7 @@ function random(seed) {
   };
 }
 
-/**
- * Paints a fixed full-screen canvas of faint static stars.
- * @param {number} count Number of stars to draw.
- */
+/** Paints a fixed full-screen canvas of faint static stars. */
 export function starfield(count = 320) {
   const canvas = document.createElement("canvas");
   Object.assign(canvas.style, {

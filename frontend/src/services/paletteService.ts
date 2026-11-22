@@ -59,7 +59,7 @@ const generateColor = (
   anchorOffset: number,
   saturationCenter: number,
   lightnessCenter: number,
-): PaletteColor => ({
+): PaletteColor => ({ // eslint-disable-line max-params -- issue #2
   hue: normalizeHue(
     baseHue +
     anchorOffset +

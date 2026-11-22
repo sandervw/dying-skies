@@ -29,7 +29,7 @@ const REFILL_THRESHOLD = 20;
 const RETRY_DELAY_MS = 2000;
 
 interface SkyHandle {
-  readonly canvasRef: RefObject<HTMLCanvasElement | null>;
+  readonly canvasReference: RefObject<HTMLCanvasElement | null>;
   readonly handleClick: (event: ReactMouseEvent<HTMLCanvasElement>) => void;
   readonly handleMouseMove: (event: ReactMouseEvent<HTMLCanvasElement>) => void;
   readonly handleMouseLeave: () => void;
@@ -38,15 +38,15 @@ interface SkyHandle {
 /** paint the sky and falling-star loop on one canvas per seed. */
 const useSkyCanvas = (onSelectStar?: (starSeed: Seed) => void): SkyHandle => {
   const { seed } = useSkySeed();
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const stateRef = useRef<StarFieldState | null>(null);
-  const fallAngleRef = useRef<number>(0);
-  const hoveredStarIdRef = useRef<number | null>(null);
+  const canvasReference = useRef<HTMLCanvasElement | null>(null);
+  const stateReference = useRef<StarFieldState | null>(null);
+  const fallAngleReference = useRef<number>(0);
+  const hoveredStarIdReference = useRef<number | null>(null);
 
   const getCanvasCoordinates = (
     event: ReactMouseEvent<HTMLCanvasElement>,
   ): { x: number; y: number } => {
-    const canvas = canvasRef.current;
+    const canvas = canvasReference.current;
     if (canvas === null) {
       return { x: 0, y: 0 };
     }
@@ -58,32 +58,32 @@ const useSkyCanvas = (onSelectStar?: (starSeed: Seed) => void): SkyHandle => {
   };
 
   const handleMouseMove = (event: ReactMouseEvent<HTMLCanvasElement>): void => {
-    const state = stateRef.current;
-    const canvas = canvasRef.current;
+    const state = stateReference.current;
+    const canvas = canvasReference.current;
     if (state === null || canvas === null) {
       return;
     }
     const { x, y } = getCanvasCoordinates(event);
-    const star = findStarAtCoordinates(state.stars, fallAngleRef.current, x, y);
-    hoveredStarIdRef.current = star?.id ?? null;
+    const star = findStarAtCoordinates(state.stars, fallAngleReference.current, x, y);
+    hoveredStarIdReference.current = star?.id ?? null;
     canvas.style.cursor = star !== null ? "pointer" : "default";
   };
 
   const handleMouseLeave = (): void => {
-    const canvas = canvasRef.current;
-    hoveredStarIdRef.current = null;
+    const canvas = canvasReference.current;
+    hoveredStarIdReference.current = null;
     if (canvas !== null) {
       canvas.style.cursor = "default";
     }
   };
 
   const handleClick = (event: ReactMouseEvent<HTMLCanvasElement>): void => {
-    const state = stateRef.current;
+    const state = stateReference.current;
     if (state === null || onSelectStar === undefined) {
       return;
     }
     const { x, y } = getCanvasCoordinates(event);
-    const star = findStarAtCoordinates(state.stars, fallAngleRef.current, x, y);
+    const star = findStarAtCoordinates(state.stars, fallAngleReference.current, x, y);
     if (star !== null) {
       if (star.tag !== null) {
         rememberTag(star.seed, star.tag);
@@ -94,7 +94,7 @@ const useSkyCanvas = (onSelectStar?: (starSeed: Seed) => void): SkyHandle => {
 
   // canvas and loop are external systems, so drive via effect.
   useEffect((): (() => void) => {
-    const canvas = canvasRef.current;
+    const canvas = canvasReference.current;
     const context = canvas?.getContext("2d") ?? null;
     if (canvas === null || context === null) {
       return (): void => {};
@@ -102,7 +102,7 @@ const useSkyCanvas = (onSelectStar?: (starSeed: Seed) => void): SkyHandle => {
 
     const sky = generateSky(seed);
     const profile = generateSkyProfile(seed);
-    fallAngleRef.current = profile.fallAngle;
+    fallAngleReference.current = profile.fallAngle;
     const sessionRandom = createSeededRandom(Date.now());
     let logicalWidth = window.innerWidth;
     let logicalHeight = window.innerHeight;
@@ -166,7 +166,7 @@ const useSkyCanvas = (onSelectStar?: (starSeed: Seed) => void): SkyHandle => {
       logicalHeight,
       takeSeedAndTag,
     );
-    stateRef.current = state;
+    stateReference.current = state;
     let previousTime = performance.now();
     let elapsedSeconds = 0;
     let animationFrame = 0;
@@ -184,9 +184,9 @@ const useSkyCanvas = (onSelectStar?: (starSeed: Seed) => void): SkyHandle => {
         logicalHeight,
         deltaSeconds,
         takeSeedAndTag,
-        hoveredStarIdRef.current,
+        hoveredStarIdReference.current,
       );
-      stateRef.current = state;
+      stateReference.current = state;
       renderSky(context, sky, logicalWidth, logicalHeight);
       renderStarField(context, state, profile, elapsedSeconds);
       animationFrame = window.requestAnimationFrame(tick);
@@ -199,12 +199,12 @@ const useSkyCanvas = (onSelectStar?: (starSeed: Seed) => void): SkyHandle => {
       window.cancelAnimationFrame(animationFrame);
       window.cancelAnimationFrame(resizeFrame);
       window.removeEventListener("resize", scheduleResize);
-      stateRef.current = null;
-      hoveredStarIdRef.current = null;
+      stateReference.current = null;
+      hoveredStarIdReference.current = null;
     };
   }, [seed]);
 
-  return { canvasRef, handleClick, handleMouseMove, handleMouseLeave };
+  return { canvasReference, handleClick, handleMouseMove, handleMouseLeave };
 };
 
 export { useSkyCanvas };

@@ -85,7 +85,7 @@ async def post_stars_save(
     response: Response,
     user_id: str | None = Depends(get_authenticated_user_id),
 ) -> dict:
-    """Verify a star's tag and persist its seed once, owned by the caller."""
+    """Verify a star's tag and save its seed once for the caller."""
     if user_id is None:
         return error_response(response, 401, "not_authenticated")
 

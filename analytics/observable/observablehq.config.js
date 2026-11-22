@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 
 const favicon = readFileSync("./logo.png").toString("base64");
 
+/** Observable Framework site settings. */
 export default {
   title: "Dying Skies",
   root: "src",

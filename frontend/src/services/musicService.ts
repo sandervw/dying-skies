@@ -108,16 +108,16 @@ const buildPart = (
   register: number,
   tempo: number,
   time: number,
-): void => {
+): void => { // eslint-disable-line max-params -- issue #2
   const beat = 60 / tempo;
   const seconds = spec.hold * beat;
   const seen = new Set<string>(); // drop ties; mono voices take one note per slot
   for (const [bar, position, step] of events) {
     if (seen.has(`${bar}:${position}`)) continue;
     seen.add(`${bar}:${position}`);
-    const at = time + (bar * 4 + position) * beat;
+    const startTime = time + (bar * 4 + position) * beat;
     const semitone = offsets[step % offsets.length] + 12 * Math.floor(step / offsets.length);
-    instrument.triggerAttackRelease(12 * (register + 1) + semitone, seconds, at); // MIDI from C{register}; noise ignores pitch
+    instrument.triggerAttackRelease(12 * (register + 1) + semitone, seconds, startTime); // MIDI from C{register}; noise ignores pitch
   }
 };
 

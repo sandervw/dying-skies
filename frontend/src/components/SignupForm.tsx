@@ -28,7 +28,7 @@ const allRulesPass = (rules: PasswordRules | null): boolean =>
   rules !== null && RULE_KEYS.every((key) => rules[key]);
 
 /** account creation form with live password-rule checks. */
-const SignupForm = ({ onClose, onSwitch }: SignupFormProps): ReactElement => {
+const SignupForm = ({ onClose, onSwitch }: SignupFormProps): ReactElement => { // eslint-disable-line complexity -- issue #2
   const { setUser } = useAuth();
   const { data: riddle } = useQuery({
     queryKey: ["auth", "signup-riddle"],
@@ -40,7 +40,7 @@ const SignupForm = ({ onClose, onSwitch }: SignupFormProps): ReactElement => {
   const [rules, setRules] = useState<PasswordRules | null>(null);
   const [error, setError] = useState("");
 
-  // debounce the live rule check so we do not call on every keystroke.
+  // debounce the live rule check; never call on every keystroke.
   useEffect((): (() => void) | undefined => {
     if (riddle === undefined || password === "") {
       setRules(null);

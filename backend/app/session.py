@@ -47,7 +47,7 @@ async def reserve_counter_range(session_id: str, count: int) -> range:
 
 
 async def set_session_user(session_id: str, user_id: str) -> None:
-    """Link a session to a user, keeping only the newest few per user."""
+    """Link a session to a user, keeping the newest few per user."""
     pool = await get_pool()
     async with pool.acquire() as connection:
         async with connection.transaction():

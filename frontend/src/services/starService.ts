@@ -119,7 +119,7 @@ const buildStar = (
   profile: SkyProfile,
   positionX: number,
   positionY: number,
-): FallingStar => {
+): FallingStar => { // eslint-disable-line max-params -- issue #2
   const shape = createSeededRandom(deriveSeed(starSeed, "star-shape"));
   const length = randomInRange(shape, SIZE_MINIMUM, SIZE_MAXIMUM);
   const width = length / SHAPE_ASPECT;
@@ -147,15 +147,15 @@ const pickEntryPoint = (
   width: number,
   height: number,
   margin: number,
-): EntryPoint => {
+): EntryPoint => { // eslint-disable-line max-params -- issue #2
   const directionX = Math.cos(fallAngle);
   const directionY = Math.sin(fallAngle);
   const topInflow = Math.abs(directionY) * width;
   const sideInflow = Math.abs(directionX) * height;
   const alongTop = sessionRandom() * (topInflow + sideInflow) < topInflow;
-  const x = alongTop ? sessionRandom() * width : directionX > 0 ? 0 : width;
-  const y = alongTop ? 0 : sessionRandom() * height;
-  return { x: x - directionX * margin, y: y - directionY * margin };
+  const entryX = alongTop ? sessionRandom() * width : directionX > 0 ? 0 : width;
+  const entryY = alongTop ? 0 : sessionRandom() * height;
+  return { x: entryX - directionX * margin, y: entryY - directionY * margin };
 };
 
 // spawn one star just outside the boundary so it slides in.
@@ -166,7 +166,7 @@ const spawnStar = (
   width: number,
   height: number,
   issued: SeedTagPair,
-): FallingStar => {
+): FallingStar => { // eslint-disable-line max-params -- issue #2
   const entry = pickEntryPoint(profile.fallAngle, sessionRandom, width, height, SIZE_MAXIMUM);
   return buildStar(issued.seed, issued.tag, id, profile, entry.x, entry.y);
 };
@@ -178,14 +178,14 @@ const spawnRatePerSecond = (fallAngle: number, height: number): number => {
   return TARGET_STAR_COUNT / lifetimeSeconds;
 };
 
-/** fill the field up to the target count with issued stars, if available. */
+/** fill the field to the target count with issued stars, if available. */
 const populateStarField = (
   profile: SkyProfile,
   sessionRandom: RandomNumberGenerator,
   width: number,
   height: number,
   takeSeedAndTag: SeedTagSource,
-): StarFieldState => {
+): StarFieldState => { // eslint-disable-line max-params -- issue #2
   const stars: FallingStar[] = [];
   let nextStarId = 0;
   while (nextStarId < TARGET_STAR_COUNT) {
@@ -241,7 +241,7 @@ const stepStarField = (
   deltaSeconds: number,
   takeSeedAndTag: SeedTagSource,
   frozenStarId?: number | null,
-): StarFieldState => {
+): StarFieldState => { // eslint-disable-line max-params -- issue #2
   const step = Math.min(deltaSeconds, MAXIMUM_DELTA_SECONDS);
   for (const star of state.stars) {
     advanceStar(star, step, star.id === frozenStarId);

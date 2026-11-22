@@ -1,8 +1,4 @@
-/**
- * Instrument sets load from ../assets/instrumentSets/*.json (filename = set name).
- * THE INSTRUMENTS MUST NEVER BE ADJUSTED WITHOUT EXPLICIT INSTRUCTIONS;
- *   Treat instruments as raw sound sources - fixes must go in musicService.ts
- */
+/** Sets load from assets/instrumentSets; NEVER ADJUST INSTRUMENTS, fix sound in musicService. */
 
 import type { InstrumentSpec, Role } from "../types/music";
 

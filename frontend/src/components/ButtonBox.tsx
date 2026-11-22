@@ -27,7 +27,7 @@ const ButtonBox = ({
   setOpen,
   muted,
   toggleMusic,
-}: ButtonBoxProps): ReactElement => {
+}: ButtonBoxProps): ReactElement => { // eslint-disable-line complexity -- issue #2
   const navigate = useNavigate();
   const onGallery = isGalleryPath(useLocation().pathname);
   const { seed, tag, save, destroy } = useSkySeed();
