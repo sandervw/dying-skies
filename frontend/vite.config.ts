@@ -34,11 +34,11 @@ const contentSecurityPolicyPlugin = (apiBaseUrl: string): Plugin => ({
   ],
 });
 
-// https://vite.dev/config/
+/** Vite build and dev-server settings for the frontend. */
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), "");
+  const environment = loadEnv(mode, process.cwd(), "");
   return {
-    plugins: [react(), contentSecurityPolicyPlugin(env.VITE_API_BASE_URL ?? "")],
+    plugins: [react(), contentSecurityPolicyPlugin(environment.VITE_API_BASE_URL ?? "")],
     server: { open: true },
     optimizeDeps: { exclude: ["webmusic-engine"] },
     // CSP blocks data: scripts, so the worklet stays a file

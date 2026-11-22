@@ -56,8 +56,8 @@ const squaredDistanceBetween = (first: Dot, second: Dot): number => {
 };
 
 // key an undirected edge independent of endpoint order.
-const edgeKey = (from: number, to: number): string =>
-  from < to ? `${from}-${to}` : `${to}-${from}`;
+const edgeKey = (from: number, target: number): string =>
+  from < target ? `${from}-${target}` : `${target}-${from}`;
 
 // pick a seed-chosen anchor, then gather its nearest neighbours as members.
 const selectMemberIndices = (
@@ -95,12 +95,12 @@ const buildMinimumSpanningTree = (
     let nearestTo = -1;
     let nearestDistance = Number.POSITIVE_INFINITY;
     for (const from of connected) {
-      for (const to of remaining) {
-        const distance = squaredDistanceBetween(dots[from], dots[to]);
-        if (distance < nearestDistance) {
+      for (const target of remaining) {
+        const distance = squaredDistanceBetween(dots[from], dots[target]);
+        if (distance < nearestDistance) { // eslint-disable-line max-depth -- issue #2
           nearestDistance = distance;
           nearestFrom = from;
-          nearestTo = to;
+          nearestTo = target;
         }
       }
     }
@@ -128,14 +128,14 @@ const collectLoopEdges = (
   for (let outer = 0; outer < memberIndices.length; outer += 1) {
     for (let inner = outer + 1; inner < memberIndices.length; inner += 1) {
       const from = memberIndices[outer];
-      const to = memberIndices[inner];
-      if (treeKeys.has(edgeKey(from, to))) {
+      const target = memberIndices[inner];
+      if (treeKeys.has(edgeKey(from, target))) {
         continue;
       }
       candidates.push({
         from,
-        to,
-        squaredDistance: squaredDistanceBetween(dots[from], dots[to]),
+        to: target,
+        squaredDistance: squaredDistanceBetween(dots[from], dots[target]),
       });
     }
   }
@@ -217,7 +217,7 @@ const drawConstellation = (
   edges: readonly Edge[],
   width: number,
   height: number,
-): void => {
+): void => { // eslint-disable-line max-params -- issue #2
   context.strokeStyle = `rgba(255, 255, 255, ${LINE_OPACITY})`;
   context.lineWidth = LINE_WIDTH;
   for (const edge of edges) {

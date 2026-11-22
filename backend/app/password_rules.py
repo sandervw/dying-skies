@@ -4,12 +4,12 @@ import random
 import re
 from pathlib import Path
 
-_DATA_DIR = Path(__file__).parent / "data"
+_DATA_FOLDER = Path(__file__).parent / "data"
 
 
 def _load(name: str) -> list:
     """Read one JSON list from the data directory."""
-    with (_DATA_DIR / name).open(encoding="utf-8") as handle:
+    with (_DATA_FOLDER / name).open(encoding="utf-8") as handle:
         return json.load(handle)
 
 

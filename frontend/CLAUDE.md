@@ -25,3 +25,5 @@ Soft-wrap paragraphs (one physical line each). No em-dashes.
 
 ## Music
 **Assume the user has ZERO MUSIC KNOWLEDGE**; you must explain music in laymans terms.
+
+**THE INSTRUMENTS MUST NEVER BE ADJUSTED WITHOUT EXPLICIT INSTRUCTIONS.** The sets in `src/assets/instrumentSets/` are raw sound sources; sound fixes go in `src/services/musicService.ts`.

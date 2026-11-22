@@ -20,7 +20,7 @@ const rememberTag = (seed: Seed, tag: string): void => {
 const tagForSeed = (seed: Seed): string | null =>
   tagsByToken.get(encodeSeed(seed)) ?? null;
 
-const postJson = (path: string, body: unknown): Promise<Response> =>
+const postBody = (path: string, body: unknown): Promise<Response> =>
   fetch(`${base}${path}`, {
     method: "POST",
     credentials: "include",
@@ -30,7 +30,7 @@ const postJson = (path: string, body: unknown): Promise<Response> =>
 
 /** request a batch of backend-issued seed/tag pairs; empty on failure. */
 const fetchStarBatch = async (count: number): Promise<readonly IssuedStar[]> => {
-  const response = await postJson("/stars/batch", { count });
+  const response = await postBody("/stars/batch", { count });
   if (!response.ok) {
     return [];
   }
@@ -43,9 +43,9 @@ const fetchStarBatch = async (count: number): Promise<readonly IssuedStar[]> => 
     .filter((star): star is IssuedStar => star !== null);
 };
 
-/** save a star by its issued seed and tag; rejects on any failure. */
+/** save a star by its seed and tag; rejects on any failure. */
 const saveStar = async (seed: Seed, tag: string): Promise<void> => {
-  const response = await postJson("/stars/save", { seed: encodeSeed(seed), tag });
+  const response = await postBody("/stars/save", { seed: encodeSeed(seed), tag });
   if (!response.ok) {
     throw new Error("save_failed");
   }
@@ -53,7 +53,7 @@ const saveStar = async (seed: Seed, tag: string): Promise<void> => {
 
 /** destroy a saved sky by its seed; rejects on any failure. */
 const destroyStar = async (seed: Seed): Promise<void> => {
-  const response = await postJson("/stars/destroy", { seed: encodeSeed(seed) });
+  const response = await postBody("/stars/destroy", { seed: encodeSeed(seed) });
   if (!response.ok) {
     throw new Error("destroy_failed");
   }

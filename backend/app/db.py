@@ -8,7 +8,7 @@ _pool: asyncpg.Pool | None = None
 
 async def get_pool() -> asyncpg.Pool:
     """Return the shared asyncpg pool, creating it on first call."""
-    global _pool
+    global _pool  # noqa: PLW0603 - issue #3
     if _pool is None:
         database_url = os.environ["DATABASE_URL"]
         _pool = await asyncpg.create_pool(database_url)
@@ -17,7 +17,7 @@ async def get_pool() -> asyncpg.Pool:
 
 async def close_pool() -> None:
     """Close the shared asyncpg pool if it is open."""
-    global _pool
+    global _pool  # noqa: PLW0603 - issue #3
     if _pool is not None:
         await _pool.close()
         _pool = None

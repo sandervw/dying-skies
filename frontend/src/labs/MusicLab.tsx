@@ -1,7 +1,4 @@
-/**
- * A Throwaway file for testing; may break code style/conventions
- * Audio engine is imported from musicService.ts; this adds visuals.
- */
+/** Throwaway test page; musicService supplies the audio, this adds visuals. */
 
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, ReactElement } from "react";
@@ -255,7 +252,7 @@ const startPlayback = async (
 };
 
 // draw one animation frame: grid, notes, playhead, seam, spectrum, meter.
-const drawFrame = (canvas: HTMLCanvasElement, playback: Playback): void => {
+const drawFrame = (canvas: HTMLCanvasElement, playback: Playback): void => { // eslint-disable-line complexity -- issue #2
   const dpr = window.devicePixelRatio || 1;
   const width = canvas.clientWidth;
   const height = canvas.clientHeight;
@@ -298,23 +295,23 @@ const drawFrame = (canvas: HTMLCanvasElement, playback: Playback): void => {
   // bar blocks and beat seams: thick per bar, faint per beat.
   const secPerBar = playback.secPerBeat * BEATS_PER_BAR;
   for (let bar = 0; bar <= LOOP_BARS; bar++) {
-    const x = xOf(bar * secPerBar);
+    const barX = xOf(bar * secPerBar);
     context.strokeStyle = "rgba(255,255,255,0.14)";
     context.lineWidth = 1;
     context.beginPath();
-    context.moveTo(x, rollTop);
-    context.lineTo(x, rollBottom + percussionHeight + 6);
+    context.moveTo(barX, rollTop);
+    context.lineTo(barX, rollBottom + percussionHeight + 6);
     context.stroke();
     if (bar < LOOP_BARS) {
       context.fillStyle = "rgba(255,255,255,0.28)";
       context.font = "10px monospace";
-      context.fillText(String(bar + 1), x + 3, rollTop + 10);
+      context.fillText(String(bar + 1), barX + 3, rollTop + 10);
       for (let beat = 1; beat < BEATS_PER_BAR; beat++) {
-        const bx = xOf(bar * secPerBar + beat * playback.secPerBeat);
+        const beatX = xOf(bar * secPerBar + beat * playback.secPerBeat);
         context.strokeStyle = "rgba(255,255,255,0.05)";
         context.beginPath();
-        context.moveTo(bx, rollTop);
-        context.lineTo(bx, rollBottom);
+        context.moveTo(beatX, rollTop);
+        context.lineTo(beatX, rollBottom);
         context.stroke();
       }
     }
@@ -344,8 +341,8 @@ const drawFrame = (canvas: HTMLCanvasElement, playback: Playback): void => {
 
   // notes: colour by instrument, size and glow by volume.
   for (const note of playback.notes) {
-    const x = xOf(note.timeSec);
-    const w = Math.max(3, (note.durSec / playback.loopSeconds) * spanX);
+    const noteX = xOf(note.timeSec);
+    const noteWidth = Math.max(3, (note.durSec / playback.loopSeconds) * spanX);
     const nearness = 1 - Math.min(1, Math.abs(note.timeSec - now) / 0.35);
     const alpha =
       clamp(0.35 + note.gain * 0.8, 0.3, 1) * (0.55 + 0.45 * nearness);
@@ -356,19 +353,19 @@ const drawFrame = (canvas: HTMLCanvasElement, playback: Playback): void => {
       context.shadowBlur = 12 * nearness;
     }
     if (note.midi === null) {
-      const cy = rollBottom + percussionHeight / 2;
+      const centerY = rollBottom + percussionHeight / 2;
       const size = 4 + note.gain * 6;
       context.beginPath();
-      context.moveTo(x, cy - size);
-      context.lineTo(x + size, cy);
-      context.lineTo(x, cy + size);
-      context.lineTo(x - size, cy);
+      context.moveTo(noteX, centerY - size);
+      context.lineTo(noteX + size, centerY);
+      context.lineTo(noteX, centerY + size);
+      context.lineTo(noteX - size, centerY);
       context.closePath();
       context.fill();
     } else {
       const barHeight = 3 + note.gain * 9;
-      const y = yOf(note.midi) - barHeight / 2;
-      context.fillRect(x, y, w, barHeight);
+      const noteY = yOf(note.midi) - barHeight / 2;
+      context.fillRect(noteX, noteY, noteWidth, barHeight);
     }
     context.shadowBlur = 0;
   }
@@ -394,14 +391,14 @@ const drawFrame = (canvas: HTMLCanvasElement, playback: Playback): void => {
     const specTop = rollBottom + percussionHeight + 18;
     for (let index = 0; index < bars; index++) {
       const value = freq[Math.floor((index / bars) * freq.length)] / 255;
-      const h = value * spectrumHeight;
+      const barLength = value * spectrumHeight;
       const hue = 200 - index * 2;
       context.fillStyle = `hsl(${hue}, 70%, ${30 + value * 40}%)`;
       context.fillRect(
         left + index * barWidth,
-        specTop + spectrumHeight - h,
+        specTop + spectrumHeight - barLength,
         barWidth - 1,
-        h,
+        barLength,
       );
     }
 
@@ -463,11 +460,11 @@ const MusicLab = (): ReactElement => {
   const [modeName, setModeName] = useState<string>("majorPentatonic");
   const [playing, setPlaying] = useState(false);
   const [playback, setPlayback] = useState<Playback | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const canvasReference = useRef<HTMLCanvasElement>(null);
 
   useEffect((): (() => void) | void => {
     if (playback === null) return;
-    const canvas = canvasRef.current;
+    const canvas = canvasReference.current;
     if (canvas === null) return;
     let frame = 0;
     const loop = (): void => {
@@ -506,7 +503,7 @@ const MusicLab = (): ReactElement => {
           <select
             style={styles.select}
             value={setName}
-            onChange={(e) => setSetName(e.target.value)}
+            onChange={(event) => setSetName(event.target.value)}
           >
             {SET_NAMES.map((name) => (
               <option key={name} value={name}>
@@ -521,7 +518,7 @@ const MusicLab = (): ReactElement => {
           <select
             style={styles.select}
             value={presetName}
-            onChange={(e) => setPresetName(e.target.value)}
+            onChange={(event) => setPresetName(event.target.value)}
           >
             {PRESET_NAMES.map((name) => (
               <option key={name} value={name}>
@@ -536,7 +533,7 @@ const MusicLab = (): ReactElement => {
           <select
             style={styles.select}
             value={modeName}
-            onChange={(e) => setModeName(e.target.value)}
+            onChange={(event) => setModeName(event.target.value)}
           >
             {MODE_NAMES.map((name) => (
               <option key={name} value={name}>
@@ -599,7 +596,7 @@ const MusicLab = (): ReactElement => {
           {playing ? "looping" : "stopped"}
         </div>
         <div style={styles.canvasWrap}>
-          <canvas ref={canvasRef} style={styles.canvas} />
+          <canvas ref={canvasReference} style={styles.canvas} />
         </div>
       </main>
     </div>

@@ -11,7 +11,6 @@ FastAPI + Postgres API. Root `CLAUDE.md` holds shared standards and system conve
 - `app/routes/`: `stars.py`, `auth.py`, `stats.py`, `health.py`.
 - `app/`: domain modules `security.py`, `session.py`, `db.py`, `encoding.py`, `password_rules.py`, `rate_limit.py`, `errors.py`.
 - `tests/`: pytest suites with `conftest.py` env defaults.
-- Exception to one-export-per-file: small domain modules may group tightly-related functions.
 
 ## Commands
 - Install: `pip install -r requirements.txt`

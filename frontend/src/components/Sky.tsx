@@ -12,12 +12,12 @@ interface SkyProps {
 const Sky = ({ muted }: SkyProps): ReactElement => {
   const navigate = useNavigate();
   useSkyMusic(muted);
-  const { canvasRef, handleClick, handleMouseMove, handleMouseLeave } = useSkyCanvas(
+  const { canvasReference, handleClick, handleMouseMove, handleMouseLeave } = useSkyCanvas(
     (star) => navigate(seedToPath(star)),
   );
   return (
     <canvas
-      ref={canvasRef}
+      ref={canvasReference}
       className="sky"
       onClick={handleClick}
       onMouseMove={handleMouseMove}

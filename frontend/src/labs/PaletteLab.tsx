@@ -183,13 +183,13 @@ const styles: Record<string, CSSProperties> = {
 
 /** throwaway lab: preview comet palettes while tuning generation knobs. */
 const PaletteLab = (): ReactElement => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const canvasReference = useRef<HTMLCanvasElement | null>(null);
   const [knobs, setKnobs] = useState<LabKnobs>(DEFAULT_KNOBS);
   const [shuffleSeed, setShuffleSeed] = useState<number>(1);
 
   useEffect((): void => {
-    if (canvasRef.current !== null) {
-      drawGrid(canvasRef.current, knobs, shuffleSeed);
+    if (canvasReference.current !== null) {
+      drawGrid(canvasReference.current, knobs, shuffleSeed);
     }
   }, [knobs, shuffleSeed]);
 
@@ -233,7 +233,7 @@ const PaletteLab = (): ReactElement => {
         <pre style={styles.code}>{JSON.stringify(knobs, null, 2)}</pre>
       </aside>
       <main style={styles.main}>
-        <canvas ref={canvasRef} />
+        <canvas ref={canvasReference} />
       </main>
     </div>
   );
