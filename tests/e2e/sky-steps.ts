@@ -3,11 +3,21 @@ import { expect } from "./harness";
 
 /** The address pattern of a Sky reached through a Star. */
 export const SKY_ADDRESS = /\/sky\/[^/]+$/;
+
+/** The address pattern of the Root sky. */
+export const ROOT_ADDRESS = /\/$/;
+
+const STAR_PATH = "/stars/";
+const STAR_ROUTES = `**${STAR_PATH}**`;
 const GRID_STEP = 16;
 const SEARCH_MILLISECONDS = 45_000;
 
 /** The Sky canvas, found by its place on the page. */
 export const skyCanvas = (page: Page): Locator => page.locator("canvas").first();
+
+/** The page title. */
+export const title = (page: Page): Locator =>
+  page.getByRole("heading", { name: "DYING SKIES" });
 
 /** The three-part Readout under the title. */
 export const readout = (page: Page): Locator =>
@@ -32,12 +42,15 @@ export const counterNumber = async (page: Page, word: string): Promise<number> =
 
 /** Stop the API from issuing Stars, so only static art shows. */
 export const blockStars = async (page: Page): Promise<void> => {
-  await page.route("**/stars/**", (route) => route.abort());
+  await page.route(STAR_ROUTES, (route) => route.abort());
 };
+
+/** True for the address of a request that issues Stars. */
+export const isStarRequest = (address: string): boolean => address.includes(STAR_PATH);
 
 /** Let the API issue Stars again. */
 export const allowStars = async (page: Page): Promise<void> => {
-  await page.unroute("**/stars/**");
+  await page.unroute(STAR_ROUTES);
 };
 
 /** Screenshot the static Sky, hiding the changing footer. */

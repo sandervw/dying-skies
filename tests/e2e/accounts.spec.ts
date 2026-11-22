@@ -1,22 +1,24 @@
 import type { Locator, Page } from "@playwright/test";
-import { expect, riddleAnswer, test } from "./harness";
+import { expect, test } from "./harness";
 import {
   freshUsername,
   logIn,
   logOut,
   openSignUp,
+  passwordField,
+  passwordParts,
   riddleRule,
   signUp,
   submitSignUp,
+  usernameField,
 } from "./account-steps";
-import { button, fallIntoStar, readout } from "./sky-steps";
+import { ROOT_ADDRESS, button, fallIntoStar, readout } from "./sky-steps";
 
 const WARNING = "Write down your username and password. Forget them and they are lost forever.";
 const WRONG_LOGIN = "Wrong username or password.";
+const WRONG_PASSWORD = "wrong-password";
 const LOGIN_ATTEMPTS = 11;
 
-const usernameField = (page: Page) => page.getByRole("textbox", { name: "username" });
-const passwordField = (page: Page) => page.getByRole("textbox", { name: "password" });
 const rule = (page: Page, text: string) => page.getByRole("listitem").filter({ hasText: text });
 
 const typePart = async (page: Page, part: string, ruleText: string): Promise<void> => {
@@ -54,13 +56,10 @@ test("UC-11 Open the sign-up form", async ({ page }) => {
 test("UC-12 Password rules check as you type", async ({ page }) => {
   await page.goto("/");
   await openSignUp(page);
-  const answer = riddleAnswer(await (await riddleRule(page)).innerText());
   await expect(button(page, "enter")).toBeDisabled();
-  await typePart(page, "red", "A creative color");
-  await typePart(page, "leo", "Your zodiac sign");
-  await typePart(page, answer, "Answer:");
-  await typePart(page, "1999", "Your favorite year");
-  await typePart(page, "!", "A special character");
+  for (const [part, ruleText] of await passwordParts(page)) {
+    await typePart(page, part, ruleText);
+  }
   await usernameField(page).fill(freshUsername());
   await expect(button(page, "enter")).toBeEnabled();
 });
@@ -97,7 +96,7 @@ test("UC-16 Wrong password", async ({ page }) => {
   await page.goto("/");
   const account = await signUp(page);
   await logOut(page);
-  await logIn(page, { username: account.username, password: "wrong-password" });
+  await logIn(page, { username: account.username, password: WRONG_PASSWORD });
   await expect(page.getByText(WRONG_LOGIN)).toBeVisible();
   await button(page, "cancel").click();
   await logIn(page, { username: freshUsername(), password: account.password });
@@ -110,7 +109,7 @@ test("UC-17 Log out", async ({ page }) => {
   await signUp(page);
   await fallIntoStar(page);
   await logOut(page);
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(ROOT_ADDRESS);
   await expect(readout(page)).toHaveText(rootReadout);
   await expect(button(page, "Gallery")).toBeHidden();
 });
@@ -129,7 +128,7 @@ test("UC-18 No pasting", async ({ page, context }) => {
   await pasteInto(page, usernameField(page));
   await pasteInto(page, passwordField(page));
   await passwordField(page).pressSequentially("plain");
-  await expect(page.getByRole("textbox", { name: "password" })).toHaveValue("plain");
+  await expect(passwordField(page)).toHaveValue("plain");
   await expect(passwordField(page)).not.toHaveAttribute("type", "password");
 });
 
@@ -143,7 +142,7 @@ test("UC-19 Stay signed in", async ({ page }) => {
 
 test("UC-20 Too many attempts", async ({ page }) => {
   await page.goto("/");
-  await logIn(page, { username: freshUsername(), password: "wrong-password" });
+  await logIn(page, { username: freshUsername(), password: WRONG_PASSWORD });
   await expect(page.getByText(WRONG_LOGIN)).toBeVisible();
   for (let attempt = 2; attempt <= LOGIN_ATTEMPTS; attempt += 1) {
     const answered = page.waitForResponse((response) => response.request().method() === "POST");

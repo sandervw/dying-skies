@@ -2,23 +2,24 @@ import { expect, test } from "./harness";
 import {
   allowStars,
   blockStars,
+  button,
   counterNumber,
   fallIntoStar,
   footer,
   hoverStar,
+  isStarRequest,
   readout,
   skyCanvas,
   skyPicture,
+  title,
 } from "./sky-steps";
 
 const COUNTER_TEXT =
   /^So far, man has saved \d+ skies, destroyed \d+ skies, and allowed \d+ skies to die\.$/;
 
-const isStarRequest = (address: string): boolean => address.includes("/stars/");
-
 test("UC-01 Open the Root sky", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "DYING SKIES" })).toBeVisible();
+  await expect(title(page)).toBeVisible();
   await expect(readout(page)).toHaveText(/^[^·]+ · [^·]+ · [^·]+$/);
   await expect(footer(page)).toHaveText(COUNTER_TEXT);
   await expect(skyCanvas(page)).toBeVisible();
@@ -106,19 +107,18 @@ test("UC-06 Go back", async ({ page }) => {
 test("UC-07 Immersive mode", async ({ page }) => {
   await blockStars(page);
   await page.goto("/");
-  const toggle = page.getByRole("button", { name: "immersive-mode" });
-  const control = page.getByRole("button", { name: "Analytics" });
-  const title = page.getByRole("heading", { name: "DYING SKIES" });
+  const toggle = button(page, "immersive-mode");
+  const control = button(page, "Analytics");
   await skyPicture(page);
   const brightControl = await control.screenshot();
   await toggle.click();
-  await expect(title).toBeHidden();
+  await expect(title(page)).toBeHidden();
   await expect(readout(page)).toBeHidden();
   await expect(footer(page)).toBeHidden();
   await skyPicture(page);
   expect((await control.screenshot()).equals(brightControl)).toBe(false);
   await toggle.click();
-  await expect(title).toBeVisible();
+  await expect(title(page)).toBeVisible();
   await expect(readout(page)).toBeVisible();
   await expect(footer(page)).toBeVisible();
   await skyPicture(page);
@@ -127,16 +127,16 @@ test("UC-07 Immersive mode", async ({ page }) => {
 
 test("UC-08 Music", async ({ page }) => {
   await page.goto("/");
-  await expect(page.getByRole("button", { name: "Unmute music" })).toBeVisible();
-  await page.getByRole("button", { name: "Unmute music" }).click();
-  await expect(page.getByRole("button", { name: "Mute music" })).toBeVisible();
-  await page.getByRole("button", { name: "Mute music" }).click();
-  await expect(page.getByRole("button", { name: "Unmute music" })).toBeVisible();
+  await expect(button(page, "Unmute music")).toBeVisible();
+  await button(page, "Unmute music").click();
+  await expect(button(page, "Mute music")).toBeVisible();
+  await button(page, "Mute music").click();
+  await expect(button(page, "Unmute music")).toBeVisible();
 });
 
 test("UC-09 Analytics link", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Analytics" }).click();
+  await button(page, "Analytics").click();
   await expect(page).toHaveURL("https://dyingskies.com/analytics/");
 });
 
