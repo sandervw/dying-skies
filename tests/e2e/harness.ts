@@ -1,6 +1,6 @@
 import { test as base } from "@playwright/test";
-import riddles from "../../backend/app/data/riddles.json";
 import { apiURL } from "./playwright.config";
+import solvedRiddles from "./riddle-answers.json";
 
 const PRODUCTION_SITE = "https://dyingskies.com/**";
 
@@ -8,11 +8,11 @@ const randomOctet = (): number => Math.floor(Math.random() * 256);
 
 /** Look up the answer to the Riddle the sign-up form shows. */
 export const riddleAnswer = (shownText: string): string => {
-  const riddle = riddles.find((candidate) => shownText.includes(candidate.text));
-  if (riddle === undefined) {
-    throw new Error(`No known riddle in: ${shownText}`);
+  const solved = Object.entries(solvedRiddles).find(([riddle]) => shownText.includes(riddle));
+  if (solved === undefined) {
+    throw new Error(`No solved riddle in: ${shownText}`);
   }
-  return riddle.answers[0];
+  return solved[1];
 };
 
 /** The Playwright test, isolated from other tests and from production. */

@@ -1,7 +1,7 @@
 import type { Locator, Page } from "@playwright/test";
 import { expect, test } from "./harness";
 import { logOut, signUp } from "./account-steps";
-import { fallIntoStar, footer, readout } from "./sky-steps";
+import { fallIntoStar, footer, pointerIsHand, readout } from "./sky-steps";
 
 const ROOT_ADDRESS = /\/$/;
 const SKY_ADDRESS = /\/sky\/[^/]+$/;
@@ -13,15 +13,13 @@ const button = (page: Page, name: string): Locator =>
 const counterNumber = async (page: Page, word: string): Promise<number> => {
   const text = await footer(page).innerText();
   const found = new RegExp(`${word} (\\d+) skies`).exec(text);
-  return found === null ? Number.NaN : Number(found[1]);
+  if (found === null) {
+    throw new Error(`No Counter number in: ${text}`);
+  }
+  return Number(found[1]);
 };
 
 const tiles = (page: Page): Locator => page.locator("canvas");
-
-const pointerIsHand = (canvas: Locator): Promise<boolean> =>
-  expect(canvas)
-    .toHaveCSS("cursor", "pointer", { timeout: 500 })
-    .then(() => true, () => false);
 
 // A tile shows its Star at its centre; rest the pointer there.
 const hoverTileStar = async (page: Page, tile: Locator): Promise<void> => {

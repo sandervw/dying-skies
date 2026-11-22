@@ -32,10 +32,9 @@ export const skyPicture = async (page: Page): Promise<Buffer> => {
   return page.screenshot({ mask: [footer(page)], animations: "disabled" });
 };
 
-const pointerIsHand = (canvas: Locator): Promise<boolean> =>
-  expect(canvas)
-    .toHaveCSS("cursor", "pointer", { timeout: 20 })
-    .then(() => true, () => false);
+/** True when the pointer shows a hand over the canvas. */
+export const pointerIsHand = async (canvas: Locator): Promise<boolean> =>
+  (await canvas.evaluate((element) => getComputedStyle(element).cursor)) === "pointer";
 
 const sweepRow = async (page: Page, height: number, width: number): Promise<boolean> => {
   const canvas = skyCanvas(page);

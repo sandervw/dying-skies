@@ -17,7 +17,10 @@ const COUNTER_TEXT =
 const diedCount = async (page: Page): Promise<number> => {
   const text = await footer(page).innerText();
   const found = /allowed (\d+) skies to die/.exec(text);
-  return found === null ? Number.NaN : Number(found[1]);
+  if (found === null) {
+    throw new Error(`No Counter number in: ${text}`);
+  }
+  return Number(found[1]);
 };
 
 const isStarRequest = (address: string): boolean => address.includes("/stars/");
