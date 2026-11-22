@@ -23,6 +23,9 @@ services:
         condition: service_healthy
     env_file:
       - .env
+    environment:
+      # Local only: each black-box test sends its own client address.
+      TRUSTED_PROXY_HOPS: "1"
     ports:
       - "8000:8000"
     volumes:
