@@ -4,7 +4,8 @@ import dotenv from "dotenv";
 
 dotenv.config({ path: new URL("../.env", import.meta.url) });
 
-export const schema = process.env.ANALYTICS_DB_SCHEMA || "analytics";
+/** Schema holding the analytics marts. */
+export const schema =process.env.ANALYTICS_DB_SCHEMA || "analytics";
 
 /** Runs one query against the marts and closes the pool. */
 export async function rows(text) {
