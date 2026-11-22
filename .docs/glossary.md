@@ -11,7 +11,7 @@ The ubiquitous language of Dying Skies, one line per term. Code, issues, and UI 
 - **Star:** a falling object that carries the Seed of the Sky it opens.
 - **Constellation:** the connected dots in a Sky's static art.
 - **Palette:** the colours a Sky gives its Stars.
-- **Sky profile:** the Seed-derived settings shared by every Star in a Sky, such as the fall angle.
+- **Sky profile:** the Seed-derived settings shared by every Star in a Sky.
 - **Accent:** the Palette's median colour, used for highlighted controls.
 
 ## Lifecycle

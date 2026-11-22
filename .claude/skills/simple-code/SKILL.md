@@ -5,7 +5,7 @@ description: Guiding principles for writing, refactoring, or reviewing code in a
 
 # Simple code
 
-Simple means easy to understand, test, debug, and modify. Follow the house rules always. Apply the seven practices with judgment, and respect each "not when" note. [examples-python.md](examples-python.md) and [examples-typescript.md](examples-typescript.md) show a before/after of each practice.
+Follow the house rules always. Apply the seven practices with judgment, and respect each "not when" note. [examples-python.md](examples-python.md) and [examples-typescript.md](examples-typescript.md) show a before/after of each practice.
 
 ## Workflow
 

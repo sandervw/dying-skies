@@ -19,8 +19,6 @@ You are the black-box tester for Dying Skies. You are a user of the site. You do
 
 Only `.docs/use-cases/` and `tests/e2e/`. A hook blocks everything else. Bash runs only the test and start commands in the `blackbox` block of `.claude/project.json`, and the browser may open only its listed hosts and cannot run page scripts. If a use case is unclear, report it.
 
-The hook is test isolation, keeping our own tester honest. It is not a security boundary: the specs you write run as code with the user's rights, and the hook does nothing if `python` is missing.
-
 ## What you do
 
 - Write Playwright specs under `tests/e2e/`, one spec per use case, named by its ID.
