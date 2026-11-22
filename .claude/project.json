@@ -35,6 +35,7 @@
     "startCommands": [["npm", "run", "dev"]],
     "safeFlags": ["--project=[\\w.-]+", "--grep=.+", "--headed", "--reporter=[A-Za-z-]+"],
     "allowedTools": [
+      "SubagentHandback",
       "mcp__playwright__browser_navigate_back",
       "mcp__playwright__browser_snapshot",
       "mcp__playwright__browser_take_screenshot",
