@@ -18,6 +18,7 @@ const layerRules = Object.entries(FORBIDDEN_IMPORTS).map(([layers, forbidden]) =
   to: { path: `${SOURCE}/(${forbidden})/` },
 }));
 
+/** Import rules for the frontend layers and the four pieces. */
 module.exports = {
   forbidden: [
     ...layerRules,

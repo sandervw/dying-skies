@@ -43,6 +43,7 @@ const CLOCK_READ = {
   message: "Core code reads the clock (1); pass the time in.",
 };
 
+/** Lint rules behind the simple-code hard checks. */
 export default defineConfig(
   { ignores: ["**/node_modules/**", "**/dist/**", "**/build/**", "**/vendor/**", "**/.observablehq/**", "**/*.d.ts"] },
   {

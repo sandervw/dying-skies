@@ -34,7 +34,7 @@ const contentSecurityPolicyPlugin = (apiBaseUrl: string): Plugin => ({
   ],
 });
 
-// https://vite.dev/config/
+/** Vite build and dev-server settings for the frontend. */
 export default defineConfig(({ mode }) => {
   const environment = loadEnv(mode, process.cwd(), "");
   return {

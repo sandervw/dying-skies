@@ -3,6 +3,7 @@ import { defineConfig, devices } from "@playwright/test";
 // Black-box use-case specs; the API runs from backend/docker-compose.yml.
 const baseURL = "http://localhost:5173";
 
+/** Runs the use-case specs at desktop and phone widths. */
 export default defineConfig({
   testDir: ".",
   testMatch: "**/*.spec.ts",
