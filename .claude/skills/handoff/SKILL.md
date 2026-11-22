@@ -25,6 +25,7 @@ Current state and next work. Rewrite when stale; never log history.
 - The look, the sound, and the account design are final. A seed keeps its art, instrument set, mode, and preset.
 - Close issues rather than open new ones. One batch, one PR.
 - Give the CEO a way to see what was built. New visual design: a mockup round of 2 to 3 variants first.
+- As few tests as possible: no unit tests, backend tests for main functionality and edge cases, one Playwright test per use case.
 - Explain music in plain words.
 - Time-box agents to 15 to 30 minutes.
 - Docs state the current design only; no decision logs or history.
@@ -38,7 +39,7 @@ Current state and next work. Rewrite when stale; never log history.
 - Every merge to `main` deploys each piece whose folder it touches, a piece's `CLAUDE.md` and docs included. Watch it with `gh run watch`.
 - A change to a seeded generator changes every Saved Sky. Compare the production bundle or fixed-seed screenshots before and after.
 - Minified bundles hide local renames: a behaviour-neutral frontend change leaves `frontend/dist/assets/*.js` byte-identical apart from changed property names.
-- The backend tests need Postgres on `localhost:5432` (`docker compose up db` in `backend/`); CI runs them against a service container.
+- The backend tests need Postgres on `localhost:5432` (`docker compose up db` in `backend/`).
 - The frontend's `wrangler` comes from the root `node_modules` on the box, which no deploy reinstalls.
 - Root TypeScript is pinned for the linter; `frontend/` carries its own newer TypeScript for the build.
 - `npm run dev` passes `--open false`; plain `vite` opens a browser tab.

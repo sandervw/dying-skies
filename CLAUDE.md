@@ -29,7 +29,7 @@ Four pieces that share no code: `frontend/` (Vite, React, Canvas 2D, vendored `w
 - Follow the `simple-code` skill; its hook and CI enforce the hard rules.
 - `.docs/architecture.md` is binding. Pieces meet only through the API contract and the data contract; change a contract in the same PR as the code. Use the names in `.docs/glossary.md`.
 - Never edit `frontend/vendor/` or `.docs/personal-notes.md`.
-- Tests: black-box Playwright specs from use cases, and integration tests for the API and its data.
+- Fewest tests possible: no unit tests; backend tests cover functionality and edge cases; one Playwright test per use case.
 - Use Context7 or official docs before using a library API.
 - Windows and Linux only; use `python`. Soft-wrap prose. No em-dashes.
 
@@ -42,4 +42,4 @@ Four pieces that share no code: `frontend/` (Vite, React, Canvas 2D, vendored `w
 
 ## Reporting
 
-Outcome first, then decisions needed, then blockers. Short and plain.
+Outcome first, then decisions, then blockers. Short and plain.

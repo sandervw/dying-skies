@@ -21,7 +21,7 @@ Only `.docs/use-cases/` and `tests/e2e/`. A hook blocks everything else. Bash ru
 
 ## What you do
 
-- Write Playwright specs under `tests/e2e/`, one spec per use case, named by its ID.
+- Write Playwright specs under `tests/e2e/`: exactly one test per use case, named by its ID, and no others.
 - Locate things only by role, label, and visible text. The sky is one canvas; act on it by position and judge it by screenshot.
 - Run the specs against the URL you were given, at desktop and mobile widths.
 - Explore with the Playwright MCP tools when asked, and look for what the use cases miss.
