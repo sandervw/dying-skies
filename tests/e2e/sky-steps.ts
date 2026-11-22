@@ -30,14 +30,27 @@ export const footer = (page: Page): Locator => page.getByRole("contentinfo");
 export const button = (page: Page, name: string): Locator =>
   page.getByRole("button", { name, exact: true });
 
-/** Read one Counter number: saved, destroyed, or allowed. */
-export const counterNumber = async (page: Page, word: string): Promise<number> => {
+const COUNTER_WAIT = { timeout: 30_000, intervals: [1_000] };
+
+const counterNumber = async (page: Page, word: string): Promise<number> => {
   const text = await footer(page).innerText();
   const found = new RegExp(`${word} (\\d+) skies`).exec(text);
   if (found === null) {
     throw new Error(`No Counter number in: ${text}`);
   }
   return Number(found[1]);
+};
+
+/** Note a Counter number; the returned step waits for a rise. */
+export const counterRise = async (page: Page, word: string): Promise<() => Promise<void>> => {
+  const before = await counterNumber(page, word);
+  return () => expect.poll(() => counterNumber(page, word), COUNTER_WAIT).toBeGreaterThan(before);
+};
+
+/** Click where the pointer rests. */
+export const clickHere = async (page: Page): Promise<void> => {
+  await page.mouse.down();
+  await page.mouse.up();
 };
 
 /** Stop the API from issuing Stars, so only static art shows. */
@@ -98,8 +111,7 @@ export const fallIntoStar = async (page: Page): Promise<string> => {
   const before = page.url();
   const beforeReadout = await readout(page).innerText();
   await hoverStar(page);
-  await page.mouse.down();
-  await page.mouse.up();
+  await clickHere(page);
   await expect(page).not.toHaveURL(before);
   await expect(page).toHaveURL(SKY_ADDRESS);
   await expect(readout(page)).not.toHaveText(beforeReadout);

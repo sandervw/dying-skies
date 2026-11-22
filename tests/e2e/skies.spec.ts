@@ -3,11 +3,12 @@ import {
   allowStars,
   blockStars,
   button,
-  counterNumber,
+  counterRise,
   fallIntoStar,
   footer,
   hoverStar,
   isStarRequest,
+  pointerIsHand,
   readout,
   skyCanvas,
   skyPicture,
@@ -24,7 +25,7 @@ test("UC-01 Open the Root sky", async ({ page }) => {
   await expect(footer(page)).toHaveText(COUNTER_TEXT);
   await expect(skyCanvas(page)).toBeVisible();
   await hoverStar(page);
-  await expect(skyCanvas(page)).toHaveCSS("cursor", "pointer");
+  expect(await pointerIsHand(skyCanvas(page))).toBe(true);
 });
 
 test("UC-02 Fall into a Star", async ({ page }) => {
@@ -36,7 +37,7 @@ test("UC-02 Fall into a Star", async ({ page }) => {
   await allowStars(page);
   await page.reload();
   await hoverStar(page);
-  await expect(skyCanvas(page)).toHaveCSS("cursor", "pointer");
+  expect(await pointerIsHand(skyCanvas(page))).toBe(true);
   const newStars = page.waitForRequest((request) => isStarRequest(request.url()));
   await fallIntoStar(page);
   await newStars;
@@ -143,8 +144,6 @@ test("UC-09 Analytics link", async ({ page }) => {
 test("UC-10 Counter stays live", async ({ page }) => {
   await page.goto("/");
   await expect(footer(page)).toHaveText(COUNTER_TEXT);
-  const startCount = await counterNumber(page, "allowed");
-  await expect
-    .poll(() => counterNumber(page, "allowed"), { timeout: 40_000, intervals: [1_000] })
-    .toBeGreaterThan(startCount);
+  const diedRose = await counterRise(page, "allowed");
+  await diedRose();
 });

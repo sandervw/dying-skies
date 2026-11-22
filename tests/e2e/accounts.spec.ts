@@ -8,6 +8,8 @@ import {
   passwordField,
   passwordParts,
   riddleRule,
+  rule,
+  rules,
   signUp,
   submitSignUp,
   usernameField,
@@ -19,7 +21,6 @@ const WRONG_LOGIN = "Wrong username or password.";
 const WRONG_PASSWORD = "wrong-password";
 const LOGIN_ATTEMPTS = 11;
 
-const rule = (page: Page, text: string) => page.getByRole("listitem").filter({ hasText: text });
 
 const typePart = async (page: Page, part: string, ruleText: string): Promise<void> => {
   await passwordField(page).pressSequentially(part);
@@ -43,13 +44,11 @@ test("UC-11 Open the sign-up form", async ({ page }) => {
   await expect(button(page, "cancel")).toBeVisible();
   await button(page, "create account").click();
   await expect(page.getByText(WARNING)).toBeVisible();
-  await riddleRule(page);
-  const rules = page.getByRole("listitem");
-  await expect(rules).toHaveCount(5);
-  for (const item of await rules.all()) {
+  await expect(await riddleRule(page)).toHaveCount(1);
+  await expect(rules(page)).toHaveCount(5);
+  for (const item of await rules(page).all()) {
     await expect(item).toHaveText(/^✕/);
   }
-  await expect(rules.filter({ hasText: /^✕\s*Answer:/ })).toHaveCount(1);
   await expect(button(page, "enter")).toBeDisabled();
 });
 
@@ -127,8 +126,8 @@ test("UC-18 No pasting", async ({ page, context }) => {
   await button(page, "create account").click();
   await pasteInto(page, usernameField(page));
   await pasteInto(page, passwordField(page));
-  await passwordField(page).pressSequentially("plain");
-  await expect(passwordField(page)).toHaveValue("plain");
+  await passwordField(page).pressSequentially(WRONG_PASSWORD);
+  await expect(passwordField(page)).toHaveValue(WRONG_PASSWORD);
   await expect(passwordField(page)).not.toHaveAttribute("type", "password");
 });
 

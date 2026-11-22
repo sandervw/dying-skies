@@ -5,8 +5,16 @@ import { button } from "./sky-steps";
 /** A username and password for one account. */
 export type Account = { username: string; password: string };
 
+const RIDDLE_LABEL = "Answer:";
 // The Riddle shows "..." until its words load.
-const RIDDLE_SHOWN = /Answer:\s*\p{L}/u;
+const RIDDLE_SHOWN = new RegExp(`${RIDDLE_LABEL}\\s*\\p{L}`, "u");
+
+/** Every Password rule on the sign-up form. */
+export const rules = (page: Page): Locator => page.getByRole("listitem");
+
+/** A Password rule found by its label. */
+export const rule = (page: Page, label: string): Locator =>
+  rules(page).filter({ hasText: label });
 
 /** The username field of the open form. */
 export const usernameField = (page: Page): Locator =>
@@ -28,9 +36,9 @@ export const openSignUp = async (page: Page): Promise<void> => {
 
 /** The Riddle rule, once its text has loaded. */
 export const riddleRule = async (page: Page): Promise<Locator> => {
-  const rule = page.getByRole("listitem").filter({ hasText: "Answer:" });
-  await expect(rule).toHaveText(RIDDLE_SHOWN);
-  return rule;
+  const riddle = rule(page, RIDDLE_LABEL);
+  await expect(riddle).toHaveText(RIDDLE_SHOWN);
+  return riddle;
 };
 
 /** The parts of a valid password, each with its rule's label. */
@@ -39,7 +47,7 @@ export const passwordParts = async (page: Page): Promise<[string, string][]> => 
   return [
     ["red", "A creative color"],
     ["leo", "Your zodiac sign"],
-    [riddleAnswer(riddle), "Answer:"],
+    [riddleAnswer(riddle), RIDDLE_LABEL],
     ["1999", "Your favorite year"],
     ["!", "A special character"],
   ];

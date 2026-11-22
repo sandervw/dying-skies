@@ -5,7 +5,8 @@ import {
   ROOT_ADDRESS,
   SKY_ADDRESS,
   button,
-  counterNumber,
+  clickHere,
+  counterRise,
   fallIntoStar,
   pointerIsHand,
   readout,
@@ -14,9 +15,8 @@ import {
 const GALLERY_ADDRESS = /\/gallery$/;
 const EMPTY_GALLERY = "No saved skies yet.";
 const DESTROY_PROMPT = "Destroy this sky forever?";
-const COUNTER_WAIT = { timeout: 30_000, intervals: [1_000] };
 
-const tiles = (page: Page): Locator => page.locator("canvas");
+const tiles = (page: Page): Locator => page.getByLabel("Open sky");
 
 type Box = { x: number; y: number; width: number; height: number };
 
@@ -33,7 +33,7 @@ const tileBox = async (tile: Locator): Promise<Box> => {
 const hoverTileStar = async (page: Page, tile: Locator): Promise<void> => {
   const box = await tileBox(tile);
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-  await expect(tile).toHaveCSS("cursor", "pointer");
+  await expect.poll(() => pointerIsHand(tile)).toBe(true);
 };
 
 // Rest the pointer on a tile spot that is not a Star.
@@ -73,8 +73,7 @@ const tileAddresses = async (page: Page, count: number): Promise<string[]> => {
   for (let place = 0; place < count; place += 1) {
     const tile = tiles(page).nth(place);
     await hoverTileStar(page, tile);
-    await page.mouse.down();
-    await page.mouse.up();
+    await clickHere(page);
     await expect(page).toHaveURL(SKY_ADDRESS);
     addresses.push(page.url());
     await page.goBack();
@@ -94,11 +93,11 @@ test("UC-21 Save a Sky", async ({ page }) => {
   await page.goto("/");
   await signUp(page);
   await fallIntoStar(page);
-  const savedBefore = await counterNumber(page, "saved");
+  const savedRose = await counterRise(page, "saved");
   await button(page, "Save this sky").click();
   await expect(button(page, "Save this sky")).toBeHidden();
   await expect(button(page, "Destroy this sky")).toBeVisible();
-  await expect.poll(() => counterNumber(page, "saved"), COUNTER_WAIT).toBeGreaterThan(savedBefore);
+  await savedRose();
 });
 
 test("UC-22 Where saving is offered", async ({ page }) => {
@@ -141,13 +140,11 @@ test("UC-25 Open a Sky from the Gallery", async ({ page }) => {
   await openGallery(page);
   const tile = tiles(page).first();
   await hoverTileEmpty(page, tile);
-  await page.mouse.down();
-  await page.mouse.up();
+  await clickHere(page);
   await page.waitForTimeout(1_000);
-  await expect(page).toHaveURL(/\/gallery$/);
+  await expect(page).toHaveURL(GALLERY_ADDRESS);
   await hoverTileStar(page, tile);
-  await page.mouse.down();
-  await page.mouse.up();
+  await clickHere(page);
   await expect(page).toHaveURL(saved);
   await expect(button(page, "Destroy this sky")).toBeVisible();
 });
@@ -169,7 +166,7 @@ test("UC-27 Destroy a Sky", async ({ page }) => {
   const rootReadout = await readout(page).innerText();
   await signUp(page);
   await saveSky(page);
-  const destroyedBefore = await counterNumber(page, "destroyed");
+  const destroyedRose = await counterRise(page, "destroyed");
   await button(page, "Destroy this sky").click();
   await expect(page.getByText(DESTROY_PROMPT)).toBeVisible();
   await button(page, "cancel").click();
@@ -178,9 +175,7 @@ test("UC-27 Destroy a Sky", async ({ page }) => {
   await expect(button(page, "Destroy this sky")).toBeVisible();
   await destroySky(page);
   await expect(readout(page)).toHaveText(rootReadout);
-  await expect
-    .poll(() => counterNumber(page, "destroyed"), COUNTER_WAIT)
-    .toBeGreaterThan(destroyedBefore);
+  await destroyedRose();
   await openGallery(page);
   await expect(page.getByText(EMPTY_GALLERY)).toBeVisible();
   await expect(tiles(page)).toHaveCount(0);
