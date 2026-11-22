@@ -1,26 +1,19 @@
 """Postgres connection pool built from DATABASE_URL."""
 import os
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 import asyncpg
 
-_pool: asyncpg.Pool | None = None
 
-
-async def get_pool() -> asyncpg.Pool:
-    """Return the shared asyncpg pool, creating it on first call."""
-    global _pool  # noqa: PLW0603 - issue #3
-    if _pool is None:
-        database_url = os.environ["DATABASE_URL"]
-        _pool = await asyncpg.create_pool(database_url)
-    return _pool
-
-
-async def close_pool() -> None:
-    """Close the shared asyncpg pool if it is open."""
-    global _pool  # noqa: PLW0603 - issue #3
-    if _pool is not None:
-        await _pool.close()
-        _pool = None
+@asynccontextmanager
+async def open_pool() -> AsyncIterator[asyncpg.Pool]:
+    """Open the pool with schema and roles ready; close it on exit."""
+    async with asyncpg.create_pool(os.environ["DATABASE_URL"]) as pool:
+        await ensure_schema(pool)
+        await ensure_analytics_role(pool)
+        await ensure_admin_role(pool)
+        yield pool
 
 
 async def ensure_schema(pool: asyncpg.Pool) -> None:

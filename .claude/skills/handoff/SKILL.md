@@ -12,13 +12,13 @@ Current state and next work. Rewrite when stale; never log history.
 - **Production** (`dyingskies.com`) runs `main`: falling from sky to sky, accounts, saving, the Gallery, destroying, the Counter, music, and the analytics site at `/analytics/`.
 - **Hosting:** the frontend and the analytics site are Cloudflare Workers assets. The API, Postgres, and Dagster run on one OVH VPS, reached as `api.dyingskies.com` through a Cloudflare Tunnel.
 - **Checks:** `main` requires the `checks` job. No black-box spec exists yet; the frontend has no tests.
-- **Exemptions:** 16 inline lint exemptions name issues #2 and #3.
+- **Exemptions:** 12 inline lint exemptions name issue #2.
 
 ## Next
 
 1. #1: the Playwright black-box suite from `.docs/use-cases/`.
 2. #2: bring the exempted frontend functions within the limits, after #1.
-3. #3: remove module-level state from `backend/app/db.py` and the two analytics loaders.
+3. Merge the Dependabot PRs.
 
 ## CEO preferences
 
@@ -42,8 +42,8 @@ Current state and next work. Rewrite when stale; never log history.
 - The backend tests need Postgres on `localhost:5432` (`docker compose up db` in `backend/`).
 - The frontend's `wrangler` comes from the root `node_modules` on the box, which no deploy reinstalls.
 - Root TypeScript is pinned for the linter; `frontend/` carries its own newer TypeScript for the build.
-- `npm run dev` passes `--open false`; plain `vite` opens a browser tab.
+- Start the frontend with `npm run dev`, which passes `--open false`.
 - A Save needs the Tag kept in memory since the Star was clicked; a reloaded Sky cannot be saved.
-- A PR body's `Closes #a, #b` closes only the first; write `Closes` before each number.
+- In a PR body, write `Closes` before each issue number.
 - Python's `write_text` on Windows writes CRLF; pass `newline="\n"` or use Edit.
 - `.docs/personal-notes.md` is the CEO's own file.

@@ -2,7 +2,6 @@
 from fastapi import APIRouter, Depends, Request, Response
 from pydantic import BaseModel, Field
 
-from app.db import get_pool
 from app.encoding import decode_base64url, encode_base64url
 from app.errors import error_response
 from app.rate_limit import limiter
@@ -70,7 +69,7 @@ async def post_stars_batch(
 ) -> StarsBatchResponse:
     """Issue a batch of HMAC-derived stars for the session."""
     secret = load_secret()
-    counters = await reserve_counter_range(session_id, body.count)
+    counters = await reserve_counter_range(request.state.pool, session_id, body.count)
     stars = []
     for counter in counters:
         seed = generate_seed(session_id, counter, secret)
@@ -81,6 +80,7 @@ async def post_stars_batch(
 
 @router.post("/stars/save")
 async def post_stars_save(
+    request: Request,
     body: StarSaveRequest,
     response: Response,
     user_id: str | None = Depends(get_authenticated_user_id),
@@ -101,7 +101,7 @@ async def post_stars_save(
     if not verify_tag(seed, tag, secret):
         return error_response(response, 403, "invalid_tag")
 
-    pool = await get_pool()
+    pool = request.state.pool
     destroyed = await pool.fetchval(
         "SELECT 1 FROM destroyed_stars WHERE seed = $1", seed
     )
@@ -122,6 +122,7 @@ async def post_stars_save(
 
 @router.post("/stars/destroy")
 async def post_stars_destroy(
+    request: Request,
     body: StarDestroyRequest,
     response: Response,
     user_id: str | None = Depends(get_authenticated_user_id),
@@ -137,7 +138,7 @@ async def post_stars_destroy(
     if len(seed) != 32:
         return error_response(response, 400, "malformed_input")
 
-    pool = await get_pool()
+    pool = request.state.pool
     async with pool.acquire() as connection:
         async with connection.transaction():
             row = await connection.fetchrow(
@@ -161,6 +162,7 @@ async def post_stars_destroy(
 
 @router.get("/stars/mine")
 async def get_stars_mine(
+    request: Request,
     response: Response,
     user_id: str | None = Depends(get_authenticated_user_id),
 ) -> dict:
@@ -168,7 +170,7 @@ async def get_stars_mine(
     if user_id is None:
         return error_response(response, 401, "not_authenticated")
 
-    pool = await get_pool()
+    pool = request.state.pool
     rows = await pool.fetch(
         "SELECT seed, saved_at FROM saved_stars WHERE owner_id = $1 "
         "ORDER BY saved_at DESC",
