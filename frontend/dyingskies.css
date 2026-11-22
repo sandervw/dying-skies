@@ -298,7 +298,8 @@ svg:hover {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: var(--medium);
-  padding: var(--xlarge);
+  /* block padding clears the fixed header and footer */
+  padding: calc(var(--xlarge) * 4) var(--xlarge);
 }
 
 .gallery-box {
