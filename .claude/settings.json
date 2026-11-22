@@ -1,24 +1,134 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(npm --prefix frontend run *)",
+      "Bash(npm --prefix analytics/observable run *)",
+      "Bash(npx playwright test*)",
+      "Bash(npx tsc *)",
+      "Bash(npx eslint *)",
+      "Bash(npx depcruise *)",
+      "Bash(python .claude/skills/simple-code/scripts/check_code.py *)",
+      "Bash(python -m pytest*)",
+      "Bash(python -m ruff *)",
+      "Bash(git status*)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git push *)",
+      "Bash(gh repo list*)",
+      "Bash(gh repo view*)",
+      "Bash(gh issue view *)",
+      "Bash(gh issue list*)",
+      "Bash(gh pr view *)",
+      "Bash(gh pr checks *)",
+      "Bash(gh pr merge *)",
+      "Bash(gh run list*)",
+      "Bash(gh run view *)",
+      "Bash(gh run watch *)",
+      "Read(./**/.env)",
+      "Read(./**/.env.*)",
+      "Read(./infra/tofu/*.tfvars)"
+    ],
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push * --force*)",
+      "Bash(git push * -f*)",
+      "Bash(git push * +*)",
+      "Bash(git push *:*)",
+      "Bash(git push *refs/heads/main*)",
+      "Bash(git push * --delete*)",
+      "Bash(git push --delete*)",
+      "Bash(git push -d*)",
+      "Bash(git push * -d *)",
+      "Bash(git push * main*)",
+      "Bash(git push * HEAD:main*)"
+    ],
+    "ask": [
+      "Bash(npm run deploy*)",
+      "Bash(npm --prefix * run deploy*)",
+      "Bash(npx wrangler deploy*)",
+      "Bash(npx wrangler versions deploy*)",
+      "Bash(npx wrangler rollback*)",
+      "Bash(npx wrangler delete*)",
+      "Bash(npx wrangler * delete*)",
+      "Bash(npx wrangler -*)",
+      "Bash(gh workflow run*)",
+      "Bash(gh secret *)",
+      "Bash(gh repo create*)",
+      "Bash(gh repo delete*)",
+      "Bash(gh repo edit*)",
+      "Bash(gh repo rename*)",
+      "Bash(gh repo archive*)",
+      "Bash(gh repo deploy-key*)",
+      "Bash(gh repo sync*)",
+      "Bash(tofu apply*)",
+      "Bash(tofu destroy*)",
+      "Bash(tofu * apply*)",
+      "Bash(tofu * destroy*)",
+      "Bash(ssh *)",
+      "Bash(scp *)"
+    ]
+  },
+  "enabledMcpjsonServers": ["playwright"],
   "hooks": {
     "PostToolUse": [
       {
-        "matcher": "Edit",
+        "matcher": "Write|Edit|MultiEdit",
         "hooks": [
           {
             "type": "command",
-            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PROJECT_DIR}/.claude/hooks/code-comment-edit-check.ps1\""
+            "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/skills/simple-code/scripts/check_code.py\" --hook"
           }
         ]
       },
       {
-        "matcher": "Write",
+        "matcher": "Write|Edit|MultiEdit|Bash",
         "hooks": [
           {
             "type": "command",
-            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File \"${CLAUDE_PROJECT_DIR}/.claude/hooks/code-comment-write-check.ps1\""
+            "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/cut_docs.py\""
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/prune_worktrees.py\""
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "doc-cutter",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/cut_docs.py\""
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR}/.claude/hooks/require_reviews.py\""
           }
         ]
       }
     ]
+  },
+  "enabledPlugins": {
+    "cloudflare@cloudflare": true,
+    "frontend-design@claude-plugins-official": true,
+    "security-guidance@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true
   }
 }

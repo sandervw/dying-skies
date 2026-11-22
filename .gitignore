@@ -160,11 +160,17 @@ venv/
 crash.log
 crash.*.log
 
+# Local agent state
 .claude/settings.local.json
+.claude/agent-memory-local/
+.claude/worktrees/
+.playwright-mcp/
+.ruff_cache/
+
+# Playwright output
+playwright-report/
+test-results/
 
 # frontend/scripts: track only Python sources
 frontend/scripts/*
 !frontend/scripts/*.py
-
-# Claude hook counters
-.claude/hooks/.state/

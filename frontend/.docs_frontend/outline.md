@@ -6,8 +6,10 @@ Vite + React single-page app rendering procedural skies on a Canvas 2D layer.
 - `components/`: `Sky` (the canvas view), `Header`, `Footer`, `ButtonBox`, `GalleryView`, `AuthOverlay` with `LoginForm`/`SignupForm`, `DestroyOverlay`, `Icon`.
 - `contexts/`: `SkySeedContext` (route seed plus save/destroy), `AuthContext` (current user).
 - `hooks/`: `useSkySeed`, `useSkyCanvas`, `useStats`, `useAuth`, `useImmersion`, `useSkyMusic`.
-- `services/`: `skyService`, `starService`, `paletteService`, `randomService` (pure seed-derived generators); `musicSoundService` (modes, presets, instrument voices); `musicEngineService` (scoring, instrument baking, note scheduling); `starApiService`, `authService` (backend calls); `routeService`, `iconService`, `manualEntryGuards`.
-- `types/`: `sky`, `star`, `palette`, `auth`.
+- `services/`: `skyService`, `starService`, `paletteService`, `randomService` (pure seed-derived generators); `musicService` (score building and playback through `webmusic-engine`); `starApiService`, `authService` (backend calls); `routeService`, `iconService`, `manualEntryGuards`.
+- `utils/`: `instrumentSets`, `modes`, `presets` (the music catalogs).
+- `types/`: `sky`, `star`, `palette`, `auth`, `music`.
+- `labs/`: `MusicLab` and `PaletteLab`, developer pages served from `lab.html`.
 - `App.tsx`, `main.tsx`: app shell and mount.
 
 ## Rendering
@@ -31,8 +33,9 @@ Vite + React single-page app rendering procedural skies on a Canvas 2D layer.
 - Fetches the user's saved seeds, renders a mini constellation and one wagging star per tile; clicking a tile opens that sky.
 
 ## Music
-- `useSkyMusic` plays each seed's score as endless ~30 second chunks: `musicEngineService` bakes one wet note per role offline via `Tone.Offline`, then fires those buffers live at context time, each chunk queued a second before the last one ends. A master gain fades in, mutes, and fades out over two seconds.
-- Chunk scatter is seeded per score, visit, and chunk, so playback never repeats and every sky keeps its own score.
+- `useSkyMusic` plays each seed through `musicService`: the seed picks an instrument set, a preset, and a mode, and `Header` shows them under the title.
+- The score is an 8-bar loop per instrument role. Each repeat re-rolls a fifth of its notes.
+- Music starts muted. On phones a silent looping clip keeps a locked phone playing and shows lock-screen controls.
 
 ## Counter
 - `Footer` polls `GET /stats` every 15 seconds and shows saved, destroyed, and died totals.
@@ -47,8 +50,7 @@ Screensaver aesthetic; the sky is the interface and UI stays near-invisible.
 
 ## Root sky
 - Fixed hardcoded seed: the origin of the universe.
-- Anonymous visitors get a view-only screensaver, nothing clickable.
-- Logged-in users get full interactive traversal and saving.
+- Anyone can fall from sky to sky. Saving, destroying, and the gallery need a login.
 
 ## Seeds
 - A seed is an unpadded base64url string (~43 chars) and is shareable as a `/sky/<seed>` link.

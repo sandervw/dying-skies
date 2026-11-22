@@ -1,5 +1,7 @@
 # Deploy: GitHub Actions
 
+`main` takes changes only through pull requests whose `checks` job passed. `ci.yml` runs that job on every pull request and on `main`: the simple-code checks, the frontend boundary check, the frontend type check and build, and the backend tests against a Postgres service.
+
 Every push to `main` deploys the pieces it touched. Three path-filtered workflows in `.github/workflows/` each fire only when files in their folder change. `infra/` is never auto-deployed; run OpenTofu by hand.
 
 ## How it works

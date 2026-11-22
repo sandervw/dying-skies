@@ -1,5 +1,19 @@
 {
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix frontend run dev -- --port 5173 --strictPort --open false",
+    "build": "npm --prefix frontend run build",
+    "typecheck": "npm --prefix frontend run typecheck",
+    "check": "python .claude/skills/simple-code/scripts/check_code.py .",
+    "check:architecture": "depcruise frontend/src --config .dependency-cruiser.cjs",
+    "test:e2e": "playwright test --config tests/e2e/playwright.config.ts"
+  },
   "devDependencies": {
+    "@playwright/test": "1.65.1",
+    "dependency-cruiser": "18.8.0",
+    "eslint": "^10.15.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.73.0",
     "wrangler": "^4.126.0"
   }
 }
