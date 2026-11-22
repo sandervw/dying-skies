@@ -6,7 +6,6 @@ import asyncpg
 from fastapi import APIRouter, Depends, Request, Response
 from pydantic import BaseModel, StringConstraints
 
-from app.db import get_pool
 from app.errors import error_response
 from app.password_rules import all_rules_pass, check_password, random_riddle
 from app.rate_limit import limiter
@@ -85,7 +84,7 @@ async def post_auth_signup(
     password_hash = hash_password(body.password)
     user_id = str(uuid.uuid4())
 
-    pool = await get_pool()
+    pool = request.state.pool
     try:
         await pool.execute(
             "INSERT INTO users (id, username, password_hash) VALUES ($1, $2, $3)",
@@ -96,7 +95,7 @@ async def post_auth_signup(
     except asyncpg.UniqueViolationError:
         return error_response(response, 409, "username_taken")
 
-    await set_session_user(session_id, user_id)
+    await set_session_user(pool, session_id, user_id)
     return AuthUserResponse(id=user_id, username=username).model_dump()
 
 
@@ -109,7 +108,7 @@ async def post_auth_login(
     session_id: str = Depends(get_session_id),
 ) -> dict:
     """Verify credentials by username and link the account to the session."""
-    pool = await get_pool()
+    pool = request.state.pool
     row = await pool.fetchrow(
         "SELECT id, password_hash FROM users WHERE username = $1",
         body.username,
@@ -121,28 +120,29 @@ async def post_auth_login(
         return error_response(response, 401, "invalid_credentials")
 
     user_id = str(row["id"])
-    await set_session_user(session_id, user_id)
+    await set_session_user(pool, session_id, user_id)
     return AuthUserResponse(id=user_id, username=body.username).model_dump()
 
 
 @router.post("/auth/logout")
 async def post_auth_logout(
+    request: Request,
     session_id: str = Depends(get_session_id),
 ) -> dict:
     """Unlink the current session from its authenticated user."""
-    await clear_session_user(session_id)
+    await clear_session_user(request.state.pool, session_id)
     return {"status": "logged_out"}
 
 
 @router.get("/auth/me")
 async def get_auth_me(request: Request, response: Response) -> dict:
     """Return the current session's authenticated user, if any."""
+    pool = request.state.pool
     session_id = request.cookies.get("session_id")
-    user_id = await get_session_user_id(session_id) if session_id else None
+    user_id = await get_session_user_id(pool, session_id) if session_id else None
     if user_id is None:
         return error_response(response, 401, "not_authenticated")
 
-    pool = await get_pool()
     row = await pool.fetchrow(
         "SELECT id, username FROM users WHERE id = $1", user_id
     )

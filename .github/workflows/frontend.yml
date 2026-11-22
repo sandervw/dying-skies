@@ -10,9 +10,10 @@ on:
   workflow_dispatch:
 
 # Shared with the other box deploys: they all reset the same /code/skies checkout.
+# queue: max makes every waiting deploy take its turn.
 concurrency:
   group: box-deploy
-  cancel-in-progress: false
+  queue: max
 
 env:
   BOX: skies@40.160.136.98

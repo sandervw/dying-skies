@@ -12,7 +12,7 @@ All three SSH to the box as `skies`, `git reset --hard origin/main` the shared `
 - `backend.yml` (`backend/**`): `uv pip install` into the existing venv, restart `skies-api.service`.
 - `analytics.yml` (`analytics/**`): `dbt deps` and `dbt parse`, restart `dagster-daemon` and `dagster-webserver`, then build and deploy the Observable site.
 
-All three share the `box-deploy` concurrency group and queue.
+All three share the `box-deploy` concurrency group, so only one runs on the box at a time. With `queue: max`, up to 100 runs wait their turn and none is cancelled.
 
 ## Setup (one time)
 
