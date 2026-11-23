@@ -121,12 +121,9 @@ async def post_auth_login(
 
 
 @router.post("/auth/logout")
-async def post_auth_logout(
-    request: Request,
-    session_id: str = Depends(get_session_id),
-) -> dict:
-    """Unlink the current session from its authenticated user."""
-    await delete_login(request.state.pool, session_id)
+async def post_auth_logout(request: Request) -> dict:
+    """Log the caller's session out, if it has a login."""
+    await delete_login(request)
     return {"status": "logged_out"}
 
 

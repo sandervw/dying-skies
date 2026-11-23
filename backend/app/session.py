@@ -10,8 +10,8 @@ SESSION_COOKIE_NAME = "session_id"
 _ONE_YEAR_SECONDS = 60 * 60 * 24 * 365
 
 
-async def _issued_session_id(pool: asyncpg.Pool, cookie: str | None) -> str | None:
-    """Return the cookie's session id if the backend issued it."""
+async def _known_session_id(pool: asyncpg.Pool, cookie: str | None) -> str | None:
+    """Return the cookie's session id when that session exists."""
     if cookie is None:
         return None
     return await pool.fetchval(
@@ -20,10 +20,10 @@ async def _issued_session_id(pool: asyncpg.Pool, cookie: str | None) -> str | No
 
 
 async def get_session_id(request: Request, response: Response) -> str:
-    """Return the caller's session id, issuing a new session if needed."""
+    """Return the caller's session id, creating a new session if needed."""
     pool = request.state.pool
     cookie = request.cookies.get(SESSION_COOKIE_NAME)
-    session_id = await _issued_session_id(pool, cookie)
+    session_id = await _known_session_id(pool, cookie)
     if session_id is not None:
         return session_id
     # Never adopt an unknown cookie; a reused id would repeat seeds.

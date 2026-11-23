@@ -29,9 +29,14 @@ async def create_login(pool: asyncpg.Pool, session_id: str, user_id: str) -> Non
             )
 
 
-async def delete_login(pool: asyncpg.Pool, session_id: str) -> None:
-    """Log a session out; the session and its count stay."""
-    await pool.execute("DELETE FROM logins WHERE session_id = $1", session_id)
+async def delete_login(request: Request) -> None:
+    """Log the request's session out; the session and its count stay."""
+    session_id = request.cookies.get(SESSION_COOKIE_NAME)
+    if session_id is None:
+        return
+    await request.state.pool.execute(
+        "DELETE FROM logins WHERE session_id = $1", session_id
+    )
 
 
 async def get_authenticated_user_id(request: Request) -> str | None:

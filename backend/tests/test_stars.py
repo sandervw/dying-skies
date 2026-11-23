@@ -1,7 +1,6 @@
 """Tests for the star issuance and save endpoints."""
 import base64
 import os
-import uuid
 
 os.environ.setdefault(
     "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/dying_skies"
@@ -9,8 +8,8 @@ os.environ.setdefault(
 os.environ.setdefault("SEED_HMAC_SECRET", "00" * 32)
 
 from fastapi.testclient import TestClient
+from helpers import get_star, rule_password, signup, unique_username
 
-from app import password_rules
 from app.main import app
 
 
@@ -18,30 +17,6 @@ def _decoded_length(value: str) -> int:
     """Base64url-decode a string and return its byte length."""
     padded = value + "=" * (-len(value) % 4)
     return len(base64.urlsafe_b64decode(padded))
-
-
-def _get_star(client: TestClient) -> dict:
-    """Issue one star (seed/tag pair) via the batch endpoint."""
-    response = client.post("/stars/batch", json={"count": 1})
-    return response.json()["stars"][0]
-
-
-def _username() -> str:
-    """Build a unique username for an isolated test account."""
-    return f"star_{uuid.uuid4().hex[:12]}"
-
-
-def _rule_password(client: TestClient) -> tuple[str, str]:
-    """Return a rule-satisfying password and the riddle it answers."""
-    riddle = client.get("/auth/signup-riddle").json()
-    answer = password_rules.get_riddle(riddle["riddle_id"])["answers"][0]
-    return f"periwinkle scorpio {answer} 1999!", riddle["riddle_id"]
-
-
-def _signup(client: TestClient, username: str, password: str, riddle_id: str):
-    """Post a signup request."""
-    body = {"username": username, "password": password, "riddle_id": riddle_id}
-    return client.post("/auth/signup", json=body)
 
 
 def test_stars_batch_issues_stars_and_sets_cookie():
@@ -63,7 +38,6 @@ def test_stars_batch_issues_stars_and_sets_cookie():
         assert first_seeds.isdisjoint(second_seeds)
 
 
-
 def test_unknown_session_cookie_gets_a_fresh_session():
     """A cookie the backend never issued is replaced, never adopted."""
     with TestClient(app) as client:
@@ -75,9 +49,9 @@ def test_unknown_session_cookie_gets_a_fresh_session():
 def test_star_save_then_reject_duplicate():
     """Saving succeeds once, then is rejected as already saved."""
     with TestClient(app) as client:
-        password, riddle_id = _rule_password(client)
-        _signup(client, _username(), password, riddle_id)
-        entry = _get_star(client)
+        password, riddle_id = rule_password(client)
+        signup(client, unique_username(), password, riddle_id)
+        entry = get_star(client)
 
         first = client.post("/stars/save", json=entry)
         assert first.status_code == 200
@@ -91,9 +65,9 @@ def test_star_save_then_reject_duplicate():
 def test_star_save_rejects_tampered_tag():
     """A tag that does not match the seed is rejected."""
     with TestClient(app) as client:
-        password, riddle_id = _rule_password(client)
-        _signup(client, _username(), password, riddle_id)
-        entry = _get_star(client)
+        password, riddle_id = rule_password(client)
+        signup(client, unique_username(), password, riddle_id)
+        entry = get_star(client)
         tampered = dict(entry, tag=("A" if entry["tag"][0] != "A" else "B") + entry["tag"][1:])
 
         response = client.post("/stars/save", json=tampered)
@@ -104,9 +78,9 @@ def test_star_save_rejects_tampered_tag():
 def test_star_save_rejects_truncated_seed():
     """A seed that does not decode to 32 bytes is rejected."""
     with TestClient(app) as client:
-        password, riddle_id = _rule_password(client)
-        _signup(client, _username(), password, riddle_id)
-        entry = _get_star(client)
+        password, riddle_id = rule_password(client)
+        signup(client, unique_username(), password, riddle_id)
+        entry = get_star(client)
         truncated = dict(entry, seed=entry["seed"][:-4])
 
         response = client.post("/stars/save", json=truncated)
@@ -117,7 +91,7 @@ def test_star_save_rejects_truncated_seed():
 def test_star_save_requires_authentication():
     """An anonymous save is rejected before decode/verify."""
     with TestClient(app) as client:
-        entry = _get_star(client)
+        entry = get_star(client)
         response = client.post("/stars/save", json=entry)
         assert response.status_code == 401
         assert response.json()["code"] == "not_authenticated"
@@ -134,11 +108,11 @@ def test_stars_mine_requires_authentication():
 def test_stars_mine_returns_owned_seeds_newest_first():
     """Saved seeds come back newest first."""
     with TestClient(app) as client:
-        password, riddle_id = _rule_password(client)
-        _signup(client, _username(), password, riddle_id)
+        password, riddle_id = rule_password(client)
+        signup(client, unique_username(), password, riddle_id)
 
-        first = _get_star(client)
-        second = _get_star(client)
+        first = get_star(client)
+        second = get_star(client)
         client.post("/stars/save", json=first)
         client.post("/stars/save", json=second)
 
@@ -151,7 +125,7 @@ def test_stars_mine_returns_owned_seeds_newest_first():
 def test_star_destroy_requires_authentication():
     """An anonymous destroy is rejected before decode."""
     with TestClient(app) as client:
-        entry = _get_star(client)
+        entry = get_star(client)
         response = client.post("/stars/destroy", json={"seed": entry["seed"]})
         assert response.status_code == 401
         assert response.json()["code"] == "not_authenticated"
@@ -160,9 +134,9 @@ def test_star_destroy_requires_authentication():
 def test_star_destroy_removes_saved_star_permanently():
     """Destroying a saved star removes it and blocks re-saving."""
     with TestClient(app) as client:
-        password, riddle_id = _rule_password(client)
-        _signup(client, _username(), password, riddle_id)
-        entry = _get_star(client)
+        password, riddle_id = rule_password(client)
+        signup(client, unique_username(), password, riddle_id)
+        entry = get_star(client)
         client.post("/stars/save", json=entry)
 
         response = client.post("/stars/destroy", json={"seed": entry["seed"]})
@@ -180,9 +154,9 @@ def test_star_destroy_removes_saved_star_permanently():
 def test_star_destroy_rejects_never_saved_seed():
     """Destroying a valid but never-saved seed is rejected."""
     with TestClient(app) as client:
-        password, riddle_id = _rule_password(client)
-        _signup(client, _username(), password, riddle_id)
-        entry = _get_star(client)
+        password, riddle_id = rule_password(client)
+        signup(client, unique_username(), password, riddle_id)
+        entry = get_star(client)
 
         response = client.post("/stars/destroy", json={"seed": entry["seed"]})
         assert response.status_code == 404
@@ -192,9 +166,9 @@ def test_star_destroy_rejects_never_saved_seed():
 def test_star_destroy_rejects_truncated_seed():
     """A seed that does not decode to 32 bytes is rejected."""
     with TestClient(app) as client:
-        password, riddle_id = _rule_password(client)
-        _signup(client, _username(), password, riddle_id)
-        entry = _get_star(client)
+        password, riddle_id = rule_password(client)
+        signup(client, unique_username(), password, riddle_id)
+        entry = get_star(client)
 
         response = client.post(
             "/stars/destroy", json={"seed": entry["seed"][:-4]}
@@ -206,16 +180,16 @@ def test_star_destroy_rejects_truncated_seed():
 def test_stars_mine_only_returns_callers_own_seeds():
     """A caller only sees their own saved seeds, not another's."""
     with TestClient(app) as client:
-        password_one, riddle_one = _rule_password(client)
-        _signup(client, _username(), password_one, riddle_one)
-        star_one = _get_star(client)
+        password_one, riddle_one = rule_password(client)
+        signup(client, unique_username(), password_one, riddle_one)
+        star_one = get_star(client)
         client.post("/stars/save", json=star_one)
         cookies_one = dict(client.cookies)
 
         client.cookies.clear()
-        password_two, riddle_two = _rule_password(client)
-        _signup(client, _username(), password_two, riddle_two)
-        star_two = _get_star(client)
+        password_two, riddle_two = rule_password(client)
+        signup(client, unique_username(), password_two, riddle_two)
+        star_two = get_star(client)
         client.post("/stars/save", json=star_two)
         cookies_two = dict(client.cookies)
 

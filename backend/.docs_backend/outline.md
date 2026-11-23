@@ -14,7 +14,7 @@ FastAPI + Postgres API. Live on an OVH VPS (see `infra/`). Full endpoint spec: `
 - Both are encoded as unpadded base64url on the wire.
 
 ## Sessions and auth
-- An anonymous httponly `session_id` cookie names a session, which holds the issuance counter and is never deleted. A cookie the backend never issued gets a new session (`session.py`).
+- An anonymous httponly `session_id` cookie names a session, which holds the issuance counter and is never deleted. An unknown `session_id` cookie gets a new session (`session.py`).
 - A login links a user to one session in the `logins` table; logout deletes it (`login.py`).
 - `/auth` signup/login/logout/me hash passwords with argon2id and use a dummy-verify timing guard on unknown users.
 - A user keeps at most 4 logins; a fifth evicts the oldest.
