@@ -14,9 +14,10 @@ FastAPI + Postgres API. Live on an OVH VPS (see `infra/`). Full endpoint spec: `
 - Both are encoded as unpadded base64url on the wire.
 
 ## Sessions and auth
-- An anonymous httponly `session_id` cookie carries identity and holds the issuance counter. Login links a user row to the session cookie.
+- An anonymous httponly `session_id` cookie names a session, which holds the issuance counter and is never deleted. An unknown `session_id` cookie gets a new session (`session.py`).
+- A login links a user to one session in the `logins` table; logout deletes it (`login.py`).
 - `/auth` signup/login/logout/me hash passwords with argon2id and use a dummy-verify timing guard on unknown users.
-- A user keeps at most 4 linked sessions; a fifth login evicts the oldest device (`session.py`).
+- A user keeps at most 4 logins; a fifth evicts the oldest.
 
 ## Password gate
 - Signup requires a password containing a color, a zodiac sign, the assigned riddle's answer, a digit, and a special character.
@@ -26,8 +27,8 @@ FastAPI + Postgres API. Live on an OVH VPS (see `infra/`). Full endpoint spec: `
 - `GET /stats` returns `saved`, `destroyed`, and `died = issued - saved - destroyed`, where issued is the sum of session counters.
 
 ## Storage
-- Shared asyncpg pool. The `users`, `sessions`, `saved_stars`, `destroyed_stars` schema is created on startup (`db.py`).
-- Startup also provisions a read-only `analytics_reader` role with column-scoped grants (never `password_hash`) and an owned `analytics` schema, when `ANALYTICS_READER_PASSWORD` is set.
+- Shared asyncpg pool. The `users`, `sessions`, `logins`, `saved_stars`, `destroyed_stars` schema is created on startup (`db.py`).
+- Startup also provisions a read-only `analytics_reader` role with column-scoped grants and an owned `analytics` schema, when `ANALYTICS_READER_PASSWORD` is set.
 
 ## Rate limiting
 - slowapi keyed by the real client address; `X-Forwarded-For` is honored only for `TRUSTED_PROXY_HOPS` (`rate_limit.py`).
@@ -38,6 +39,3 @@ FastAPI + Postgres API. Live on an OVH VPS (see `infra/`). Full endpoint spec: `
 ## Deployment
 - Runs as the `skies-api` systemd service against local Postgres, provisioned in `infra/`. Secrets in `/etc/skies/.env`: `SEED_HMAC_SECRET`, `DATABASE_URL`, `FRONTEND_ORIGIN`, `ANALYTICS_READER_PASSWORD`.
 - Public at `api.dyingskies.com` through a Cloudflare Tunnel; the Dagster UI shares it, gated with Cloudflare Access.
-
-## Boundaries
-Sky rendering from a seed is the frontend's concern. The metrics pipeline that reads `analytics_reader` is the analytics piece.

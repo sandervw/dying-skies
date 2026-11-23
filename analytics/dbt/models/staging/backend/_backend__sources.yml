@@ -14,7 +14,7 @@ sources:
         columns:
           - name: session_id
           - name: counter
-          - name: user_id
+          - name: created_at
       - name: saved_stars
         columns:
           - name: seed

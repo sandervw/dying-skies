@@ -6,11 +6,8 @@ from app.encoding import decode_base64url, encode_base64url
 from app.errors import error_response
 from app.rate_limit import limiter
 from app.security import generate_seed, generate_tag, load_secret, verify_tag
-from app.session import (
-    get_authenticated_user_id,
-    get_session_id,
-    reserve_counter_range,
-)
+from app.login import get_authenticated_user_id
+from app.session import get_session_id, reserve_counter_range
 
 router = APIRouter()
 

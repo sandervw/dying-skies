@@ -27,8 +27,9 @@ The ubiquitous language of Dying Skies, one line per term. Code, issues, and UI 
 
 ## Accounts
 
-- **Session:** the anonymous identity a browser gets on its first Batch; it holds that browser's issuance count.
-- **User:** an account with a username; signing in links it to the Session.
+- **Session:** the anonymous identity a browser gets on its first Batch; it holds that browser's issuance count and is never deleted.
+- **User:** an account with a username.
+- **Login:** a User's link to one Session; logout or eviction deletes the Login.
 - **Password rules:** the five conditions a signup password meets.
 - **Riddle:** the question assigned at signup whose answer the password holds.
 
