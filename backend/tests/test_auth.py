@@ -79,29 +79,41 @@ def test_login_success_and_wrong_password():
         assert right.json()["username"] == username
 
 
-def test_session_cap_keeps_four_per_user():
-    """A fifth session for one user evicts the oldest, capping at four."""
+def _is_logged_in(client, session_id: str) -> bool:
+    """Switch the client to a session; report whether it is logged in."""
+    client.cookies.clear()
+    client.cookies.set("session_id", session_id)
+    return client.get("/auth/me").status_code == 200
+
+
+def _get_star(client) -> dict:
+    """Issue one star (seed/tag pair) via the batch endpoint."""
+    return client.post("/stars/batch", json={"count": 1}).json()["stars"][0]
+
+
+def test_fifth_login_evicts_oldest_but_keeps_its_session():
+    """A fifth login logs the oldest device out; its issued stars survive."""
     with TestClient(app) as client:
         username = _username()
         password, riddle_id = _rule_password(client)
         _signup(client, username, password, riddle_id)
-        session_ids = [client.cookies.get("session_id")]
+        oldest = client.cookies.get("session_id")
+        first_star = _get_star(client)
+        died_before = client.get("/stats").json()["died"]
 
+        newer = []
         for _ in range(4):
             client.cookies.clear()
             login = client.post(
                 "/auth/login", json={"username": username, "password": password}
             )
             assert login.status_code == 200
-            session_ids.append(client.cookies.get("session_id"))
+            newer.append(client.cookies.get("session_id"))
 
-        still_authenticated = 0
-        for session_id in session_ids:
-            client.cookies.clear()
-            client.cookies.set("session_id", session_id)
-            if client.get("/auth/me").status_code == 200:
-                still_authenticated += 1
-        assert still_authenticated == 4
+        assert all(_is_logged_in(client, session_id) for session_id in newer)
+        assert not _is_logged_in(client, oldest)
+        assert client.get("/stats").json()["died"] == died_before
+        assert _get_star(client)["seed"] != first_star["seed"]
 
 
 def test_me_reflects_login_and_logout():

@@ -16,6 +16,27 @@ async def open_pool() -> AsyncIterator[asyncpg.Pool]:
         yield pool
 
 
+# Moves pre-split login links into logins; a no-op once applied.
+_MOVE_LOGINS_OUT_OF_SESSIONS = """
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'sessions'
+      AND column_name = 'user_id'
+  ) THEN
+    INSERT INTO logins (session_id, user_id, logged_in_at)
+      SELECT session_id, user_id, created_at FROM sessions
+      WHERE user_id IS NOT NULL
+      ON CONFLICT (session_id) DO NOTHING;
+    -- CASCADE drops analytics views on the column; dbt rebuilds them.
+    ALTER TABLE sessions DROP COLUMN user_id CASCADE;
+  END IF;
+END $$
+"""
+
+
 async def ensure_schema(pool: asyncpg.Pool) -> None:
     """Create the full schema if tables do not already exist."""
     await pool.execute(
@@ -26,13 +47,20 @@ async def ensure_schema(pool: asyncpg.Pool) -> None:
         "password_hash TEXT NOT NULL, "
         "created_at TIMESTAMPTZ NOT NULL DEFAULT now())"
     )
+    # Sessions are never deleted; their counters sum to all-time Issued.
     await pool.execute(
         "CREATE TABLE IF NOT EXISTS sessions ("
         "session_id TEXT PRIMARY KEY, "
         "counter BIGINT NOT NULL DEFAULT 0, "
-        "user_id UUID REFERENCES users(id), "
         "created_at TIMESTAMPTZ NOT NULL DEFAULT now())"
     )
+    await pool.execute(
+        "CREATE TABLE IF NOT EXISTS logins ("
+        "session_id TEXT PRIMARY KEY REFERENCES sessions(session_id), "
+        "user_id UUID NOT NULL REFERENCES users(id), "
+        "logged_in_at TIMESTAMPTZ NOT NULL DEFAULT now())"
+    )
+    await pool.execute(_MOVE_LOGINS_OUT_OF_SESSIONS)
     await pool.execute(
         "CREATE TABLE IF NOT EXISTS saved_stars ("
         "seed BYTEA PRIMARY KEY, "

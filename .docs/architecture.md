@@ -40,7 +40,7 @@ A file imports only from its own piece. A contract document changes in the same 
 |---|---|
 | `routes/` | Parse the request with Pydantic, call the rule modules, run the star, stats, and account queries, shape the response |
 | `security.py`, `encoding.py`, `password_rules.py` | Rules: HMAC seeds and tags, argon2id, base64url, the password rules. `security.py` reads `SEED_HMAC_SECRET`; `password_rules.py` reads its word lists and picks a riddle at random |
-| `session.py`, `db.py` | The session cookie and its queries, the issuance count, the pool, schema, roles |
+| `session.py`, `login.py`, `db.py` | The session cookie and issuance count; logins; the pool, schema, roles |
 | `rate_limit.py`, `errors.py`, `main.py` | The limiter, the error envelope, app wiring |
 
 Every query binds its values as parameters. `db.py` creates the schema and the `analytics_reader` and `skies_admin` roles on startup.
@@ -54,7 +54,7 @@ dbt reads the backend's tables as sources, builds staging views and mart tables 
 - **Accounts.** A username and a password, with no email and no reset. The signup and login fields show the password as plain text and refuse paste, drop, and autofill.
 - **Password rules.** A signup password holds a colour, a zodiac sign, the answer to the assigned riddle, a digit, and a special character. The word lists and riddle answers stay on the server; `/auth/password/check` returns one boolean per rule.
 - **Passwords.** Hashed with argon2id. A login for an unknown username spends the same argon2 time and returns the same error as a wrong password.
-- **Sessions.** An anonymous `session_id` cookie (`HttpOnly`, `SameSite=Lax`, `Secure` by default, one year) carries identity and the issuance count. Login links the session to a user; logout unlinks it. A user keeps 4 linked sessions, and a fifth evicts the oldest.
+- **Sessions.** An anonymous `session_id` cookie (`HttpOnly`, `SameSite=Lax`, `Secure` by default, one year) names a session, which holds the issuance count and is never deleted. A cookie the backend never issued gets a new session. A login links a session to a user in `logins`; logout deletes the login. A user keeps 4 logins, and a fifth evicts the oldest.
 - **Seeds and tags.** A seed is `HMAC(secret, session_id || issuance count)` and its tag is `HMAC(secret, seed)`. A save is accepted only when the tag verifies in constant time. Destroy and list act only on the caller's own rows.
 - **Rate limits.** Per client address, listed in the API contract. `X-Forwarded-For` counts only for `TRUSTED_PROXY_HOPS`.
 - **Browser.** CORS allows the single `FRONTEND_ORIGIN` with credentials. The production build injects a Content Security Policy from `frontend/vite.config.ts`.

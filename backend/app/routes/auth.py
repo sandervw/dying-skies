@@ -10,12 +10,8 @@ from app.errors import error_response
 from app.password_rules import all_rules_pass, check_password, random_riddle
 from app.rate_limit import limiter
 from app.security import dummy_verify, hash_password, verify_password
-from app.session import (
-    clear_session_user,
-    get_session_id,
-    get_session_user_id,
-    set_session_user,
-)
+from app.login import create_login, delete_login, get_authenticated_user_id
+from app.session import get_session_id
 
 router = APIRouter()
 
@@ -95,7 +91,7 @@ async def post_auth_signup(
     except asyncpg.UniqueViolationError:
         return error_response(response, 409, "username_taken")
 
-    await set_session_user(pool, session_id, user_id)
+    await create_login(pool, session_id, user_id)
     return AuthUserResponse(id=user_id, username=username).model_dump()
 
 
@@ -120,7 +116,7 @@ async def post_auth_login(
         return error_response(response, 401, "invalid_credentials")
 
     user_id = str(row["id"])
-    await set_session_user(pool, session_id, user_id)
+    await create_login(pool, session_id, user_id)
     return AuthUserResponse(id=user_id, username=body.username).model_dump()
 
 
@@ -130,20 +126,21 @@ async def post_auth_logout(
     session_id: str = Depends(get_session_id),
 ) -> dict:
     """Unlink the current session from its authenticated user."""
-    await clear_session_user(request.state.pool, session_id)
+    await delete_login(request.state.pool, session_id)
     return {"status": "logged_out"}
 
 
 @router.get("/auth/me")
-async def get_auth_me(request: Request, response: Response) -> dict:
+async def get_auth_me(
+    request: Request,
+    response: Response,
+    user_id: str | None = Depends(get_authenticated_user_id),
+) -> dict:
     """Return the current session's authenticated user, if any."""
-    pool = request.state.pool
-    session_id = request.cookies.get("session_id")
-    user_id = await get_session_user_id(pool, session_id) if session_id else None
     if user_id is None:
         return error_response(response, 401, "not_authenticated")
 
-    row = await pool.fetchrow(
+    row = await request.state.pool.fetchrow(
         "SELECT id, username FROM users WHERE id = $1", user_id
     )
     if row is None:

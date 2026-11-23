@@ -63,6 +63,15 @@ def test_stars_batch_issues_stars_and_sets_cookie():
         assert first_seeds.isdisjoint(second_seeds)
 
 
+
+def test_unknown_session_cookie_gets_a_fresh_session():
+    """A cookie the backend never issued is replaced, never adopted."""
+    with TestClient(app) as client:
+        client.cookies.set("session_id", "forged")
+        response = client.post("/stars/batch", json={"count": 1})
+        assert response.status_code == 200
+        assert response.cookies.get("session_id") not in (None, "forged")
+
 def test_star_save_then_reject_duplicate():
     """Saving succeeds once, then is rejected as already saved."""
     with TestClient(app) as client:
