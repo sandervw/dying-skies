@@ -27,31 +27,14 @@ const ButtonBox = ({
   setOpen,
   muted,
   toggleMusic,
-}: ButtonBoxProps): ReactElement => { // eslint-disable-line complexity -- issue #2
-  const navigate = useNavigate();
-  const onGallery = isGalleryPath(useLocation().pathname);
-  const { seed, tag, save, destroy } = useSkySeed();
+}: ButtonBoxProps): ReactElement => {
+  const { destroy } = useSkySeed();
   const { user } = useAuth();
   const [destroyOpen, setDestroyOpen] = useState(false);
-  const { data: savedTokens } = useQuery({
-    queryKey: ["stars", "mine"],
-    queryFn: fetchMyStars,
-    enabled: user !== null,
-  });
-  const isSaved = (savedTokens ?? []).includes(encodeSeed(seed));
 
   const handleAnalytics = (event: MouseEvent<HTMLButtonElement>): void => {
     event.preventDefault();
     window.location.href = ANALYTICS_URL;
-  };
-
-  const handleGallery = (event: MouseEvent<HTMLButtonElement>): void => {
-    event.preventDefault();
-    if (onGallery) {
-      navigate(-1);
-      return;
-    }
-    navigate(GALLERY_PATH);
   };
 
   return (
@@ -78,31 +61,7 @@ const ButtonBox = ({
         <Icon name="analytics" />
       </button>
       {user !== null ? (
-        <button
-          className="icon link"
-          aria-label={onGallery ? "Back" : "Gallery"}
-          onClick={handleGallery}
-        >
-          <Icon name={onGallery ? "return" : "archive"} />
-        </button>
-      ) : null}
-      {user !== null && tag !== null && !isSaved ? (
-        <button
-          className="icon link"
-          aria-label="Save this sky"
-          onClick={save}
-        >
-          <Icon name="save" />
-        </button>
-      ) : null}
-      {user !== null && isSaved ? (
-        <button
-          className="icon link"
-          aria-label="Destroy this sky"
-          onClick={() => setDestroyOpen(true)}
-        >
-          <Icon name="skull" />
-        </button>
+        <SignedInButtons onDestroy={() => setDestroyOpen(true)} />
       ) : null}
       <button
         className="icon link"
@@ -121,6 +80,63 @@ const ButtonBox = ({
         />
       ) : null}
     </div>
+  );
+};
+
+interface SignedInButtonsProps {
+  readonly onDestroy: () => void;
+}
+
+// a user's controls: gallery, then save or destroy for this sky.
+const SignedInButtons = ({ onDestroy }: SignedInButtonsProps): ReactElement => {
+  const navigate = useNavigate();
+  const onGallery = isGalleryPath(useLocation().pathname);
+  const { seed, tag, save } = useSkySeed();
+  const { data: savedTokens } = useQuery({
+    queryKey: ["stars", "mine"],
+    queryFn: fetchMyStars,
+  });
+  const isSaved = (savedTokens ?? []).includes(encodeSeed(seed));
+  const hasTag = tag !== null;
+  const canSave = hasTag && !isSaved;
+
+  const handleGallery = (event: MouseEvent<HTMLButtonElement>): void => {
+    event.preventDefault();
+    if (onGallery) {
+      navigate(-1);
+      return;
+    }
+    navigate(GALLERY_PATH);
+  };
+
+  return (
+    <>
+      <button
+        className="icon link"
+        aria-label={onGallery ? "Back" : "Gallery"}
+        onClick={handleGallery}
+      >
+        <Icon name={onGallery ? "return" : "archive"} />
+      </button>
+      {canSave ? (
+        <button
+          className="icon link"
+          aria-label="Save this sky"
+          onClick={save}
+        >
+          <Icon name="save" />
+        </button>
+      ) : null}
+      {isSaved ? (
+        <button
+          className="icon link"
+          aria-label="Destroy this sky"
+          onClick={onDestroy}
+        >
+          <Icon name="skull" />
+        </button>
+      ) : null}
+    </>
   );
 };
 

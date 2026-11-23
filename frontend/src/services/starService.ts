@@ -1,6 +1,6 @@
 import { createSeededRandom, deriveSeed } from "./randomService";
 import type { RandomNumberGenerator, Seed } from "./randomService";
-import { generatePalette, toCssColor } from "./paletteService";
+import { generatePalette } from "./paletteService";
 import type { FallingStar, StarFieldState, StarPixel } from "../types/star";
 import type { SkyProfile } from "../types/sky";
 
@@ -13,9 +13,6 @@ const SIZE_MINIMUM = 20;
 const SIZE_MAXIMUM = 50;
 const SHAPE_ASPECT = 3.2;
 const PIXEL_SIZE = 2;
-
-// extra hit-target padding in pixels around the star silhouette.
-const HIT_PADDING = 6;
 
 // fall speed in pixels per second; the spread gives free parallax depth.
 const SPEED_MINIMUM = 70;
@@ -31,17 +28,12 @@ const FALL_ANGLE_MAXIMUM_DEGREES = 110;
 // clamp a frame's elapsed time so hidden tabs cannot teleport stars.
 const MAXIMUM_DELTA_SECONDS = 0.05;
 
-// per-star wobble phase and tail-wag shape.
-const WAG_AMPLITUDE = 1;
-const WAG_FREQUENCY = 40;
-const WAG_WAVENUMBER = 0.1;
-
 ////////////////////////////////////////////////////////////
 // GENERATION
 ////////////////////////////////////////////////////////////
 
-// entry point where a fresh star crosses into the frame.
-interface EntryPoint {
+// a point in canvas pixels.
+interface Point {
   readonly x: number;
   readonly y: number;
 }
@@ -98,6 +90,33 @@ const generateSkyProfile = (seed: Seed): SkyProfile => {
   return { palette, fallAngle };
 };
 
+/** build one star: its seed fixes the look, the caller places it. */
+const buildStar = (
+  identity: Pick<FallingStar, "seed" | "tag">,
+  id: number,
+  profile: SkyProfile,
+  position: Point,
+): FallingStar => {
+  const shape = createSeededRandom(deriveSeed(identity.seed, "star-shape"));
+  const length = randomInRange(shape, SIZE_MINIMUM, SIZE_MAXIMUM);
+  const width = length / SHAPE_ASPECT;
+  const speed = randomInRange(shape, SPEED_MINIMUM, SPEED_MAXIMUM);
+  const pixels = buildCometPixels(shape, length, width, profile.palette.colors.length);
+  return {
+    id,
+    seed: identity.seed,
+    tag: identity.tag,
+    positionX: position.x,
+    positionY: position.y,
+    velocityX: Math.cos(profile.fallAngle) * speed,
+    velocityY: Math.sin(profile.fallAngle) * speed,
+    pixelSize: PIXEL_SIZE,
+    halfLength: length / 2,
+    wobblePhase: shape() * Math.PI * 2,
+    pixels,
+  };
+};
+
 ////////////////////////////////////////////////////////////
 // SPAWNING
 ////////////////////////////////////////////////////////////
@@ -108,67 +127,26 @@ interface SeedTagPair {
   readonly tag: string;
 }
 
-// pulls the next issued pair, or null when none available.
-type SeedTagSource = () => SeedTagPair | null;
+/** what the field reads from outside: sky, randomness, size, issued stars. */
+interface StarFieldInputs {
+  readonly profile: SkyProfile;
+  readonly sessionRandom: RandomNumberGenerator;
+  readonly width: number;
+  readonly height: number;
+  readonly takeSeedAndTag: () => SeedTagPair | null;
+}
 
-// build one star: seed fixes appearance, position is given.
-const buildStar = (
-  starSeed: Seed,
-  tag: string | null,
-  id: number,
-  profile: SkyProfile,
-  positionX: number,
-  positionY: number,
-): FallingStar => { // eslint-disable-line max-params -- issue #2
-  const shape = createSeededRandom(deriveSeed(starSeed, "star-shape"));
-  const length = randomInRange(shape, SIZE_MINIMUM, SIZE_MAXIMUM);
-  const width = length / SHAPE_ASPECT;
-  const speed = randomInRange(shape, SPEED_MINIMUM, SPEED_MAXIMUM);
-  const pixels = buildCometPixels(shape, length, width, profile.palette.colors.length);
-  return {
-    id,
-    seed: starSeed,
-    tag,
-    positionX,
-    positionY,
-    velocityX: Math.cos(profile.fallAngle) * speed,
-    velocityY: Math.sin(profile.fallAngle) * speed,
-    pixelSize: PIXEL_SIZE,
-    halfLength: length / 2,
-    wobblePhase: shape() * Math.PI * 2,
-    pixels,
-  };
-};
-
-// pick an entry on the top or inflow side, by flux.
-const pickEntryPoint = (
-  fallAngle: number,
-  sessionRandom: RandomNumberGenerator,
-  width: number,
-  height: number,
-  margin: number,
-): EntryPoint => { // eslint-disable-line max-params -- issue #2
-  const directionX = Math.cos(fallAngle);
-  const directionY = Math.sin(fallAngle);
+// pick an entry just outside the top or inflow side, by flux.
+const pickEntryPoint = (inputs: StarFieldInputs): Point => {
+  const { profile, sessionRandom, width, height } = inputs;
+  const directionX = Math.cos(profile.fallAngle);
+  const directionY = Math.sin(profile.fallAngle);
   const topInflow = Math.abs(directionY) * width;
   const sideInflow = Math.abs(directionX) * height;
   const alongTop = sessionRandom() * (topInflow + sideInflow) < topInflow;
   const entryX = alongTop ? sessionRandom() * width : directionX > 0 ? 0 : width;
   const entryY = alongTop ? 0 : sessionRandom() * height;
-  return { x: entryX - directionX * margin, y: entryY - directionY * margin };
-};
-
-// spawn one star just outside the boundary so it slides in.
-const spawnStar = (
-  id: number,
-  profile: SkyProfile,
-  sessionRandom: RandomNumberGenerator,
-  width: number,
-  height: number,
-  issued: SeedTagPair,
-): FallingStar => { // eslint-disable-line max-params -- issue #2
-  const entry = pickEntryPoint(profile.fallAngle, sessionRandom, width, height, SIZE_MAXIMUM);
-  return buildStar(issued.seed, issued.tag, id, profile, entry.x, entry.y);
+  return { x: entryX - directionX * SIZE_MAXIMUM, y: entryY - directionY * SIZE_MAXIMUM };
 };
 
 // spawn rate that, at steady state, holds the target on-screen count.
@@ -179,13 +157,8 @@ const spawnRatePerSecond = (fallAngle: number, height: number): number => {
 };
 
 /** fill the field to the target count with issued stars, if available. */
-const populateStarField = (
-  profile: SkyProfile,
-  sessionRandom: RandomNumberGenerator,
-  width: number,
-  height: number,
-  takeSeedAndTag: SeedTagSource,
-): StarFieldState => { // eslint-disable-line max-params -- issue #2
+const populateStarField = (inputs: StarFieldInputs): StarFieldState => {
+  const { profile, sessionRandom, width, height, takeSeedAndTag } = inputs;
   const stars: FallingStar[] = [];
   let nextStarId = 0;
   while (nextStarId < TARGET_STAR_COUNT) {
@@ -193,16 +166,8 @@ const populateStarField = (
     if (issued === null) {
       break;
     }
-    stars.push(
-      buildStar(
-        issued.seed,
-        issued.tag,
-        nextStarId,
-        profile,
-        sessionRandom() * width,
-        sessionRandom() * height,
-      ),
-    );
+    const position = { x: sessionRandom() * width, y: sessionRandom() * height };
+    stars.push(buildStar(issued, nextStarId, profile, position));
     nextStarId += 1;
   }
   return { stars, spawnAccumulator: 0, nextStarId };
@@ -234,14 +199,11 @@ const isOnscreen = (star: FallingStar, width: number, height: number): boolean =
 /** advance the field one frame: move, cull, then spawn replacements. */
 const stepStarField = (
   state: StarFieldState,
-  profile: SkyProfile,
-  sessionRandom: RandomNumberGenerator,
-  width: number,
-  height: number,
+  inputs: StarFieldInputs,
   deltaSeconds: number,
-  takeSeedAndTag: SeedTagSource,
   frozenStarId?: number | null,
-): StarFieldState => { // eslint-disable-line max-params -- issue #2
+): StarFieldState => {
+  const { profile, width, height, takeSeedAndTag } = inputs;
   const step = Math.min(deltaSeconds, MAXIMUM_DELTA_SECONDS);
   for (const star of state.stars) {
     advanceStar(star, step, star.id === frozenStarId);
@@ -257,112 +219,17 @@ const stepStarField = (
       break;
     }
     spawnAccumulator -= 1;
-    stars.push(spawnStar(nextStarId, profile, sessionRandom, width, height, issued));
+    stars.push(buildStar(issued, nextStarId, profile, pickEntryPoint(inputs)));
     nextStarId += 1;
   }
   return { stars, spawnAccumulator, nextStarId };
 };
 
-////////////////////////////////////////////////////////////
-// RENDERING
-////////////////////////////////////////////////////////////
-
-// transverse tail displacement; grows toward the tail, travels along it.
-const tailWave = (
-  pixel: StarPixel,
-  star: FallingStar,
-  elapsedSeconds: number,
-): number => {
-  const tailFraction = (star.halfLength - pixel.offsetX) / (2 * star.halfLength);
-  const travel =
-    elapsedSeconds * WAG_FREQUENCY + star.wobblePhase + WAG_WAVENUMBER * pixel.offsetX;
-  return WAG_AMPLITUDE * tailFraction * Math.sin(travel);
-};
-
-// paint one comet as its cluster of pixels, tail wagging.
-const drawStar = (
-  context: CanvasRenderingContext2D,
-  star: FallingStar,
-  profile: SkyProfile,
-  elapsedSeconds: number,
-): void => {
-  const offset = star.pixelSize / 2;
-  for (const pixel of star.pixels) {
-    const wag = tailWave(pixel, star, elapsedSeconds);
-    context.fillStyle = toCssColor(profile.palette.colors[pixel.colorIndex]);
-    context.fillRect(
-      pixel.offsetX - offset,
-      pixel.offsetY + wag - offset,
-      star.pixelSize,
-      star.pixelSize,
-    );
-  }
-};
-
-/** paint every live star, tails wagging; caller clears first. */
-const renderStarField = (
-  context: CanvasRenderingContext2D,
-  state: StarFieldState,
-  profile: SkyProfile,
-  elapsedSeconds: number,
-): void => {
-  for (const star of state.stars) {
-    context.save();
-    context.translate(star.positionX, star.positionY);
-    context.rotate(profile.fallAngle);
-    drawStar(context, star, profile, elapsedSeconds);
-    context.restore();
-  }
-};
-
-// test if a point (px, py) intersects a falling star with orientation.
-const isPointInsideStar = (
-  star: FallingStar,
-  fallAngle: number,
-  pointX: number,
-  pointY: number,
-): boolean => {
-  const deltaX = pointX - star.positionX;
-  const deltaY = pointY - star.positionY;
-  const cosine = Math.cos(-fallAngle);
-  const sine = Math.sin(-fallAngle);
-  const localX = deltaX * cosine - deltaY * sine;
-  const localY = deltaX * sine + deltaY * cosine;
-  const halfLength = star.halfLength + HIT_PADDING;
-  const radius = star.halfLength / SHAPE_ASPECT + HIT_PADDING;
-  const headX = star.halfLength - star.halfLength / SHAPE_ASPECT;
-  const insideHead = (localX - headX) ** 2 + localY ** 2 <= radius ** 2;
-  const taperHalf =
-    (radius * (localX + halfLength)) / (2 * star.halfLength - star.halfLength / SHAPE_ASPECT);
-  const insideTail =
-    localX >= -halfLength &&
-    localX <= headX &&
-    Math.abs(localY) <= Math.max(taperHalf, HIT_PADDING);
-  return insideHead || insideTail;
-};
-
-/** find the topmost falling star under given coordinates. */
-const findStarAtCoordinates = (
-  stars: readonly FallingStar[],
-  fallAngle: number,
-  pointX: number,
-  pointY: number,
-): FallingStar | null => {
-  for (let index = stars.length - 1; index >= 0; index -= 1) {
-    const star = stars[index];
-    if (isPointInsideStar(star, fallAngle, pointX, pointY)) {
-      return star;
-    }
-  }
-  return null;
-};
-
+export type { StarFieldInputs };
 export {
+  SHAPE_ASPECT,
   generateSkyProfile,
   buildStar,
   populateStarField,
   stepStarField,
-  drawStar,
-  renderStarField,
-  findStarAtCoordinates,
 };

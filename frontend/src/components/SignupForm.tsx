@@ -28,7 +28,7 @@ const allRulesPass = (rules: PasswordRules | null): boolean =>
   rules !== null && RULE_KEYS.every((key) => rules[key]);
 
 /** account creation form with live password-rule checks. */
-const SignupForm = ({ onClose, onSwitch }: SignupFormProps): ReactElement => { // eslint-disable-line complexity -- issue #2
+const SignupForm = ({ onClose, onSwitch }: SignupFormProps): ReactElement => {
   const { setUser } = useAuth();
   const { data: riddle } = useQuery({
     queryKey: ["auth", "signup-riddle"],
@@ -92,16 +92,7 @@ const SignupForm = ({ onClose, onSwitch }: SignupFormProps): ReactElement => { /
         value={password}
         onChange={(event) => setPassword(event.target.value)}
       />
-      <ul className="auth-rules">
-        <RuleRow met={rules?.color} label="A creative color" />
-        <RuleRow met={rules?.zodiac} label="Your zodiac sign" />
-        <RuleRow
-          met={rules?.riddle}
-          label={`Answer: ${riddle?.text ?? "..."}`}
-        />
-        <RuleRow met={rules?.year} label="Your favorite year" />
-        <RuleRow met={rules?.special} label="A special character" />
-      </ul>
+      <RuleList rules={rules} riddleText={riddle?.text} />
       {error !== "" ? <p className="auth-error">{error}</p> : null}
       <button
         className="btn"
@@ -136,6 +127,22 @@ const RuleRow = ({ met, label }: RuleRowProps): ReactElement => (
   <li className={met ? undefined : "rule-pending"}>
     {met ? "✓" : "✕"} {label}
   </li>
+);
+
+interface RuleListProps {
+  readonly rules: PasswordRules | null;
+  readonly riddleText: string | undefined;
+}
+
+// the five password rules, each marked met or pending.
+const RuleList = ({ rules, riddleText }: RuleListProps): ReactElement => (
+  <ul className="auth-rules">
+    <RuleRow met={rules?.color} label="A creative color" />
+    <RuleRow met={rules?.zodiac} label="Your zodiac sign" />
+    <RuleRow met={rules?.riddle} label={`Answer: ${riddleText ?? "..."}`} />
+    <RuleRow met={rules?.year} label="Your favorite year" />
+    <RuleRow met={rules?.special} label="A special character" />
+  </ul>
 );
 
 export { SignupForm };

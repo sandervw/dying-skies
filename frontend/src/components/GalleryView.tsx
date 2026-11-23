@@ -6,12 +6,8 @@ import { fetchMyStars } from "../services/starApiService";
 import { useAuth } from "../hooks/useAuth";
 import { decodeSeed, seedToPath } from "../services/routeService";
 import { generateSky, renderConstellation } from "../services/skyService";
-import {
-  buildStar,
-  drawStar,
-  findStarAtCoordinates,
-  generateSkyProfile,
-} from "../services/starService";
+import { buildStar, generateSkyProfile } from "../services/starService";
+import { drawStar, findStarAtCoordinates } from "../services/starCanvasService";
 import type { FallingStar } from "../types/star";
 import type { SkyProfile } from "../types/sky";
 import type { Seed } from "../services/randomService";
@@ -42,7 +38,7 @@ const GallerySkyBox = ({
     context.setTransform(ratio, 0, 0, ratio, 0, 0);
     const { constellation } = generateSky(seed);
     const profile = generateSkyProfile(seed);
-    const star = buildStar(seed, null, 0, profile, 0, 0);
+    const star = buildStar({ seed, tag: null }, 0, profile, { x: 0, y: 0 });
     starReference.current = star;
     profileReference.current = profile;
     let frame = 0;
