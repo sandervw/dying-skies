@@ -14,8 +14,12 @@ class ApiError extends Error {
 /** read a refused response's error envelope into an ApiError. */
 const failFrom = async (response: Response): Promise<ApiError> => {
   // a non-JSON body, like a proxy error page, keeps only the status.
-  const data = await response.json().catch((): Record<string, never> => ({}));
-  return new ApiError(data.code ?? "unreadable_error", response.status, data.rules);
+  const body: unknown = await response.json().catch(() => null);
+  const envelope = (body ?? {}) as { code?: unknown; rules?: unknown };
+  const code = typeof envelope.code === "string" ? envelope.code : "unreadable_error";
+  const hasRules = typeof envelope.rules === "object" && envelope.rules !== null;
+  const rules = hasRules ? (envelope.rules as PasswordRules) : undefined;
+  return new ApiError(code, response.status, rules);
 };
 
 export { ApiError, failFrom };

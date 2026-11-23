@@ -70,8 +70,19 @@ const fetchMyStars = async (): Promise<readonly string[]> => {
   if (!response.ok) {
     throw await failFrom(response);
   }
-  const data = (await response.json()) as { stars: { seed: string }[] };
-  return data.stars.map((star) => star.seed);
+  return parseSavedSeeds(await response.json());
+};
+
+const hasSeed = (star: unknown): star is { seed: string } =>
+  typeof (star as { seed?: unknown } | null)?.seed === "string";
+
+// throws naming the body when it is not a list of seeds.
+const parseSavedSeeds = (body: unknown): readonly string[] => {
+  const stars: unknown = (body as { stars?: unknown } | null)?.stars;
+  if (!Array.isArray(stars) || !stars.every(hasSeed)) {
+    throw new Error(`malformed /stars/mine body: ${JSON.stringify(body)}`);
+  }
+  return stars.map((star) => star.seed);
 };
 
 export {
