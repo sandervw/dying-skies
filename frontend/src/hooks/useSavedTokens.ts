@@ -9,7 +9,7 @@ const useSavedTokens = () => {
     queryKey: [...SAVED_STARS_QUERY_KEY, user?.id],
     queryFn: fetchMyStars,
     enabled: user !== null,
-    // a 401 signs out at once; main.tsx logs every failure.
+    // a 401 logs out at once; main.tsx logs every failure.
     retry: false,
   });
 };

@@ -32,7 +32,6 @@ const postBody = (path: string, body: unknown): Promise<Response> =>
     body: JSON.stringify(body),
   });
 
-
 /** request a batch of backend-issued seed/tag pairs; empty on failure. */
 const fetchStarBatch = async (count: number): Promise<readonly IssuedStar[]> => {
   const response = await postBody("/stars/batch", { count });
@@ -71,8 +70,8 @@ const fetchMyStars = async (): Promise<readonly string[]> => {
   if (!response.ok) {
     throw await failFrom(response);
   }
-  const data = await response.json().catch(() => null);
-  return ((data?.stars ?? []) as { seed: string }[]).map((star) => star.seed);
+  const data = (await response.json()) as { stars: { seed: string }[] };
+  return data.stars.map((star) => star.seed);
 };
 
 export {

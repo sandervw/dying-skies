@@ -18,7 +18,7 @@ if (container === null) {
   throw new Error("Root element #root was not found");
 }
 
-// log every failed call; a rejected Login signs this tab out.
+// log every failed call; a rejected Login logs this tab out.
 const handleApiError = (error: Error): void => {
   console.error(error);
   if (error instanceof ApiError && error.code === "not_authenticated") {

@@ -3,7 +3,7 @@ import type { ReactElement, ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { QueryClient } from "@tanstack/react-query";
 import type { AuthUser } from "../types/auth";
-import { fetchCurrentUser, logout as endLogin } from "../services/authService";
+import * as authService from "../services/authService";
 import { SAVED_STARS_QUERY_KEY } from "../services/starApiService";
 
 const AUTH_QUERY_KEY = ["auth", "me"] as const;
@@ -27,7 +27,7 @@ const AuthProvider = ({ children }: { children: ReactNode }): ReactElement => {
   const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: AUTH_QUERY_KEY,
-    queryFn: fetchCurrentUser,
+    queryFn: authService.fetchCurrentUser,
     retry: false,
     staleTime: Infinity,
   });
@@ -39,7 +39,7 @@ const AuthProvider = ({ children }: { children: ReactNode }): ReactElement => {
 
   // end the Login on the server, then forget the user here.
   const logout = async (): Promise<void> => {
-    await endLogin();
+    await authService.logout();
     forgetUser(queryClient);
   };
 
