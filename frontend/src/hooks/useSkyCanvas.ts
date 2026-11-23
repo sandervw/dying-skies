@@ -7,12 +7,12 @@ import { fetchStarBatch, rememberTag } from "../services/starApiService";
 import type { IssuedStar } from "../services/starApiService";
 import { generateSky, renderSky } from "../services/skyService";
 import {
-  findStarAtCoordinates,
   generateSkyProfile,
   populateStarField,
-  renderStarField,
   stepStarField,
 } from "../services/starService";
+import type { StarFieldInputs } from "../services/starService";
+import { findStarAtCoordinates, renderStarField } from "../services/starCanvasService";
 import type { StarFieldState } from "../types/star";
 
 // stars requested per batch call; the backend caps a batch at 105.
@@ -158,14 +158,17 @@ const useSkyCanvas = (onSelectStar?: (starSeed: Seed) => void): SkyHandle => {
       return issuedQueue.shift() ?? null;
     };
 
-    resize();
-    let state = populateStarField(
+    // the field's view of the sky at the current size.
+    const fieldInputs = (): StarFieldInputs => ({
       profile,
       sessionRandom,
-      logicalWidth,
-      logicalHeight,
+      width: logicalWidth,
+      height: logicalHeight,
       takeSeedAndTag,
-    );
+    });
+
+    resize();
+    let state = populateStarField(fieldInputs());
     stateReference.current = state;
     let previousTime = performance.now();
     let elapsedSeconds = 0;
@@ -176,16 +179,7 @@ const useSkyCanvas = (onSelectStar?: (starSeed: Seed) => void): SkyHandle => {
       const deltaSeconds = (currentTime - previousTime) / 1000;
       previousTime = currentTime;
       elapsedSeconds += deltaSeconds;
-      state = stepStarField(
-        state,
-        profile,
-        sessionRandom,
-        logicalWidth,
-        logicalHeight,
-        deltaSeconds,
-        takeSeedAndTag,
-        hoveredStarIdReference.current,
-      );
+      state = stepStarField(state, fieldInputs(), deltaSeconds, hoveredStarIdReference.current);
       stateReference.current = state;
       renderSky(context, sky, logicalWidth, logicalHeight);
       renderStarField(context, state, profile, elapsedSeconds);

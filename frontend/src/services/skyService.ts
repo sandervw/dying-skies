@@ -82,6 +82,26 @@ const selectMemberIndices = (
     .map((entry: NearnessEntry): number => entry.index);
 };
 
+// the shortest edge from a connected dot to a remaining one.
+const findNearestEdge = (
+  dots: readonly Dot[],
+  connected: ReadonlySet<number>,
+  remaining: ReadonlySet<number>,
+): Edge => {
+  let nearest: Edge = { from: -1, to: -1 };
+  let nearestDistance = Number.POSITIVE_INFINITY;
+  for (const from of connected) {
+    for (const target of remaining) {
+      const distance = squaredDistanceBetween(dots[from], dots[target]);
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearest = { from, to: target };
+      }
+    }
+  }
+  return nearest;
+};
+
 // link members with a minimum spanning tree (Prim's).
 const buildMinimumSpanningTree = (
   dots: readonly Dot[],
@@ -91,22 +111,10 @@ const buildMinimumSpanningTree = (
   const connected = new Set<number>([memberIndices[0]]);
   const remaining = new Set<number>(memberIndices.slice(1));
   while (remaining.size > 0) {
-    let nearestFrom = -1;
-    let nearestTo = -1;
-    let nearestDistance = Number.POSITIVE_INFINITY;
-    for (const from of connected) {
-      for (const target of remaining) {
-        const distance = squaredDistanceBetween(dots[from], dots[target]);
-        if (distance < nearestDistance) { // eslint-disable-line max-depth -- issue #2
-          nearestDistance = distance;
-          nearestFrom = from;
-          nearestTo = target;
-        }
-      }
-    }
-    edges.push({ from: nearestFrom, to: nearestTo });
-    connected.add(nearestTo);
-    remaining.delete(nearestTo);
+    const nearest = findNearestEdge(dots, connected, remaining);
+    edges.push(nearest);
+    connected.add(nearest.to);
+    remaining.delete(nearest.to);
   }
   return edges;
 };
@@ -213,16 +221,15 @@ const drawDots = (
 // stroke each edge, trimmed at both ends for breathing room.
 const drawConstellation = (
   context: CanvasRenderingContext2D,
-  dots: readonly Dot[],
-  edges: readonly Edge[],
+  constellation: Constellation,
   width: number,
   height: number,
-): void => { // eslint-disable-line max-params -- issue #2
+): void => {
   context.strokeStyle = `rgba(255, 255, 255, ${LINE_OPACITY})`;
   context.lineWidth = LINE_WIDTH;
-  for (const edge of edges) {
-    const start = dots[edge.from];
-    const end = dots[edge.to];
+  for (const edge of constellation.edges) {
+    const start = constellation.dots[edge.from];
+    const end = constellation.dots[edge.to];
     const startX = start.x * width;
     const startY = start.y * height;
     const endX = end.x * width;
@@ -256,13 +263,7 @@ const renderSky = (
   height: number,
 ): void => {
   context.clearRect(0, 0, width, height);
-  drawConstellation(
-    context,
-    sky.constellation.dots,
-    sky.constellation.edges,
-    width,
-    height,
-  );
+  drawConstellation(context, sky.constellation, width, height);
   drawDots(context, sky.backgroundDots, width, height);
 };
 
@@ -273,7 +274,7 @@ const renderConstellation = (
   width: number,
   height: number,
 ): void => {
-  drawConstellation(context, constellation.dots, constellation.edges, width, height);
+  drawConstellation(context, constellation, width, height);
   drawDots(context, constellation.dots, width, height);
 };
 

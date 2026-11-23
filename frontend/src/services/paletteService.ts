@@ -52,41 +52,34 @@ const buildHueOffsets = (spanDegrees: number, stopCount: number): number[] => {
   );
 };
 
-// build one colour: anchored hue with jitter, plus centre-hugging saturation/lightness.
+// build one colour: the centre's hue moved to its anchor, all jittered.
 const generateColor = (
   random: RandomNumberGenerator,
-  baseHue: number,
+  center: PaletteColor,
   anchorOffset: number,
-  saturationCenter: number,
-  lightnessCenter: number,
-): PaletteColor => ({ // eslint-disable-line max-params -- issue #2
+): PaletteColor => ({
   hue: normalizeHue(
-    baseHue +
+    center.hue +
     anchorOffset +
     randomInRange(random, -HUE_JITTER_DEGREES, HUE_JITTER_DEGREES),
   ),
   saturation: clampPercent(
-    saturationCenter + randomInRange(random, -SATURATION_SPREAD, SATURATION_SPREAD),
+    center.saturation + randomInRange(random, -SATURATION_SPREAD, SATURATION_SPREAD),
   ),
   lightness: clampPercent(
-    lightnessCenter + randomInRange(random, -LIGHTNESS_SPREAD, LIGHTNESS_SPREAD),
+    center.lightness + randomInRange(random, -LIGHTNESS_SPREAD, LIGHTNESS_SPREAD),
   ),
 });
 
 /** generate a full palette from one seed. */
 const generatePalette = (seed: number): Palette => {
   const random = createSeededRandom(seed);
-  const baseHue = random() * DEGREES_IN_CIRCLE;
-  const saturationCenter = randomInRange(
-    random,
-    SATURATION_CENTER_MINIMUM,
-    SATURATION_CENTER_MAXIMUM,
-  );
-  const lightnessCenter = randomInRange(
-    random,
-    LIGHTNESS_CENTER_MINIMUM,
-    LIGHTNESS_CENTER_MAXIMUM,
-  );
+  // the sky's centre colour; draw order is hue, saturation, lightness.
+  const center: PaletteColor = {
+    hue: random() * DEGREES_IN_CIRCLE,
+    saturation: randomInRange(random, SATURATION_CENTER_MINIMUM, SATURATION_CENTER_MAXIMUM),
+    lightness: randomInRange(random, LIGHTNESS_CENTER_MINIMUM, LIGHTNESS_CENTER_MAXIMUM),
+  };
   const hueSpan = randomInRange(random, HUE_SPAN_MINIMUM, HUE_SPAN_MAXIMUM);
   const colorCount = Math.max(
     1,
@@ -96,9 +89,7 @@ const generatePalette = (seed: number): Palette => {
   const colors: PaletteColor[] = [];
   for (let index = 0; index < colorCount; index += 1) {
     const anchorOffset = offsets[index % offsets.length];
-    colors.push(
-      generateColor(random, baseHue, anchorOffset, saturationCenter, lightnessCenter),
-    );
+    colors.push(generateColor(random, center, anchorOffset));
   }
   return { colors };
 };

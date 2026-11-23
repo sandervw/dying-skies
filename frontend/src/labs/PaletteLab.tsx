@@ -3,7 +3,8 @@ import type { ChangeEvent, CSSProperties, ReactElement } from "react";
 import { createSeededRandom, generateSeed } from "../services/randomService";
 import type { RandomNumberGenerator } from "../services/randomService";
 import { toCssColor } from "../services/paletteService";
-import { buildStar, drawStar } from "../services/starService";
+import { buildStar } from "../services/starService";
+import { drawStar } from "../services/starCanvasService";
 import type { Palette, PaletteColor } from "../types/palette";
 import type { SkyProfile } from "../types/sky";
 
@@ -125,7 +126,8 @@ const drawCard = (
   cometSeedSource: number,
 ): void => {
   const profile: SkyProfile = { palette, fallAngle: 0 };
-  const star = buildStar(generateSeed(createSeededRandom(cometSeedSource)), null, 0, profile, 0, 0);
+  const seed = generateSeed(createSeededRandom(cometSeedSource));
+  const star = buildStar({ seed, tag: null }, 0, profile, { x: 0, y: 0 });
   context.save();
   context.translate(width / 2, (CARD_HEIGHT - SWATCH_HEIGHT) / 2);
   context.scale(COMET_SCALE, COMET_SCALE);

@@ -99,25 +99,30 @@ const slip = (
   });
 };
 
-/** trigger one role's notes for this loop, timed off the passed time. */
+/** one role's score, the instrument playing it, and its octave. */
+interface Voice {
+  readonly spec: InstrumentSpec;
+  readonly instrument: Instrument;
+  readonly register: number;
+  readonly events: readonly [number, number, number][];
+}
+
+/** trigger one voice's notes for this loop, timed off the passed time. */
 const buildPart = (
-  spec: InstrumentSpec,
-  instrument: Instrument,
-  events: readonly [number, number, number][],
+  voice: Voice,
   offsets: readonly number[],
-  register: number,
   tempo: number,
   time: number,
-): void => { // eslint-disable-line max-params -- issue #2
+): void => {
   const beat = 60 / tempo;
-  const seconds = spec.hold * beat;
+  const seconds = voice.spec.hold * beat;
   const seen = new Set<string>(); // drop ties; mono voices take one note per slot
-  for (const [bar, position, step] of events) {
+  for (const [bar, position, step] of voice.events) {
     if (seen.has(`${bar}:${position}`)) continue;
     seen.add(`${bar}:${position}`);
     const startTime = time + (bar * 4 + position) * beat;
     const semitone = offsets[step % offsets.length] + 12 * Math.floor(step / offsets.length);
-    instrument.triggerAttackRelease(12 * (register + 1) + semitone, seconds, startTime); // MIDI from C{register}; noise ignores pitch
+    voice.instrument.triggerAttackRelease(12 * (voice.register + 1) + semitone, seconds, startTime); // MIDI from C{register}; noise ignores pitch
   }
 };
 
@@ -144,16 +149,15 @@ const playSky = async (seed: Seed): Promise<Engine> => {
     roomSize: Math.min(0.85, preset.reverbDecay / 14),
   });
   const engine = await createEngine({ patch, roles: mixRoles, context: audioContext });
-  const instruments = roles.map((role) => engine.instrument(role));
+  const voices = score.map((voice, index) => ({ ...voice, instrument: engine.instrument(roles[index]) }));
   engine.transport.bpm = preset.tempo;
 
   // each repeat: slip a fraction, then trigger from the passed time
   let first = true;
   engine.transport.scheduleRepeat((time): void => {
-    if (!first) for (const voice of score) slip(voice.spec.hold, voice.events, steps, voice.density);
+    if (!first) for (const voice of voices) slip(voice.spec.hold, voice.events, steps, voice.density);
     first = false;
-    score.forEach((voice, index) =>
-      buildPart(voice.spec, instruments[index], voice.events, mode, voice.register, preset.tempo, time));
+    for (const voice of voices) buildPart(voice, mode, preset.tempo, time);
   }, `${LOOP_BARS}m`, 0);
   engine.transport.start();
   return engine;
