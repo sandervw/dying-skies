@@ -23,5 +23,5 @@ Expected: The User sees "No saved skies yet." The Visitor lands on the Root sky.
 **UC-27 Destroy a Sky.** Actor: User on a Saved Sky. Steps: Press "Destroy this sky", then "cancel". Press it again, then "destroy".
 Expected: The prompt reads "Destroy this sky forever?". After "cancel" the Sky stays Saved. After "destroy" the Root sky shows, the Sky is gone from the Gallery, and within 30 seconds the footer's "destroyed" number is one higher.
 
-**UC-28 Destroyed stays destroyed.** Pre: UC-27, same visit. Steps: Press the browser's back button to the Destroyed Sky and press "Save this sky".
-Expected: The Sky does not appear in the Gallery.
+**UC-28 Destroyed stays destroyed.** Pre: UC-27, same visit. Steps: Press the browser's back button to the Destroyed Sky.
+Expected: Neither "Save this sky" nor "Destroy this sky" shows, and the Sky does not appear in the Gallery.

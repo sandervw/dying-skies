@@ -22,7 +22,7 @@ A file imports only from its own piece. A contract document changes in the same 
 | `types/`, `utils/` | each other, `Seed` from `randomService` | Shapes and static catalogs |
 | `services/` | `types/`, `utils/`, other services, `webmusic-engine` | Seeded generators, codecs, backend calls, music |
 | `contexts/` | `services/`, `types/` | The visible sky and the current user |
-| `hooks/` | `contexts/`, `services/`, `types/`, `webmusic-engine` | Canvas loop, music playback, polling |
+| `hooks/` | `contexts/`, `services/`, `types/`, `webmusic-engine` | Canvas loop, music playback, polling, the saved-stars query |
 | `components/` | `hooks/`, `services/`, `types/` | Screens and controls |
 | `labs/` | `services/`, `types/`, `utils/`, `webmusic-engine` | Developer pages served from `lab.html`; nothing imports them |
 
@@ -54,9 +54,9 @@ dbt reads the backend's tables as sources, builds staging views and mart tables 
 - **Accounts.** A username and a password, with no email and no reset. The signup and login fields show the password as plain text and refuse paste, drop, and autofill.
 - **Password rules.** A signup password holds a colour, a zodiac sign, the answer to the assigned riddle, a digit, and a special character. The word lists and riddle answers stay on the server; `/auth/password/check` returns one boolean per rule.
 - **Passwords.** Hashed with argon2id. A login for an unknown username spends the same argon2 time and returns the same error as a wrong password.
-- **Sessions.** An anonymous `session_id` cookie (`HttpOnly`, `SameSite=Lax`, `Secure` by default, one year) names a session, which holds the issuance count and is never deleted. An unknown `session_id` cookie gets a new session. A login links a session to a user in `logins`; logout deletes the login. A user keeps 4 logins, and a fifth evicts the oldest.
+- **Sessions.** An anonymous `session_id` cookie (`HttpOnly`, `SameSite=Lax`, `Secure` by default, one year) names a session, which holds the issuance count and is never deleted. An unknown `session_id` cookie gets a new session. Signup and login start a new session with a fresh cookie and link it to the user in `logins`; logout deletes the login. A user keeps 4 logins, and a fifth evicts the oldest.
 - **Seeds and tags.** A seed is `HMAC(secret, session_id || issuance count)` and its tag is `HMAC(secret, seed)`. A save is accepted only when the tag verifies in constant time. Destroy and list act only on the caller's own rows.
 - **Rate limits.** Per client address, listed in the API contract. `X-Forwarded-For` counts only for `TRUSTED_PROXY_HOPS`.
 - **Browser.** CORS allows the single `FRONTEND_ORIGIN` with credentials. The production build injects a Content Security Policy from `frontend/vite.config.ts`.
-- **Analytics access.** `analytics_reader` reads `sessions`, `saved_stars`, `destroyed_stars`, and the `users` columns `id`, `username`, and `created_at`.
+- **Analytics access.** `analytics_reader` reads `sessions`, `saved_stars`, and the `users` columns `id`, `username`, and `created_at`.
 - **Secrets.** Runtime secrets live in `/etc/skies/.env` on the box and in each piece's gitignored `.env`. `SKIES_SSH_KEY` is the one GitHub secret.

@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import type { FormEvent, ReactElement } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { PasswordRules } from "../types/auth";
+import { ApiError } from "../services/apiError";
 import {
-  AuthError,
   checkPassword,
   fetchSignupRiddle,
   signup,
@@ -64,8 +64,8 @@ const SignupForm = ({ onClose, onSwitch }: SignupFormProps): ReactElement => {
       setUser(await signup({ username, password, riddleId: riddle.riddleId }));
       onClose();
     } catch (caught) {
-      const code = caught instanceof AuthError ? caught.code : "request_failed";
-      if (caught instanceof AuthError && caught.rules !== undefined) {
+      const code = caught instanceof ApiError ? caught.code : "request_failed";
+      if (caught instanceof ApiError && caught.rules !== undefined) {
         setRules(caught.rules);
       }
       setError(messageFor(code));

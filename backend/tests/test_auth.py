@@ -39,24 +39,29 @@ def test_signup_weak_password_rejected():
 
 
 def test_login_success_and_wrong_password():
-    """Login succeeds with the right password, fails with the wrong one."""
+    """Right password logs in on a new session; wrong one fails."""
     with TestClient(app) as client:
         username = unique_username()
         password, riddle_id = rule_password(client)
         signup(client, username, password, riddle_id)
         client.post("/auth/logout")
+        logged_out_session = client.cookies.get("session_id")
 
         wrong = client.post(
             "/auth/login", json={"username": username, "password": "nope"}
         )
         assert wrong.status_code == 401
         assert wrong.json()["code"] == "invalid_credentials"
+        assert "session_id" not in wrong.cookies
 
         right = client.post(
             "/auth/login", json={"username": username, "password": password}
         )
         assert right.status_code == 200
         assert right.json()["username"] == username
+        assert right.cookies.get("session_id") not in (None, logged_out_session)
+        assert client.get("/auth/me").status_code == 200
+        assert not _is_logged_in(client, logged_out_session)
 
 
 def _use_session(client, session_id: str) -> None:

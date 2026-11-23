@@ -188,8 +188,8 @@ test("UC-28 Destroyed stays destroyed", async ({ page }) => {
   await destroySky(page);
   await page.goBack();
   await expect(page).toHaveURL(destroyed);
-  await button(page, "Save this sky").click();
-  await page.waitForTimeout(2_000);
+  await expect(button(page, "Save this sky")).toBeHidden();
+  await expect(button(page, "Destroy this sky")).toBeHidden();
   await openGallery(page);
   await expect(page.getByText(EMPTY_GALLERY)).toBeVisible();
   await expect(tiles(page)).toHaveCount(0);

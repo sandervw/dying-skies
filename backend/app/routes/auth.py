@@ -10,8 +10,7 @@ from app.errors import error_response
 from app.password_rules import all_rules_pass, check_password, random_riddle
 from app.rate_limit import limiter
 from app.security import dummy_verify, hash_password, verify_password
-from app.login import create_login, delete_login, get_authenticated_user_id
-from app.session import get_session_id
+from app.login import delete_login, get_authenticated_user_id, start_login
 
 router = APIRouter()
 
@@ -68,9 +67,8 @@ async def post_auth_signup(
     request: Request,
     body: AuthSignupRequest,
     response: Response,
-    session_id: str = Depends(get_session_id),
 ) -> dict:
-    """Validate password rules, create an account, link the session."""
+    """Validate password rules, create an account, log it in."""
     rules = check_password(body.password, body.riddle_id)
     if not all_rules_pass(rules):
         response.status_code = 422
@@ -91,7 +89,7 @@ async def post_auth_signup(
     except asyncpg.UniqueViolationError:
         return error_response(response, 409, "username_taken")
 
-    await create_login(pool, session_id, user_id)
+    await start_login(request, response, user_id)
     return AuthUserResponse(id=user_id, username=username).model_dump()
 
 
@@ -101,9 +99,8 @@ async def post_auth_login(
     request: Request,
     body: AuthLoginRequest,
     response: Response,
-    session_id: str = Depends(get_session_id),
 ) -> dict:
-    """Verify credentials by username and link the account to the session."""
+    """Verify credentials by username and log the account in."""
     pool = request.state.pool
     row = await pool.fetchrow(
         "SELECT id, password_hash FROM users WHERE username = $1",
@@ -116,7 +113,7 @@ async def post_auth_login(
         return error_response(response, 401, "invalid_credentials")
 
     user_id = str(row["id"])
-    await create_login(pool, session_id, user_id)
+    await start_login(request, response, user_id)
     return AuthUserResponse(id=user_id, username=body.username).model_dump()
 
 

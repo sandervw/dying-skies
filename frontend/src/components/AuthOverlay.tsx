@@ -1,6 +1,5 @@
 import { useState } from "react";
 import type { ReactElement } from "react";
-import { logout } from "../services/authService";
 import { LoginForm } from "./LoginForm";
 import { SignupForm } from "./SignupForm";
 import { useNavigate } from "react-router-dom";
@@ -15,12 +14,11 @@ type Mode = "login" | "signup";
 /** modal switching between login, signup, and signed-in states. */
 const AuthOverlay = ({ onClose }: AuthOverlayProps): ReactElement => {
   const [mode, setMode] = useState<Mode>("login");
-  const { user, setUser } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async (): Promise<void> => {
     await logout();
-    setUser(null);
     onClose();
     navigate("/");
   };

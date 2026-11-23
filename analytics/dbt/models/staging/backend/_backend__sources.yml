@@ -8,7 +8,6 @@ sources:
         columns:
           - name: id
           - name: username
-          - name: password_hash
           - name: created_at
       - name: sessions
         columns:
@@ -20,8 +19,4 @@ sources:
           - name: seed
           - name: owner_id
           - name: saved_at
-      - name: destroyed_stars
-        columns:
-          - name: seed
-          - name: owner_id
           - name: destroyed_at

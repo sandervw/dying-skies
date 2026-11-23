@@ -12,11 +12,11 @@ Current state and next work. Rewrite when stale; never log history.
 - **Production** (`dyingskies.com`) runs `main`: falling from sky to sky, accounts, saving, the Gallery, destroying, the Counter, music, and the analytics site at `/analytics/`.
 - **Hosting:** the frontend and the analytics site are Cloudflare Workers assets. The API, Postgres, and Dagster run on one OVH VPS, reached as `api.dyingskies.com` through a Cloudflare Tunnel.
 - **Checks:** `main` requires the `checks` job. The black-box suite, one Playwright test per use case, runs locally with `npm run test:e2e` at desktop and phone widths; CI does not run it.
-- **Exemptions:** 12 inline lint exemptions name issue #2.
+- **Schema changes** run as idempotent blocks in `backend/app/db.py` at API startup. A `CASCADE` drop removes analytics staging views; the next Dagster run rebuilds them.
 
 ## Next
 
-1. #2: bring the exempted frontend functions within the limits.
+1. #26: naming drift, Postgres ownership, and the `Retry-After` header.
 2. Merge the Dependabot PRs.
 
 ## CEO preferences
@@ -40,10 +40,10 @@ Current state and next work. Rewrite when stale; never log history.
 - A behaviour-neutral frontend change leaves `frontend/dist/assets/*.js` byte-identical apart from changed property names.
 - The backend tests need Postgres on `localhost:5432` (`docker compose up db` in `backend/`).
 - `npm run test:e2e` needs Docker running; it starts the API and the frontend itself and leaves test accounts in the local Postgres.
-- `tests/e2e/harness.ts` gives each test its own client address; import `test` from it, never from `@playwright/test`.
+- `tests/e2e/harness.ts` gives each test its own client address; import `test` from it.
 - The frontend's `wrangler` comes from the root `node_modules` on the box, which no deploy reinstalls.
 - Root TypeScript is pinned for the linter; `frontend/` carries its own newer TypeScript for the build.
-- Start the frontend with `npm run dev`, which passes `--open false`.
+- Start the frontend with `npm run dev`.
 - A Save needs the Tag kept in memory since the Star was clicked; a reloaded Sky cannot be saved.
 - In a PR body, write `Closes` before each issue number.
 - Python's `write_text` on Windows writes CRLF; pass `newline="\n"` or use Edit.

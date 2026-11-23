@@ -1,7 +1,11 @@
 import { encodeSeed, decodeSeed } from "./routeService";
+import { failFrom } from "./apiError";
 import type { Seed } from "./randomService";
 
 const base = import.meta.env.VITE_API_BASE_URL;
+
+/** the query key prefix for the signed-in user's Saved tokens. */
+const SAVED_STARS_QUERY_KEY = ["stars", "mine"] as const;
 
 /** one backend-issued star: its seed and HMAC save tag. */
 interface IssuedStar {
@@ -43,33 +47,46 @@ const fetchStarBatch = async (count: number): Promise<readonly IssuedStar[]> => 
     .filter((star): star is IssuedStar => star !== null);
 };
 
-/** save a star by its seed and tag; rejects on any failure. */
+/** save a star by its seed and tag; rejects with ApiError. */
 const saveStar = async (seed: Seed, tag: string): Promise<void> => {
   const response = await postBody("/stars/save", { seed: encodeSeed(seed), tag });
   if (!response.ok) {
-    throw new Error("save_failed");
+    throw await failFrom(response);
   }
 };
 
-/** destroy a saved sky by its seed; rejects on any failure. */
+/** destroy a saved sky and forget its tag; rejects with ApiError. */
 const destroyStar = async (seed: Seed): Promise<void> => {
   const response = await postBody("/stars/destroy", { seed: encodeSeed(seed) });
   if (!response.ok) {
-    throw new Error("destroy_failed");
+    throw await failFrom(response);
   }
+  tagsByToken.delete(encodeSeed(seed));
 };
 
-/** fetch the caller's saved sky tokens, newest first; empty on failure. */
+/** fetch the caller's saved sky tokens, newest first; rejects with ApiError. */
 const fetchMyStars = async (): Promise<readonly string[]> => {
   const response = await fetch(`${base}/stars/mine`, { credentials: "include" });
   if (!response.ok) {
-    return [];
+    throw await failFrom(response);
   }
-  const data = await response.json().catch(() => null);
-  return ((data?.stars ?? []) as { seed: string }[]).map((star) => star.seed);
+  return parseSavedTokens(await response.json());
+};
+
+const hasSeed = (star: unknown): star is { seed: string } =>
+  typeof (star as { seed?: unknown } | null)?.seed === "string";
+
+// throws naming the body when it is not a list of Tokens.
+const parseSavedTokens = (body: unknown): readonly string[] => {
+  const stars: unknown = (body as { stars?: unknown } | null)?.stars;
+  if (!Array.isArray(stars) || !stars.every(hasSeed)) {
+    throw new Error(`malformed /stars/mine body: ${JSON.stringify(body)}`);
+  }
+  return stars.map((star) => star.seed);
 };
 
 export {
+  SAVED_STARS_QUERY_KEY,
   fetchStarBatch,
   saveStar,
   destroyStar,

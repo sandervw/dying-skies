@@ -7,11 +7,12 @@ router = APIRouter()
 @router.get("/stats")
 async def get_stats(request: Request) -> dict:
     """Return counts of saved, destroyed, and died stars."""
-    pool = request.state.pool
-    issued = await pool.fetchval(
-        "SELECT COALESCE(SUM(counter), 0)::bigint FROM sessions"
+    row = await request.state.pool.fetchrow(
+        "SELECT "
+        "(SELECT COALESCE(SUM(counter), 0)::bigint FROM sessions) AS issued, "
+        "COUNT(*) FILTER (WHERE destroyed_at IS NULL) AS saved, "
+        "COUNT(destroyed_at) AS destroyed "
+        "FROM saved_stars"
     )
-    saved = await pool.fetchval("SELECT COUNT(*) FROM saved_stars")
-    destroyed = await pool.fetchval("SELECT COUNT(*) FROM destroyed_stars")
-    died = issued - saved - destroyed
-    return {"saved": saved, "destroyed": destroyed, "died": died}
+    died = row["issued"] - row["saved"] - row["destroyed"]
+    return {"saved": row["saved"], "destroyed": row["destroyed"], "died": died}

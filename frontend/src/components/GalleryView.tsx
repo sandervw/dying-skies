@@ -1,9 +1,8 @@
 import { useEffect, useRef } from "react";
 import type { MouseEvent, ReactElement } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
-import { fetchMyStars } from "../services/starApiService";
 import { useAuth } from "../hooks/useAuth";
+import { useSavedTokens } from "../hooks/useSavedTokens";
 import { decodeSeed, seedToPath } from "../services/routeService";
 import { generateSky, renderConstellation } from "../services/skyService";
 import { buildStar, generateSkyProfile } from "../services/starService";
@@ -11,8 +10,6 @@ import { drawStar, findStarAtCoordinates } from "../services/starCanvasService";
 import type { FallingStar } from "../types/star";
 import type { SkyProfile } from "../types/sky";
 import type { Seed } from "../services/randomService";
-
-const GALLERY_QUERY_KEY = ["stars", "mine"] as const;
 
 // one clickable tile: a saved sky's constellation and its wagging star.
 const GallerySkyBox = ({
@@ -119,11 +116,7 @@ const GallerySkyBox = ({
 const GalleryView = (): ReactElement => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { data, isLoading } = useQuery({
-    queryKey: GALLERY_QUERY_KEY,
-    queryFn: fetchMyStars,
-    enabled: user !== null,
-  });
+  const { data, isLoading } = useSavedTokens();
   const skies = (data ?? [])
     .map((token) => ({ token, seed: decodeSeed(token) }))
     .filter((sky): sky is { token: string; seed: Seed } => sky.seed !== null);

@@ -62,9 +62,11 @@ class StarDestroyRequest(BaseModel):
 async def post_stars_batch(
     request: Request,
     body: StarsBatchRequest,
-    session_id: str = Depends(get_session_id),
+    response: Response,
 ) -> StarsBatchResponse:
     """Issue a batch of HMAC-derived stars for the session."""
+    # Called after the limit check, so a 429 never creates a session.
+    session_id = await get_session_id(request, response)
     secret = load_secret()
     counters = await reserve_counter_range(request.state.pool, session_id, body.count)
     stars = []
@@ -99,22 +101,21 @@ async def post_stars_save(
         return error_response(response, 403, "invalid_tag")
 
     pool = request.state.pool
-    destroyed = await pool.fetchval(
-        "SELECT 1 FROM destroyed_stars WHERE seed = $1", seed
-    )
-    if destroyed:
-        return error_response(response, 409, "already_destroyed")
-
     row = await pool.fetchrow(
         "INSERT INTO saved_stars (seed, owner_id) VALUES ($1, $2) "
         "ON CONFLICT (seed) DO NOTHING RETURNING seed",
         seed,
         user_id,
     )
-    if row is None:
-        return error_response(response, 409, "already_saved")
+    if row is not None:
+        return {"status": "saved"}
 
-    return {"status": "saved"}
+    destroyed_at = await pool.fetchval(
+        "SELECT destroyed_at FROM saved_stars WHERE seed = $1", seed
+    )
+    if destroyed_at is not None:
+        return error_response(response, 409, "already_destroyed")
+    return error_response(response, 409, "already_saved")
 
 
 @router.post("/stars/destroy")
@@ -135,25 +136,15 @@ async def post_stars_destroy(
     if len(seed) != 32:
         return error_response(response, 400, "malformed_input")
 
-    pool = request.state.pool
-    async with pool.acquire() as connection:
-        async with connection.transaction():
-            row = await connection.fetchrow(
-                "DELETE FROM saved_stars WHERE seed = $1 AND owner_id = $2 "
-                "RETURNING seed",
-                seed,
-                user_id,
-            )
-            if row is None:
-                return error_response(response, 404, "not_saved")
-
-            await connection.execute(
-                "INSERT INTO destroyed_stars (seed, owner_id) VALUES ($1, $2) "
-                "ON CONFLICT (seed) DO NOTHING",
-                seed,
-                user_id,
-            )
-
+    row = await request.state.pool.fetchrow(
+        "UPDATE saved_stars SET destroyed_at = now() "
+        "WHERE seed = $1 AND owner_id = $2 AND destroyed_at IS NULL "
+        "RETURNING seed",
+        seed,
+        user_id,
+    )
+    if row is None:
+        return error_response(response, 404, "not_saved")
     return {"status": "destroyed"}
 
 
@@ -169,7 +160,8 @@ async def get_stars_mine(
 
     pool = request.state.pool
     rows = await pool.fetch(
-        "SELECT seed, saved_at FROM saved_stars WHERE owner_id = $1 "
+        "SELECT seed, saved_at FROM saved_stars "
+        "WHERE owner_id = $1 AND destroyed_at IS NULL "
         "ORDER BY saved_at DESC",
         user_id,
     )

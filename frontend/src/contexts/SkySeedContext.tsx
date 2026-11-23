@@ -3,7 +3,12 @@ import type { ReactElement, ReactNode } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { seedFromPath, ROOT_SEED } from "../services/routeService";
-import { saveStar, destroyStar, tagForSeed } from "../services/starApiService";
+import {
+  SAVED_STARS_QUERY_KEY,
+  saveStar,
+  destroyStar,
+  tagForSeed,
+} from "../services/starApiService";
 import { deriveSeed } from "../services/randomService";
 import type { Seed } from "../services/randomService";
 import {
@@ -39,12 +44,12 @@ const SkySeedProvider = ({ children }: { children: ReactNode }): ReactElement =>
   const saveMutation = useMutation({
     mutationFn: () => saveStar(seed, tag ?? ""),
     onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["stars", "mine"] }),
+      queryClient.invalidateQueries({ queryKey: SAVED_STARS_QUERY_KEY }),
   });
   const destroyMutation = useMutation({
     mutationFn: () => destroyStar(seed),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["stars", "mine"] });
+      queryClient.invalidateQueries({ queryKey: SAVED_STARS_QUERY_KEY });
       navigate("/");
     },
   });
