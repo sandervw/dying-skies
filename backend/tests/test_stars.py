@@ -39,7 +39,7 @@ def test_stars_batch_issues_stars_and_sets_cookie():
 
 
 def test_unknown_session_cookie_gets_a_fresh_session():
-    """A cookie the backend never issued is replaced, never adopted."""
+    """An unknown session cookie is replaced, never adopted."""
     with TestClient(app) as client:
         client.cookies.set("session_id", "forged")
         response = client.post("/stars/batch", json={"count": 1})
