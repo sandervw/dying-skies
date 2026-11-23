@@ -46,16 +46,9 @@
       "Bash(git push * HEAD:main*)"
     ],
     "ask": [
-      "Bash(npm run deploy*)",
-      "Bash(npm --prefix * run deploy*)",
-      "Bash(npx wrangler deploy*)",
-      "Bash(npx wrangler versions deploy*)",
-      "Bash(npx wrangler rollback*)",
       "Bash(npx wrangler delete*)",
       "Bash(npx wrangler * delete*)",
       "Bash(npx wrangler -*)",
-      "Bash(gh workflow run*)",
-      "Bash(gh secret *)",
       "Bash(gh repo create*)",
       "Bash(gh repo delete*)",
       "Bash(gh repo edit*)",
