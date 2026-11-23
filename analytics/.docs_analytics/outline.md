@@ -1,23 +1,21 @@
 # Analytics outline
 
-Dagster + dbt + Observable Framework. Concept: `../../.docs/plan.md`. Data contract: `data-contract.md`.
+Dagster + dbt + Observable Framework. Concept: `../../.docs/outline.md`. Data contract: `data-contract.md`.
 
 ## Data flow
-dbt reads the backend's Postgres tables directly as dbt sources. dbt materializes staging views and mart tables into an `analytics` schema owned by `analytics_reader`. Observable Framework data loaders query those marts and emit JSON; the site renders it. Dagster orchestrates the dbt build and the site deploy on a schedule. Historical trends derive from timestamped rows in the source event tables.
+dbt reads the backend's Postgres tables directly as dbt sources. dbt materializes staging views and mart tables into an `analytics` schema owned by `analytics_reader`. Observable Framework data loaders query those marts and emit JSON; the site renders it. Dagster orchestrates the dbt build and the site deploy on a schedule. Historical trends derive from the timestamps on source rows.
 
 ## dbt
 Project in `dbt/`. Connects as `analytics_reader` via `profiles.yml` using the `ANALYTICS_DB_*` env vars; builds into the `analytics` schema. Staging is materialized as views, marts as tables.
 
-Sources (`models/staging/backend/_backend__sources.yml`): backend `public` tables `users`, `sessions`, `saved_stars`, `destroyed_stars`.
+Sources (`models/staging/backend/_backend__sources.yml`): backend `public` tables `users`, `sessions`, `saved_stars`.
 
-Staging normalizes each source: `stg_users` (excludes `password_hash`), `stg_sessions`, `stg_saved_stars`, `stg_destroyed_stars`.
+Staging normalizes each source: `stg_users` (excludes `password_hash`), `stg_sessions`, `stg_saved_stars` (every Star ever Saved, with `saved_at` and `destroyed_at`).
 
 Marts (`models/marts/`):
-- `mart_star_counters`: one row of `saved`, `destroyed`, `dead`. `saved` and `destroyed` are row counts; `dead` is issued minus saved minus destroyed, where issued is the sum of `sessions.counter`.
+- `mart_star_counters`: one row of `saved`, `destroyed`, `dead`. `saved` counts `stg_saved_stars` rows with no `destroyed_at`, `destroyed` those with one; `dead` is issued minus saved minus destroyed, where issued is the sum of `sessions.counter`.
 - `mart_users_total`: `total_users`, the `stg_users` row count.
-- `mart_star_trends`: daily and weekly counts of saves, destroys, and signups. Columns `event_day`, `event_week`, `event_type` (`saved`/`destroyed`/`signup`), `event_count`. Built by unioning the timestamped event rows.
-
-Dead is a computed total.
+- `mart_star_trends`: daily and weekly counts of saves, destroys, and signups. Columns `event_day`, `event_week`, `event_type` (`saved`/`destroyed`/`signup`), `event_count`. A `saved` event comes from every non-NULL `saved_at`, Destroyed Stars included; a `destroyed` event from every `destroyed_at`; a `signup` from every `users.created_at`.
 
 ## Dagster orchestration
 Code location under `orchestration/`, declared by `[tool.dagster]` in `pyproject.toml` (`module_name = orchestration.definitions`). Run locally with `uv run dagster dev` from `analytics/`.
@@ -31,9 +29,9 @@ Project in `observable/`, config `observablehq.config.js`: root `src`, output `d
 
 `src/index.md` renders four counter cards (saved, destroyed, dead, users) and three stacked, labeled stepped line charts of the trends (Users, Saved Skies, Destroyed Skies). `src/components/starfield.js` draws the static seeded starfield backdrop.
 
-Data loaders `src/data/metrics.json.js` and `src/data/trends.json.js` query the marts through `db.js`, a shared `pg` pool reading `ANALYTICS_DB_*` from `.env`. When the database is unavailable the loaders emit zeros.
+Data loaders `src/data/metrics.json.js` and `src/data/trends.json.js` query the marts through `db.js`, a shared `pg` pool reading `ANALYTICS_DB_*` from `.env`. A loader that cannot read the marts exits non-zero, which fails `observable build`.
 
-`npm run deploy` runs `observable build` then `wrangler deploy`. `wrangler.jsonc` serves `dist/` and binds the `dying-skies-analytics` Worker to the `dyingskies.com/analytics` and `dyingskies.com/analytics/*` routes.
+`npm run deploy` clears the cached loader output, runs `observable build`, and runs `wrangler deploy` only when the build succeeds. `wrangler.jsonc` serves `dist/` and binds the `dying-skies-analytics` Worker to the `dyingskies.com/analytics` and `dyingskies.com/analytics/*` routes.
 
 ## Hosting and serving
 Dagster runs on the OVH VPS provisioned in `infra/`, as `dagster-daemon` and `dagster-webserver` systemd services with Postgres-backed storage. The webserver binds `localhost:3000`, fronted by a Cloudflare Tunnel gated with Access. dbt connects as `analytics_reader` over local Postgres. VPS provisioning installs the site's npm deps and provides `ANALYTICS_DB_*` and `CLOUDFLARE_*` to the scheduled redeploys. The site is live at `dyingskies.com/analytics/`.

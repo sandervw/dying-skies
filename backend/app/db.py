@@ -37,6 +37,27 @@ END $$
 """
 
 
+# Folds destroyed_stars into saved_stars; a no-op once applied.
+_MERGE_DESTROYED_INTO_SAVED = """
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'destroyed_stars'
+  ) THEN
+    ALTER TABLE saved_stars ADD COLUMN IF NOT EXISTS destroyed_at TIMESTAMPTZ;
+    -- Stars destroyed before the merge lost their save time.
+    ALTER TABLE saved_stars ALTER COLUMN saved_at DROP NOT NULL;
+    INSERT INTO saved_stars (seed, owner_id, saved_at, destroyed_at)
+      SELECT seed, owner_id, NULL, destroyed_at FROM destroyed_stars
+      ON CONFLICT (seed) DO UPDATE SET destroyed_at = EXCLUDED.destroyed_at;
+    -- CASCADE drops analytics views on the table; dbt rebuilds them.
+    DROP TABLE destroyed_stars CASCADE;
+  END IF;
+END $$
+"""
+
+
 async def ensure_schema(pool: asyncpg.Pool) -> None:
     """Create the full schema if tables do not already exist."""
     await pool.execute(
@@ -61,18 +82,15 @@ async def ensure_schema(pool: asyncpg.Pool) -> None:
         "logged_in_at TIMESTAMPTZ NOT NULL DEFAULT now())"
     )
     await pool.execute(_MOVE_LOGINS_OUT_OF_SESSIONS)
+    # Every Star ever Saved; destroyed_at stays NULL while it is Saved.
     await pool.execute(
         "CREATE TABLE IF NOT EXISTS saved_stars ("
         "seed BYTEA PRIMARY KEY, "
         "owner_id UUID REFERENCES users(id), "
-        "saved_at TIMESTAMPTZ NOT NULL DEFAULT now())"
+        "saved_at TIMESTAMPTZ DEFAULT now(), "
+        "destroyed_at TIMESTAMPTZ)"
     )
-    await pool.execute(
-        "CREATE TABLE IF NOT EXISTS destroyed_stars ("
-        "seed BYTEA PRIMARY KEY, "
-        "owner_id UUID REFERENCES users(id), "
-        "destroyed_at TIMESTAMPTZ NOT NULL DEFAULT now())"
-    )
+    await pool.execute(_MERGE_DESTROYED_INTO_SAVED)
 
 
 _ENSURE_ANALYTICS_ROLE = """
@@ -93,7 +111,7 @@ END $$
 
 async def ensure_analytics_role(pool: asyncpg.Pool) -> None:
     """Create analytics_reader, its grants, and its marts schema."""
-    password = os.environ.get("ANALYTICS_READER_PASSWORD")
+    password = os.environ.get("ANALYTICS_DB_PASSWORD")
     if not password:
         return
     async with pool.acquire() as connection:
@@ -110,7 +128,7 @@ async def ensure_analytics_role(pool: asyncpg.Pool) -> None:
             )
             await connection.execute("GRANT USAGE ON SCHEMA public TO analytics_reader")
             await connection.execute(
-                "GRANT SELECT ON sessions, saved_stars, destroyed_stars TO analytics_reader"
+                "GRANT SELECT ON sessions, saved_stars TO analytics_reader"
             )
             # Never expose password_hash; grant only safe user columns.
             await connection.execute("REVOKE ALL ON users FROM analytics_reader")

@@ -27,6 +27,11 @@ async def get_session_id(request: Request, response: Response) -> str:
     if session_id is not None:
         return session_id
     # Never adopt an unknown cookie; a reused id would repeat seeds.
+    return await create_session(pool, response)
+
+
+async def create_session(pool: asyncpg.Pool, response: Response) -> str:
+    """Create a new session and set its cookie for one year."""
     session_id = secrets.token_urlsafe(24)
     await pool.execute("INSERT INTO sessions (session_id) VALUES ($1)", session_id)
     response.set_cookie(

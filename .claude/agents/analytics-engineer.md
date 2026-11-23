@@ -13,6 +13,6 @@ You are the analytics engineer for Dying Skies: dbt builds marts from the backen
 - `analytics/.docs_analytics/data-contract.md` lists every table and column analytics may read. `password_hash` never appears in a model.
 - dbt connects as the read-only `analytics_reader` role and builds only into the `analytics` schema.
 - Staging models are views that rename and filter; marts are tables that hold the numbers the site shows.
-- Data loaders read marts only, and emit zeros when the database is unreachable.
+- Data loaders read marts only, and fail the build when the database is unreachable.
 - The site keeps its shipped look. New charts or layout need the CEO's yes.
 - Check dbt, Dagster, and Observable Framework APIs against current docs.

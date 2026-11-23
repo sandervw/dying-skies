@@ -1,6 +1,5 @@
 import { useState } from "react";
 import type { MouseEvent, ReactElement } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Icon } from "./Icon";
 import { DestroyOverlay } from "./DestroyOverlay";
@@ -11,7 +10,7 @@ import {
   isGalleryPath,
 } from "../services/routeService";
 import { useSkySeed } from "../hooks/useSkySeed";
-import { fetchMyStars } from "../services/starApiService";
+import { useSavedTokens } from "../hooks/useSavedTokens";
 import { useAuth } from "../hooks/useAuth";
 
 interface ButtonBoxProps {
@@ -92,10 +91,7 @@ const SignedInButtons = ({ onDestroy }: SignedInButtonsProps): ReactElement => {
   const navigate = useNavigate();
   const onGallery = isGalleryPath(useLocation().pathname);
   const { seed, tag, save } = useSkySeed();
-  const { data: savedTokens } = useQuery({
-    queryKey: ["stars", "mine"],
-    queryFn: fetchMyStars,
-  });
+  const { data: savedTokens } = useSavedTokens();
   const isSaved = (savedTokens ?? []).includes(encodeSeed(seed));
   const hasTag = tag !== null;
   const canSave = hasTag && !isSaved;

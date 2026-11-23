@@ -1,4 +1,5 @@
 """Tests for the star issuance and save endpoints."""
+import asyncio
 import base64
 import os
 
@@ -7,10 +8,12 @@ os.environ.setdefault(
 )
 os.environ.setdefault("SEED_HMAC_SECRET", "00" * 32)
 
+import asyncpg
 from fastapi.testclient import TestClient
 from helpers import get_star, rule_password, signup, unique_username
 
 from app.main import app
+from app.rate_limit import limiter
 
 
 def _decoded_length(value: str) -> int:
@@ -38,6 +41,39 @@ def test_stars_batch_issues_stars_and_sets_cookie():
         assert first_seeds.isdisjoint(second_seeds)
 
 
+def _session_count() -> int:
+    """Count every session row in the database."""
+
+    async def count() -> int:
+        connection = await asyncpg.connect(os.environ["DATABASE_URL"])
+        try:
+            return await connection.fetchval("SELECT COUNT(*) FROM sessions")
+        finally:
+            await connection.close()
+
+    return asyncio.run(count())
+
+
+def test_rate_limited_batch_creates_no_session():
+    """A 429 on /stars/batch adds no session row."""
+    limiter.reset()
+    limiter.enabled = True
+    try:
+        with TestClient(app) as client:
+            for _ in range(60):
+                batch = client.post("/stars/batch", json={"count": 1})
+                assert batch.status_code == 200
+            client.cookies.clear()
+            sessions_before = _session_count()
+
+            limited = client.post("/stars/batch", json={"count": 1})
+            assert limited.status_code == 429
+            assert _session_count() == sessions_before
+    finally:
+        limiter.enabled = False
+        limiter.reset()
+
+
 def test_unknown_session_cookie_gets_a_fresh_session():
     """An unknown session cookie is replaced, never adopted."""
     with TestClient(app) as client:
@@ -47,11 +83,13 @@ def test_unknown_session_cookie_gets_a_fresh_session():
         assert response.cookies.get("session_id") not in (None, "forged")
 
 def test_star_save_then_reject_duplicate():
-    """Saving succeeds once, then is rejected as already saved."""
+    """A star issued before signup saves once, then is rejected."""
     with TestClient(app) as client:
+        entry = get_star(client)
+        anonymous_session = client.cookies.get("session_id")
         password, riddle_id = rule_password(client)
         signup(client, unique_username(), password, riddle_id)
-        entry = get_star(client)
+        assert client.cookies.get("session_id") != anonymous_session
 
         first = client.post("/stars/save", json=entry)
         assert first.status_code == 200

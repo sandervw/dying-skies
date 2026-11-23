@@ -1,20 +1,24 @@
 """Logins: a user's link to one session, capped per user."""
-import asyncpg
-from fastapi import Request
+from fastapi import Request, Response
 
-from app.session import SESSION_COOKIE_NAME
+from app.session import SESSION_COOKIE_NAME, create_session
 
 _MAX_LOGINS_PER_USER = 4
 
 
-async def create_login(pool: asyncpg.Pool, session_id: str, user_id: str) -> None:
-    """Log a session in, evicting the user's oldest logins past the cap."""
+async def start_login(request: Request, response: Response, user_id: str) -> None:
+    """Log the user in on a fresh session, ending the cookie's login."""
+    pool = request.state.pool
+    session_id = await create_session(pool, response)
+    old_session_id = request.cookies.get(SESSION_COOKIE_NAME)
     async with pool.acquire() as connection:
         async with connection.transaction():
+            # A missing cookie binds NULL, which matches no login.
             await connection.execute(
-                "INSERT INTO logins (session_id, user_id) VALUES ($1, $2) "
-                "ON CONFLICT (session_id) DO UPDATE "
-                "SET user_id = EXCLUDED.user_id, logged_in_at = now()",
+                "DELETE FROM logins WHERE session_id = $1", old_session_id
+            )
+            await connection.execute(
+                "INSERT INTO logins (session_id, user_id) VALUES ($1, $2)",
                 session_id,
                 user_id,
             )

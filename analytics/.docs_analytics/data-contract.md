@@ -4,20 +4,20 @@ Analytics reads the backend's Postgres tables directly as dbt sources. `backend/
 
 ## Source tables and columns
 
-- `saved_stars`: `seed` (`BYTEA` primary key), `owner_id`, `saved_at` (`TIMESTAMPTZ NOT NULL DEFAULT now()`).
-- `destroyed_stars`: `seed` (`BYTEA` primary key), `owner_id`, `destroyed_at` (`TIMESTAMPTZ NOT NULL DEFAULT now()`).
+- `saved_stars`: one row per Star ever Saved. `seed` (`BYTEA` primary key), `owner_id`, `saved_at` (`TIMESTAMPTZ`; NULL only on some Destroyed Stars), `destroyed_at` (`TIMESTAMPTZ`; NULL while the Star is still Saved).
 - `sessions`: `session_id` (`TEXT` primary key), `counter` (`BIGINT NOT NULL DEFAULT 0`, the session's issuance count), `created_at`. Rows are never deleted. `SUM(counter)` is every Star ever Issued.
-- `users`: `id` (`UUID` primary key), `username` (`TEXT UNIQUE NOT NULL`), `password_hash` (`TEXT NOT NULL`), `created_at` (`TIMESTAMPTZ NOT NULL DEFAULT now()`). `password_hash` is excluded from every staging model and never leaves the backend.
+- `users`: `id` (`UUID` primary key), `username` (`TEXT UNIQUE NOT NULL`), `created_at` (`TIMESTAMPTZ NOT NULL DEFAULT now()`). `password_hash` is not granted and no model names it.
 
 ## Access
 
-The backend defines a read-only role, `analytics_reader`, granted `SELECT` only, scoped to exactly four tables:
+The backend defines a read-only role, `analytics_reader`, granted `SELECT` only, on exactly:
 
 - `sessions`
 - `saved_stars`
-- `users`
-- `destroyed_stars`
+- `users` columns `id`, `username`, `created_at`
 
 The backend also creates an `analytics` schema, where dbt materializes staging views and marts. dbt connects as `analytics_reader` and builds into that schema.
 
-Dead is a computed total (issued minus saved minus destroyed).
+## Counts
+
+Saved counts `saved_stars` rows with `destroyed_at` NULL; Destroyed counts rows with `destroyed_at` set. Dead is a computed total: Issued minus Saved minus Destroyed.

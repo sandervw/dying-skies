@@ -15,7 +15,7 @@ FastAPI + Postgres API.
 ## Commands
 - Install: `pip install -r requirements.txt`
 - Run local: `uvicorn app.main:app --reload`
-- Test: `pytest`
+- Test: `python -m pytest`, against a local Postgres (`docker compose up db`).
 - Config: copy `.env.sample` to `.env` and fill values; keys documented there.
 
 ## Contracts
