@@ -1,17 +1,7 @@
+import { failFrom } from "./apiError";
 import type { AuthUser, PasswordRules, SignupRiddle } from "../types/auth";
 
 const base = import.meta.env.VITE_API_BASE_URL;
-
-/** an auth request failure carrying the backend error code and any rules. */
-class AuthError extends Error {
-  readonly code: string;
-  readonly rules?: PasswordRules;
-  constructor(code: string, rules?: PasswordRules) {
-    super(code);
-    this.code = code;
-    this.rules = rules;
-  }
-}
 
 interface SignupInput {
   readonly username: string;
@@ -28,18 +18,13 @@ const send = (path: string, body?: unknown): Promise<Response> =>
     body: body === undefined ? undefined : JSON.stringify(body),
   });
 
-const failFrom = async (response: Response): Promise<AuthError> => {
-  const data = await response.json().catch((): Record<string, never> => ({}));
-  return new AuthError(data.code ?? "request_failed", data.rules);
-};
-
 /** fetch the current session's user, or null when anonymous. */
 const fetchCurrentUser = async (): Promise<AuthUser | null> => {
   const response = await fetch(`${base}/auth/me`, { credentials: "include" });
   return response.ok ? ((await response.json()) as AuthUser) : null;
 };
 
-/** log in by username; throws AuthError on bad credentials. */
+/** log in by username; throws ApiError on bad credentials. */
 const login = async (username: string, password: string): Promise<AuthUser> => {
   const response = await send("/auth/login", { username, password });
   if (!response.ok) {
@@ -48,7 +33,7 @@ const login = async (username: string, password: string): Promise<AuthUser> => {
   return (await response.json()) as AuthUser;
 };
 
-/** create an account; throws AuthError with code or rules on failure. */
+/** create an account; throws ApiError with code or rules on failure. */
 const signup = async (input: SignupInput): Promise<AuthUser> => {
   const response = await send("/auth/signup", {
     username: input.username,
@@ -89,7 +74,6 @@ const checkPassword = async (
 };
 
 export {
-  AuthError,
   fetchCurrentUser,
   login,
   signup,

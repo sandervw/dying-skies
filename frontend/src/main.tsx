@@ -10,7 +10,7 @@ import "../dyingskies.css";
 import { App } from "./App";
 import { SkySeedProvider } from "./contexts/SkySeedContext";
 import { AuthProvider, forgetUser } from "./contexts/AuthContext";
-import { StarApiError } from "./services/starApiService";
+import { ApiError } from "./services/apiError";
 
 const container = document.getElementById("root");
 
@@ -18,16 +18,17 @@ if (container === null) {
   throw new Error("Root element #root was not found");
 }
 
-// a Login evicted or expired elsewhere drops this tab to signed out.
-const forgetRejectedLogin = (error: Error): void => {
-  if (error instanceof StarApiError && error.code === "not_authenticated") {
+// log every failed call; a rejected Login signs this tab out.
+const handleApiError = (error: Error): void => {
+  console.error(error);
+  if (error instanceof ApiError && error.code === "not_authenticated") {
     forgetUser(queryClient);
   }
 };
 
 const queryClient = new QueryClient({
-  queryCache: new QueryCache({ onError: forgetRejectedLogin }),
-  mutationCache: new MutationCache({ onError: forgetRejectedLogin }),
+  queryCache: new QueryCache({ onError: handleApiError }),
+  mutationCache: new MutationCache({ onError: handleApiError }),
 });
 
 createRoot(container).render(

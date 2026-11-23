@@ -14,11 +14,11 @@ type Mode = "login" | "signup";
 /** modal switching between login, signup, and signed-in states. */
 const AuthOverlay = ({ onClose }: AuthOverlayProps): ReactElement => {
   const [mode, setMode] = useState<Mode>("login");
-  const { user, signOut } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async (): Promise<void> => {
-    await signOut();
+    await logout();
     onClose();
     navigate("/");
   };

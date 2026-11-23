@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { FormEvent, ReactElement } from "react";
-import { AuthError, login } from "../services/authService";
+import { ApiError } from "../services/apiError";
+import { login } from "../services/authService";
 import { manualEntryGuards } from "../services/manualEntryGuards";
 import { useAuth } from "../hooks/useAuth";
 
@@ -23,7 +24,7 @@ const LoginForm = ({ onClose, onSwitch }: LoginFormProps): ReactElement => {
       setUser(await login(username, password));
       onClose();
     } catch (caught) {
-      const code = caught instanceof AuthError ? caught.code : "request_failed";
+      const code = caught instanceof ApiError ? caught.code : "request_failed";
       setError(
         code === "invalid_credentials"
           ? "Wrong username or password."

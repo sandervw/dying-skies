@@ -1,21 +1,16 @@
 import { encodeSeed, decodeSeed } from "./routeService";
+import { failFrom } from "./apiError";
 import type { Seed } from "./randomService";
 
 const base = import.meta.env.VITE_API_BASE_URL;
+
+/** the query key prefix for the signed-in user's Saved tokens. */
+const SAVED_STARS_QUERY_KEY = ["stars", "mine"] as const;
 
 /** one backend-issued star: its seed and HMAC save tag. */
 interface IssuedStar {
   readonly seed: Seed;
   readonly tag: string;
-}
-
-/** a refused star call, carrying the backend's error code. */
-class StarApiError extends Error {
-  readonly code: string;
-  constructor(code: string) {
-    super(code);
-    this.code = code;
-  }
 }
 
 const tagsByToken = new Map<string, string>();
@@ -37,10 +32,6 @@ const postBody = (path: string, body: unknown): Promise<Response> =>
     body: JSON.stringify(body),
   });
 
-const failFrom = async (response: Response): Promise<StarApiError> => {
-  const data = await response.json().catch((): Record<string, never> => ({}));
-  return new StarApiError(data.code ?? "request_failed");
-};
 
 /** request a batch of backend-issued seed/tag pairs; empty on failure. */
 const fetchStarBatch = async (count: number): Promise<readonly IssuedStar[]> => {
@@ -57,7 +48,7 @@ const fetchStarBatch = async (count: number): Promise<readonly IssuedStar[]> => 
     .filter((star): star is IssuedStar => star !== null);
 };
 
-/** save a star by its seed and tag; rejects with StarApiError. */
+/** save a star by its seed and tag; rejects with ApiError. */
 const saveStar = async (seed: Seed, tag: string): Promise<void> => {
   const response = await postBody("/stars/save", { seed: encodeSeed(seed), tag });
   if (!response.ok) {
@@ -65,7 +56,7 @@ const saveStar = async (seed: Seed, tag: string): Promise<void> => {
   }
 };
 
-/** destroy a saved sky and forget its tag; rejects with StarApiError. */
+/** destroy a saved sky and forget its tag; rejects with ApiError. */
 const destroyStar = async (seed: Seed): Promise<void> => {
   const response = await postBody("/stars/destroy", { seed: encodeSeed(seed) });
   if (!response.ok) {
@@ -74,7 +65,7 @@ const destroyStar = async (seed: Seed): Promise<void> => {
   tagsByToken.delete(encodeSeed(seed));
 };
 
-/** fetch the caller's saved sky tokens, newest first; rejects with StarApiError. */
+/** fetch the caller's saved sky tokens, newest first; rejects with ApiError. */
 const fetchMyStars = async (): Promise<readonly string[]> => {
   const response = await fetch(`${base}/stars/mine`, { credentials: "include" });
   if (!response.ok) {
@@ -85,7 +76,7 @@ const fetchMyStars = async (): Promise<readonly string[]> => {
 };
 
 export {
-  StarApiError,
+  SAVED_STARS_QUERY_KEY,
   fetchStarBatch,
   saveStar,
   destroyStar,
