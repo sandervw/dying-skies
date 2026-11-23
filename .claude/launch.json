@@ -12,6 +12,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "frontend", "run", "dev", "--", "--port", "5173", "--strictPort", "--open", "false"],
       "port": 5173
+    },
+    {
+      "name": "analytics-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "analytics/observable", "run", "dev", "--", "--port", "3000", "--no-open"],
+      "port": 3000
     }
   ]
 }
