@@ -1,7 +1,7 @@
 /** Music Lab canvas: piano roll, playhead, spectrum, meter, and legend. */
 
 import { LOOP_BARS } from "../services/musicService";
-import { BEATS_PER_BAR, clamp } from "./musicLabPlayback";
+import { BEATS_PER_BAR, LAB_COLORS } from "./musicLabPlayback";
 import type { DrawnNote, Playback } from "./musicLabPlayback";
 
 // layout in CSS pixels.
@@ -15,6 +15,10 @@ const SPECTRUM_BARS = 72;
 // pitch range shown before any pitched note exists.
 const DEFAULT_LOW_PITCH = 48;
 const DEFAULT_HIGH_PITCH = 72;
+
+// keep a value inside the low..high range.
+const clamp = (value: number, low: number, high: number): number =>
+  Math.min(high, Math.max(low, value));
 
 // one frame's geometry and clock.
 interface Frame {
@@ -194,9 +198,9 @@ const drawMeter = (context: CanvasRenderingContext2D, frame: Frame, loudness: nu
   context.fillRect(12, frame.rollTop, 16, meterHeight);
   const filled = level * meterHeight;
   const gradient = context.createLinearGradient(0, frame.rollBottom, 0, frame.rollTop);
-  gradient.addColorStop(0, "#39c8a0");
-  gradient.addColorStop(0.7, "#ffd24a");
-  gradient.addColorStop(1, "#ff6b4a");
+  gradient.addColorStop(0, LAB_COLORS.green);
+  gradient.addColorStop(0.7, LAB_COLORS.yellow);
+  gradient.addColorStop(1, LAB_COLORS.red);
   context.fillStyle = gradient;
   context.fillRect(12, frame.rollBottom - filled, 16, filled);
   context.fillStyle = "rgba(255,255,255,0.4)";
@@ -208,17 +212,25 @@ const drawMeter = (context: CanvasRenderingContext2D, frame: Frame, loudness: nu
   context.restore();
 };
 
+// true while this role's note plays at the given moment.
+const isSounding = (note: DrawnNote, role: string, now: number): boolean => {
+  const isRole = note.role === role;
+  const hasStarted = now >= note.startSeconds;
+  const hasEnded = now > note.startSeconds + note.lengthSeconds;
+  return isRole && hasStarted && !hasEnded;
+};
+
 // legend: pulse each voice while it is sounding.
-const drawLegend = (context: CanvasRenderingContext2D, frame: Frame, playback: Playback): void => {
+const drawLegend = (
+  context: CanvasRenderingContext2D,
+  frame: Frame,
+  voices: Playback["voices"],
+  notes: readonly DrawnNote[],
+): void => {
   let legendX = frame.left;
   const legendY = frame.rollBottom + PERCUSSION_HEIGHT + SPECTRUM_HEIGHT + 22;
-  for (const voice of playback.voices) {
-    const sounding = playback.notes.some(
-      (note) =>
-        note.role === voice.role &&
-        frame.now >= note.startSeconds &&
-        frame.now <= note.startSeconds + note.lengthSeconds,
-    );
+  for (const voice of voices) {
+    const sounding = notes.some((note) => isSounding(note, voice.role, frame.now));
     context.globalAlpha = sounding ? 1 : 0.45;
     context.fillStyle = voice.color;
     context.fillRect(legendX, legendY - 8, 10, 10);
@@ -237,7 +249,9 @@ const drawFrame = (canvas: HTMLCanvasElement, playback: Playback): void => {
   const height = canvas.clientHeight;
   const backingWidth = Math.round(width * pixelRatio);
   const backingHeight = Math.round(height * pixelRatio);
-  if (canvas.width !== backingWidth || canvas.height !== backingHeight) {
+  const widthChanged = canvas.width !== backingWidth;
+  const heightChanged = canvas.height !== backingHeight;
+  if (widthChanged || heightChanged) {
     canvas.width = backingWidth;
     canvas.height = backingHeight;
   }
@@ -247,15 +261,16 @@ const drawFrame = (canvas: HTMLCanvasElement, playback: Playback): void => {
   context.clearRect(0, 0, width, height);
 
   const frame = measureFrame(width, height, playback);
+  const notes = playback.currentNotes();
   drawGrid(context, frame, playback.beatSeconds);
   drawSeams(context, frame);
   drawLaneDivider(context, frame);
-  drawNotes(context, frame, playback.notes);
+  drawNotes(context, frame, notes);
   drawPlayhead(context, frame);
   const analyser = playback.analyser;
   if (analyser !== null) drawSpectrum(context, frame, analyser);
   drawMeter(context, frame, analyser === null ? 0 : measureLoudness(analyser));
-  drawLegend(context, frame, playback);
+  drawLegend(context, frame, playback.voices, notes);
 };
 
 export { drawFrame };

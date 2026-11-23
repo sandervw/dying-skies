@@ -97,6 +97,8 @@ const SignedInButtons = ({ onDestroy }: SignedInButtonsProps): ReactElement => {
     queryFn: fetchMyStars,
   });
   const isSaved = (savedTokens ?? []).includes(encodeSeed(seed));
+  const hasTag = tag !== null;
+  const canSave = hasTag && !isSaved;
 
   const handleGallery = (event: MouseEvent<HTMLButtonElement>): void => {
     event.preventDefault();
@@ -116,7 +118,7 @@ const SignedInButtons = ({ onDestroy }: SignedInButtonsProps): ReactElement => {
       >
         <Icon name={onGallery ? "return" : "archive"} />
       </button>
-      {tag !== null && !isSaved ? (
+      {canSave ? (
         <button
           className="icon link"
           aria-label="Save this sky"

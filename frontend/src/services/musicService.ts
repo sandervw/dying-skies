@@ -3,9 +3,10 @@ import type { Engine, Instrument } from "webmusic-engine";
 import { INSTRUMENT_SETS, INSTRUMENT_SET_DISPLAY_NAMES } from "../utils/instrumentSets";
 import { MODES } from "../utils/modes";
 import { PRESETS } from "../utils/presets";
+import type { Preset } from "../utils/presets";
 import { createSeededRandom, deriveSeed } from "./randomService";
 import type { Seed } from "./randomService";
-import type { InstrumentSpec } from "../types/music";
+import type { InstrumentSpec, Role } from "../types/music";
 
 // one shared context, so a single unlock covers every sky
 const audioContext = new AudioContext({ latencyHint: "playback" });
@@ -99,15 +100,32 @@ const slip = (
   });
 };
 
-/** one role's score, the instrument playing it, and its octave. */
+/** the MIDI note a score step plays, up the mode from C{register}. */
+const notePitch = (register: number, offsets: readonly number[], step: number): number => {
+  const semitone = offsets[step % offsets.length] + 12 * Math.floor(step / offsets.length);
+  return 12 * (register + 1) + semitone;
+};
+
+// one instrument set as the catalog holds it.
+type InstrumentSet = (typeof INSTRUMENT_SETS)[string];
+
+/** one role's sound, octave, density, locked score, and instrument. */
 interface Voice {
+  readonly role: Role;
   readonly spec: InstrumentSpec;
-  readonly instrument: Instrument;
   readonly register: number;
-  readonly events: readonly [number, number, number][];
+  readonly density: number;
+  readonly events: [number, number, number][];
+  readonly instrument: Instrument;
 }
 
-/** trigger one voice's notes for this loop, timed off the passed time. */
+/** a looping engine and the live voices it plays. */
+interface Loop {
+  readonly engine: Engine;
+  readonly voices: readonly Voice[];
+}
+
+// trigger one voice's notes for this loop, timed off the passed time.
 const buildPart = (
   voice: Voice,
   offsets: readonly number[],
@@ -121,9 +139,45 @@ const buildPart = (
     if (seen.has(`${bar}:${position}`)) continue;
     seen.add(`${bar}:${position}`);
     const startTime = time + (bar * 4 + position) * beat;
-    const semitone = offsets[step % offsets.length] + 12 * Math.floor(step / offsets.length);
-    voice.instrument.triggerAttackRelease(12 * (voice.register + 1) + semitone, seconds, startTime); // MIDI from C{register}; noise ignores pitch
+    voice.instrument.triggerAttackRelease(notePitch(voice.register, offsets, step), seconds, startTime); // noise ignores pitch
   }
+};
+
+/** loop a set, preset, and mode; dispose the engine to stop. */
+const playLoop = async (
+  set: InstrumentSet,
+  preset: Preset,
+  offsets: readonly number[],
+  context: AudioContext,
+): Promise<Loop> => {
+  const roles = [...preset.instruments];
+  const steps = offsets.length + 1;
+
+  // locked score: built once, a fraction of notes slips each repeat
+  const score = roles.map((role) => {
+    const spec = set[role];
+    const register = Math.min(MAX_REGISTER, Math.max(MIN_REGISTER, (spec.register ?? 2) + preset.registerShift));
+    const events = buildScore(preset.density[role], steps, spec.hold, LOOP_BARS);
+    return { role, spec, register, events, density: preset.density[role] };
+  });
+
+  const { patch, roles: mixRoles } = toneSetToPatch(set, {
+    reverbSend: preset.reverbWet,
+    roomSize: Math.min(0.85, preset.reverbDecay / 14),
+  });
+  const engine = await createEngine({ patch, roles: mixRoles, context });
+  const voices = score.map((voice) => ({ ...voice, instrument: engine.instrument(voice.role) }));
+  engine.transport.bpm = preset.tempo;
+
+  // each repeat: slip a fraction, then trigger from the passed time
+  let first = true;
+  engine.transport.scheduleRepeat((time): void => {
+    if (!first) for (const voice of voices) slip(voice.spec.hold, voice.events, steps, voice.density);
+    first = false;
+    for (const voice of voices) buildPart(voice, offsets, preset.tempo, time);
+  }, `${LOOP_BARS}m`, 0);
+  engine.transport.start();
+  return { engine, voices };
 };
 
 /** play this sky on a looping engine; dispose the engine to stop. */
@@ -133,34 +187,8 @@ const playSky = async (seed: Seed): Promise<Engine> => {
   const set = INSTRUMENT_SETS[pickSet(seed)];
   const preset = PRESETS[pick(random, PRESET_NAMES)];
   const mode = MODES[pick(random, MODE_NAMES)].offsets;
-  const roles = [...preset.instruments];
-  const steps = mode.length + 1;
-
-  // locked score: built once, a fraction of notes slips each repeat
-  const score = roles.map((role) => {
-    const spec = set[role];
-    const register = Math.min(MAX_REGISTER, Math.max(MIN_REGISTER, (spec.register ?? 2) + preset.registerShift));
-    const events = buildScore(preset.density[role], steps, spec.hold, LOOP_BARS);
-    return { spec, register, events, density: preset.density[role] };
-  });
-
-  const { patch, roles: mixRoles } = toneSetToPatch(set, {
-    reverbSend: preset.reverbWet,
-    roomSize: Math.min(0.85, preset.reverbDecay / 14),
-  });
-  const engine = await createEngine({ patch, roles: mixRoles, context: audioContext });
-  const voices = score.map((voice, index) => ({ ...voice, instrument: engine.instrument(roles[index]) }));
-  engine.transport.bpm = preset.tempo;
-
-  // each repeat: slip a fraction, then trigger from the passed time
-  let first = true;
-  engine.transport.scheduleRepeat((time): void => {
-    if (!first) for (const voice of voices) slip(voice.spec.hold, voice.events, steps, voice.density);
-    first = false;
-    for (const voice of voices) buildPart(voice, mode, preset.tempo, time);
-  }, `${LOOP_BARS}m`, 0);
-  engine.transport.start();
-  return engine;
+  const loop = await playLoop(set, preset, mode, audioContext);
+  return loop.engine;
 };
 
 /** name the instrument-set, mode, and preset a seed plays. */
@@ -173,14 +201,12 @@ const describeSky = (seed: Seed): { set: string; mode: string; preset: string; }
   return { set: INSTRUMENT_SET_DISPLAY_NAMES[set], mode: MODES[mode].displayName, preset: PRESETS[preset].displayName };
 };
 
+export type { Voice };
 export {
   LOOP_BARS,
-  MIN_REGISTER,
-  MAX_REGISTER,
-  buildScore,
-  slip,
-  buildPart,
+  notePitch,
   describeSky,
   phoneAudio,
+  playLoop,
   playSky,
 };
