@@ -3,11 +3,11 @@ name = "dying-skies-analytics"
 version = "0.1.0"
 requires-python = ">=3.12,<3.13"
 dependencies = [
-    "dagster>=1.13",
-    "dagster-dbt>=0.29",
-    "dagster-postgres>=0.29",
-    "dagster-webserver>=1.13",
-    "dbt-core>=1.9,<1.12",
+    "dagster>=1.13.30",
+    "dagster-dbt>=0.29.30",
+    "dagster-postgres>=0.29.30",
+    "dagster-webserver>=1.13.30",
+    "dbt-core>=1.12.7,<1.13",
     "dbt-postgres>=1.9,<1.12",
 ]
 
