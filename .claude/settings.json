@@ -66,9 +66,7 @@
       "Bash(tofu apply*)",
       "Bash(tofu destroy*)",
       "Bash(tofu * apply*)",
-      "Bash(tofu * destroy*)",
-      "Bash(ssh *)",
-      "Bash(scp *)"
+      "Bash(tofu * destroy*)"
     ]
   },
   "enabledMcpjsonServers": ["playwright"],
