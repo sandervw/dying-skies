@@ -129,7 +129,7 @@ async def ensure_analytics_role(pool: asyncpg.Pool) -> None:
             )
             await connection.execute("GRANT USAGE ON SCHEMA public TO analytics_reader")
             await connection.execute("GRANT SELECT ON saved_stars TO analytics_reader")
-            # Never expose session_id, a login token; grant only safe columns.
+            # Never expose session_id; grant only counter and created_at.
             await connection.execute("REVOKE ALL ON sessions FROM analytics_reader")
             await connection.execute(
                 "GRANT SELECT (counter, created_at) ON sessions TO analytics_reader"

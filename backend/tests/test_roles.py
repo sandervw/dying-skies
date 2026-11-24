@@ -2,11 +2,6 @@
 import asyncio
 import os
 
-os.environ.setdefault(
-    "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/dying_skies"
-)
-os.environ.setdefault("SEED_HMAC_SECRET", "00" * 32)
-
 import asyncpg
 from fastapi.testclient import TestClient
 
@@ -23,7 +18,7 @@ _FAKE_DAGSTER_TABLES = (
 _ROLE_FACTS = (
     "SELECT "
     "has_column_privilege('analytics_reader', 'sessions', 'session_id', 'SELECT') "
-    "AS reads_token, "
+    "AS reads_session_id, "
     "has_column_privilege('analytics_reader', 'sessions', 'counter', 'SELECT') "
     "AS reads_issuance, "
     "(SELECT tableowner FROM pg_tables "
@@ -50,7 +45,7 @@ async def _role_facts() -> asyncpg.Record:
         await connection.close()
 
 
-def test_startup_hides_login_tokens_and_gives_dagster_its_tables(monkeypatch):
+def test_startup_hides_session_ids_and_gives_dagster_its_tables(monkeypatch):
     """Analytics cannot read session_id; Dagster's tables move to its schema."""
     for key in ("ANALYTICS_DB_PASSWORD", "DAGSTER_DB_PASSWORD"):
         monkeypatch.setenv(key, os.environ.get(key) or "test-only")
@@ -59,7 +54,7 @@ def test_startup_hides_login_tokens_and_gives_dagster_its_tables(monkeypatch):
     with TestClient(app):
         facts = asyncio.run(_role_facts())
 
-    assert not facts["reads_token"]
+    assert not facts["reads_session_id"]
     assert facts["reads_issuance"]
     assert facts["runs_owner"] == "dagster"
     assert facts["runs_left_in_public"] is None
