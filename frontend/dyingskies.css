@@ -1,6 +1,6 @@
 /* site theme + in-use sparse foundations (single stylesheet) */
 
-@import url("https://fonts.googleapis.com/css2?family=Silkscreen&display=swap");
+@import "@fontsource/silkscreen/latin-400.css";
 
 /* ### The Laws of Sparse CSS
 *By Sander Vanwilligen*

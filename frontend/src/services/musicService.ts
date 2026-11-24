@@ -1,4 +1,3 @@
-import { createEngine, toneSetToPatch } from "webmusic-engine";
 import type { Engine, Instrument } from "webmusic-engine";
 import { INSTRUMENT_SETS, INSTRUMENT_SET_DISPLAY_NAMES } from "../utils/instrumentSets";
 import { MODES } from "../utils/modes";
@@ -161,6 +160,8 @@ const playLoop = async (
     return { role, spec, register, events, density: preset.density[role] };
   });
 
+  // the engine downloads on first play
+  const { createEngine, toneSetToPatch } = await import("webmusic-engine");
   const { patch, roles: mixRoles } = toneSetToPatch(set, {
     reverbSend: preset.reverbWet,
     roomSize: Math.min(0.85, preset.reverbDecay / 14),
