@@ -17,8 +17,7 @@ Current state and next work. Rewrite when stale; never log history.
 
 ## Next
 
-1. API 504s on `api.dyingskies.com` (`/stats`, `/auth/me`, `/stars/mine`) and the apex `/`. Cause unknown.
-2. React stays at 19.2 (#12, #20 open): 19.3 fails UC-05 and UC-07.
+1. React stays at 19.2 (#12, #20 open): 19.3 fails UC-05 and UC-07.
 
 ## CEO preferences
 
@@ -50,4 +49,5 @@ Current state and next work. Rewrite when stale; never log history.
 - Python's `write_text` on Windows writes CRLF; pass `newline="\n"` or use Edit.
 - `.docs/personal-notes.md` is the CEO's own file.
 - Read Cloudflare Web Analytics and bot settings through the Cloudflare connector.
+- Cloudflare's `fl2 early hints` and `nginx-ssl early hints` user agents log 504s; filter them out of error counts.
 - `wrangler dev` on Windows leaves `workerd.exe` running and `frontend/.wrangler/tmp` behind. Stop `workerd.exe` and delete the folder after use.
