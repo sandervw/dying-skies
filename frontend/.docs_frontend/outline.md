@@ -35,7 +35,8 @@ Vite + React single-page app rendering procedural skies on a Canvas 2D layer.
 ## Music
 - `useSkyMusic` plays each seed through `musicService`: the seed picks an instrument set, a preset, and a mode, and `Header` shows them under the title.
 - The score is an 8-bar loop per instrument role. Each repeat re-rolls a fifth of its notes.
-- Music starts muted. On phones a silent looping clip keeps a locked phone playing and shows lock-screen controls.
+- Music starts muted. `webmusic-engine` downloads on the first unmute.
+- On phones a silent looping clip keeps a locked phone playing and shows lock-screen controls.
 
 ## Counter
 - `Footer` polls `GET /stats` every 15 seconds and shows saved, destroyed, and died totals.
@@ -54,6 +55,11 @@ Screensaver aesthetic; the sky is the interface and UI stays near-invisible.
 
 ## Seeds
 - A seed is an unpadded base64url string (~43 chars) and is shareable as a `/sky/<seed>` link.
+
+## Page load
+- `public/_headers` caches the fingerprinted `/assets/*` files for a year; the HTML revalidates on every visit.
+- The Silkscreen title font ships with the app from `@fontsource/silkscreen` and is preloaded in `index.html`.
+- `index.html` preconnects to the API.
 
 ## Boundaries
 Seed issuance, persistence, and auth are the backend's; the analytics pipeline is its own deployed site. The frontend integrates with the backend only through the HTTP API in `backend/.docs_backend/api-contract.md`.

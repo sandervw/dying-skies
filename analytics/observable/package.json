@@ -6,7 +6,7 @@
     "clean": "rimraf src/.observablehq/cache dist",
     "dev": "observable preview",
     "build": "observable build",
-    "deploy": "rimraf src/.observablehq/cache/data && observable build && wrangler deploy",
+    "deploy": "rimraf src/.observablehq/cache/data && observable build && node -e \"require('fs').copyFileSync('_headers', 'dist/_headers')\" && wrangler deploy",
     "observable": "observable"
   },
   "dependencies": {
