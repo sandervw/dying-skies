@@ -45,7 +45,7 @@ Errors: 401 `not_authenticated`.
 
 `POST /auth/password/check` - anonymous.
 Body `{password, riddle_id}`.
-200 `{rules: {color, zodiac, riddle, year, special}}`, each a boolean.
+200 `{rules: {color, zodiac, riddle, digit, special}}`, each a boolean.
 
 `POST /auth/signup` - anonymous; logs the created account in on a new session and sets its cookie.
 Body `{username (3-64 chars), password (<=127 chars), riddle_id}`.

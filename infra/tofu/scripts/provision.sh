@@ -26,23 +26,24 @@ APT::Periodic::Update-Package-Lists "1";
 APT::Periodic::Unattended-Upgrade "1";
 EOF
 
-# Role, database, schemas. Peer auth over the unix socket.
+# The backend's login role and database; the backend creates the rest.
 su - postgres -c "psql -tc \"SELECT 1 FROM pg_roles WHERE rolname='skies'\"" | grep -q 1 || \
   su - postgres -c "createuser --createdb --createrole skies"
 su - postgres -c "psql -tc \"SELECT 1 FROM pg_database WHERE datname='dying_skies'\"" | grep -q 1 || \
   su - postgres -c "createdb -O skies dying_skies"
-su - skies -c "psql -d dying_skies -c 'CREATE SCHEMA IF NOT EXISTS dagster; CREATE SCHEMA IF NOT EXISTS analytics;'"
 
-# Node 24 and wrangler for the Observable build and deploy.
-curl -fsSL https://deb.nodesource.com/setup_24.x | bash -
+# Node 24 from NodeSource's signed apt repo, and a pinned wrangler.
+mkdir -p --mode=0755 /usr/share/keyrings
+curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor --yes -o /usr/share/keyrings/nodesource.gpg
+echo 'deb [signed-by=/usr/share/keyrings/nodesource.gpg] https://deb.nodesource.com/node_24.x nodistro main' > /etc/apt/sources.list.d/nodesource.list
+apt-get update
 apt-get install -y nodejs
-npm install -g wrangler
+npm install -g wrangler@4.167.0
 
-# uv installs to /home/skies/.local/bin.
-su - skies -c "curl -LsSf https://astral.sh/uv/install.sh | sh"
+# uv, pinned, installs to /home/skies/.local/bin.
+su - skies -c "curl -LsSf https://astral.sh/uv/0.12.6/install.sh | sh"
 
 # cloudflared: outbound tunnels for the API and Dagster UI.
-mkdir -p --mode=0755 /usr/share/keyrings
 curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg > /usr/share/keyrings/cloudflare-main.gpg
 echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main' > /etc/apt/sources.list.d/cloudflared.list
 apt-get update
@@ -76,6 +77,8 @@ ANALYTICS_DB_NAME=dying_skies
 ANALYTICS_DB_USER=analytics_reader
 ANALYTICS_DB_PASSWORD=
 ANALYTICS_DB_SCHEMA=analytics
+DAGSTER_DB_PASSWORD=
+DAGSTER_PG_URL=postgresql://dagster:<DAGSTER_DB_PASSWORD>@127.0.0.1:5432/dying_skies
 CLOUDFLARE_ACCOUNT_ID=954c30f428e0a61f4c66e6a679f51ec0
 CLOUDFLARE_API_TOKEN=
 ALERT_FROM=alerts@dyingskies.com

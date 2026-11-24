@@ -1,5 +1,5 @@
 -- Daily/weekly counts of saves, destroys, and signups over time.
--- Destroyed Stars keep their save; saves with no recorded time drop out.
+-- Destroyed Skies keep their save; saves with no recorded time drop out.
 with events as (
     select saved_at as event_at, 'saved' as event_type
     from {{ ref('stg_saved_stars') }}

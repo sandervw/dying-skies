@@ -20,5 +20,6 @@ FastAPI + Postgres API.
 
 ## Contracts
 - Exposes the HTTP API in `.docs_backend/api-contract.md`.
-- Provisions the read-only `analytics_reader` Postgres role the analytics piece reads.
+- Owns every Postgres role, schema, and grant: `analytics_reader`, `dagster`, `skies_admin`.
+- Analytics reads only the tables and columns in `.docs_backend/data-contract.md`.
 - Runs on the OVH VPS provisioned in `infra/`.

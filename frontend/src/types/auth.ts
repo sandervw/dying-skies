@@ -9,7 +9,7 @@ interface PasswordRules {
   readonly color: boolean;
   readonly zodiac: boolean;
   readonly riddle: boolean;
-  readonly year: boolean;
+  readonly digit: boolean;
   readonly special: boolean;
 }
 

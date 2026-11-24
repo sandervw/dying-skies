@@ -1,4 +1,4 @@
--- Global star counter breakdown: saved, destroyed, dead.
+-- The Counter: Saved, Destroyed, and Died Skies.
 with stars as (
     select
         count(*) filter (where destroyed_at is null) as saved_count,
@@ -12,5 +12,5 @@ issued as (
 select
     stars.saved_count as saved,
     stars.destroyed_count as destroyed,
-    issued.issued_count - stars.saved_count - stars.destroyed_count as dead
+    issued.issued_count - stars.saved_count - stars.destroyed_count as died
 from stars, issued

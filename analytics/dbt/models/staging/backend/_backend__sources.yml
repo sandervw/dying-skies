@@ -11,7 +11,6 @@ sources:
           - name: created_at
       - name: sessions
         columns:
-          - name: session_id
           - name: counter
           - name: created_at
       - name: saved_stars

@@ -12,6 +12,7 @@ async def open_pool() -> AsyncIterator[asyncpg.Pool]:
     async with asyncpg.create_pool(os.environ["DATABASE_URL"]) as pool:
         await ensure_schema(pool)
         await ensure_analytics_role(pool)
+        await ensure_dagster_role(pool)
         await ensure_admin_role(pool)
         yield pool
 
@@ -68,7 +69,8 @@ async def ensure_schema(pool: asyncpg.Pool) -> None:
         "password_hash TEXT NOT NULL, "
         "created_at TIMESTAMPTZ NOT NULL DEFAULT now())"
     )
-    # Sessions are never deleted; their counters sum to all-time Issued.
+    # Sessions are never deleted; counter is the issuance count, and the
+    # counters sum to all-time Issued.
     await pool.execute(
         "CREATE TABLE IF NOT EXISTS sessions ("
         "session_id TEXT PRIMARY KEY, "
@@ -127,8 +129,11 @@ async def ensure_analytics_role(pool: asyncpg.Pool) -> None:
                 "GRANT CONNECT ON DATABASE dying_skies TO analytics_reader"
             )
             await connection.execute("GRANT USAGE ON SCHEMA public TO analytics_reader")
+            await connection.execute("GRANT SELECT ON saved_stars TO analytics_reader")
+            # Never expose session_id, a login token; grant only safe columns.
+            await connection.execute("REVOKE ALL ON sessions FROM analytics_reader")
             await connection.execute(
-                "GRANT SELECT ON sessions, saved_stars TO analytics_reader"
+                "GRANT SELECT (counter, created_at) ON sessions TO analytics_reader"
             )
             # Never expose password_hash; grant only safe user columns.
             await connection.execute("REVOKE ALL ON users FROM analytics_reader")
@@ -139,6 +144,69 @@ async def ensure_analytics_role(pool: asyncpg.Pool) -> None:
             await connection.execute(
                 "ALTER SCHEMA analytics OWNER TO analytics_reader"
             )
+
+
+_ENSURE_DAGSTER_ROLE = """
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'dagster') THEN
+    EXECUTE format(
+      'CREATE ROLE dagster LOGIN PASSWORD %L',
+      current_setting('dagster.password'));
+  ELSE
+    EXECUTE format(
+      'ALTER ROLE dagster WITH PASSWORD %L',
+      current_setting('dagster.password'));
+  END IF;
+END $$
+"""
+
+
+# Moves Dagster's tables from public into its schema; a no-op once applied.
+_MOVE_DAGSTER_OUT_OF_PUBLIC = """
+DO $$
+DECLARE
+  dagster_table TEXT;
+BEGIN
+  -- Only Dagster keeps an alembic_version table.
+  IF EXISTS (
+    SELECT FROM pg_tables
+    WHERE schemaname = 'public' AND tablename = 'alembic_version'
+  ) THEN
+    FOR dagster_table IN
+      SELECT tablename FROM pg_tables
+      WHERE schemaname = 'public'
+        AND tablename NOT IN ('users', 'sessions', 'logins', 'saved_stars')
+    LOOP
+      -- Owned sequences and indexes move with the table.
+      EXECUTE format('ALTER TABLE public.%I SET SCHEMA dagster', dagster_table);
+      EXECUTE format('ALTER TABLE dagster.%I OWNER TO dagster', dagster_table);
+    END LOOP;
+  END IF;
+END $$
+"""
+
+
+async def ensure_dagster_role(pool: asyncpg.Pool) -> None:
+    """Create the dagster role and schema; move its tables there."""
+    password = os.environ.get("DAGSTER_DB_PASSWORD")
+    if not password:
+        return
+    async with pool.acquire() as connection:
+        async with connection.transaction():
+            # Pass password via a session setting; role DDL cannot bind params.
+            await connection.execute(
+                "SELECT set_config('dagster.password', $1, true)", password
+            )
+            await connection.execute(_ENSURE_DAGSTER_ROLE)
+            # Membership lets us reassign ownership to dagster.
+            await connection.execute("GRANT dagster TO CURRENT_USER")
+            await connection.execute("GRANT CONNECT ON DATABASE dying_skies TO dagster")
+            await connection.execute("CREATE SCHEMA IF NOT EXISTS dagster")
+            await connection.execute("ALTER SCHEMA dagster OWNER TO dagster")
+            # Dagster names its tables without a schema.
+            await connection.execute("ALTER ROLE dagster SET search_path = dagster")
+            await connection.execute(_MOVE_DAGSTER_OUT_OF_PUBLIC)
 
 
 _ENSURE_ADMIN_ROLE = """
@@ -164,13 +232,14 @@ END $$
 _ENSURE_DAGSTER_WRITE = """
 DO $$
 BEGIN
-  IF EXISTS (SELECT FROM information_schema.schemata WHERE schema_name = 'dagster') THEN
+  IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'dagster') THEN
     GRANT USAGE, CREATE ON SCHEMA dagster TO skies_admin;
     GRANT ALL ON ALL TABLES IN SCHEMA dagster TO skies_admin;
     GRANT ALL ON ALL SEQUENCES IN SCHEMA dagster TO skies_admin;
-    ALTER DEFAULT PRIVILEGES IN SCHEMA dagster
+    -- Cover the tables Dagster creates later.
+    ALTER DEFAULT PRIVILEGES FOR ROLE dagster IN SCHEMA dagster
       GRANT ALL ON TABLES TO skies_admin;
-    ALTER DEFAULT PRIVILEGES IN SCHEMA dagster
+    ALTER DEFAULT PRIVILEGES FOR ROLE dagster IN SCHEMA dagster
       GRANT ALL ON SEQUENCES TO skies_admin;
   END IF;
 END $$

@@ -23,13 +23,13 @@ Run `npm run check:architecture` and copy its result. Any failure fails the revi
 
 Grade each rule PASS or FAIL for the changed code. Every FAIL cites `file:line` and quotes the offending code in one line; without a citation it is a PASS. A rule with nothing to apply to is PASS.
 
-1. **Pieces meet only through contracts.** *Violation:* a file in one piece imports or reads another piece's code; the frontend calls a route or field missing from `backend/.docs_backend/api-contract.md`; analytics reads a table or column missing from `analytics/.docs_analytics/data-contract.md`.
+1. **Pieces meet only through contracts.** *Violation:* a file in one piece imports or reads another piece's code; the frontend calls a route or field missing from `backend/.docs_backend/api-contract.md`; analytics reads a table or column missing from `backend/.docs_backend/data-contract.md`.
 2. **Contracts change with the code.** *Violation:* a route, wire shape, table, column, or grant changes and its contract document does not change in the same diff.
 3. **Dependencies point inward.** *Violation:* an import crosses a layer against the tables in the spec.
 4. **Pure modules stay pure.** No I/O, clock, randomness, or global state in the modules the spec lists as pure. *Violation:* one of them fetches, reads the time, draws an unseeded random value, logs, or writes.
-5. **Side effects live in adapters, and adapters hold no business rules.** *Violation:* a route, component, hook, data loader, or Dagster asset gains a business `if` (limits, eligibility, a state change) that belongs in a domain module.
+5. **Side effects live in adapters, and adapters hold no business rules.** *Violation:* a route, component, hook, data loader, or Dagster asset gains a business `if` that belongs in a domain module.
 6. **Ubiquitous language.** One term per concept, matching the glossary. *Violation:* a new name uses a synonym or a generic word for a glossary concept, a term starts meaning two things, or a new domain term is missing from the glossary.
-7. **One source per value.** Code, styles, and copy read each value from where it lives. *Violation:* changed code retypes a colour, size, limit, path, or length that a token, constant, or function already owns, or copies a rule, style, or component instead of sharing it. Search the whole piece for the value.
+7. **One source per value.** Code, styles, and copy read each value from where it lives. *Violation:* changed code retypes a value that a token, constant, or function already owns, or copies a rule, style, or component instead of sharing it. Search the whole piece for the value.
 
 ## Report
 

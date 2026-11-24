@@ -82,7 +82,8 @@ resource "terraform_data" "services" {
       "sudo install -m 0644 /tmp/dagster-webserver.service /etc/systemd/system/dagster-webserver.service",
       "sudo install -m 0644 /tmp/dagster-daemon.service /etc/systemd/system/dagster-daemon.service",
       "sudo systemctl daemon-reload",
-      "sudo systemctl enable --now skies-api.service dagster-webserver.service dagster-daemon.service",
+      "sudo systemctl enable skies-api.service dagster-webserver.service dagster-daemon.service",
+      "sudo systemctl restart skies-api.service dagster-webserver.service dagster-daemon.service",
     ]
   }
 }

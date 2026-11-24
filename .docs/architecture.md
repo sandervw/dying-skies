@@ -8,10 +8,10 @@ The pieces share no code.
 
 | Piece | Owns | Meets the others through |
 |---|---|---|
-| `frontend/` | Sky rendering, routing, interaction, music, the counter | The HTTP API in `backend/.docs_backend/api-contract.md` |
-| `backend/` | Star issuance, save verification, counters, sessions, accounts, the Postgres schema | The HTTP API; the tables and grants in `analytics/.docs_analytics/data-contract.md` |
-| `analytics/` | dbt marts, the Dagster schedule, the site at `/analytics/` | Read-only Postgres access as `analytics_reader` |
-| `infra/` | The VPS, its services, and its tunnels | The host conventions in `infra/CLAUDE.md` |
+| `frontend/` | Sky rendering, routing, interaction, music, the Counter | The HTTP API in `backend/.docs_backend/api-contract.md` |
+| `backend/` | Star issuance, save verification, the Counter's totals, sessions, accounts, and every Postgres role, schema, and grant | The HTTP API; the tables and grants in `backend/.docs_backend/data-contract.md` |
+| `analytics/` | dbt marts, the Dagster schedule, the site at `/analytics/` | Read-only Postgres access as `analytics_reader`; Dagster storage as `dagster` |
+| `infra/` | The VPS, its services, its tunnels, and Postgres with its `skies` role and database | The host conventions in `infra/CLAUDE.md` |
 
 A file imports only from its own piece. A contract document changes in the same PR as the route, wire shape, table, column, or grant it describes.
 
@@ -43,7 +43,7 @@ A file imports only from its own piece. A contract document changes in the same 
 | `session.py`, `login.py`, `db.py` | The session cookie and issuance count; logins; the pool, schema, roles |
 | `rate_limit.py`, `errors.py`, `main.py` | The limiter, the error envelope, app wiring |
 
-Every query binds its values as parameters. `db.py` creates the schema and the `analytics_reader` and `skies_admin` roles on startup.
+Every query binds its values as parameters. `db.py` creates the tables, the `analytics` and `dagster` schemas, and the `analytics_reader`, `dagster`, and `skies_admin` roles on startup.
 
 ## 4. Analytics flow
 
@@ -58,5 +58,5 @@ dbt reads the backend's tables as sources, builds staging views and mart tables 
 - **Seeds and tags.** A seed is `HMAC(secret, session_id || issuance count)` and its tag is `HMAC(secret, seed)`. A save is accepted only when the tag verifies in constant time. Destroy and list act only on the caller's own rows.
 - **Rate limits.** Per client address, listed in the API contract. `X-Forwarded-For` counts only for `TRUSTED_PROXY_HOPS`.
 - **Browser.** CORS allows the single `FRONTEND_ORIGIN` with credentials. The production build injects a Content Security Policy from `frontend/vite.config.ts`.
-- **Analytics access.** `analytics_reader` reads `sessions`, `saved_stars`, and the `users` columns `id`, `username`, and `created_at`.
+- **Analytics access.** `analytics_reader` reads `saved_stars`, the `sessions` columns `counter` and `created_at`, and the `users` columns `id`, `username`, and `created_at`. Dagster logs in as `dagster`, which owns only the `dagster` schema.
 - **Secrets.** Runtime secrets live in `/etc/skies/.env` on the box and in each piece's gitignored `.env`. `SKIES_SSH_KEY` is the one GitHub secret.
