@@ -94,20 +94,34 @@ async def ensure_schema(pool: asyncpg.Pool) -> None:
     await pool.execute(_MERGE_DESTROYED_INTO_SAVED)
 
 
-_ENSURE_ANALYTICS_ROLE = """
+# Creates login role skies.role, or resets its password to skies.password.
+_ENSURE_LOGIN_ROLE = """
 DO $$
+DECLARE
+  role_name TEXT := current_setting('skies.role');
+  role_password TEXT := current_setting('skies.password');
 BEGIN
-  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'analytics_reader') THEN
-    EXECUTE format(
-      'CREATE ROLE analytics_reader LOGIN PASSWORD %L',
-      current_setting('analytics.reader_password'));
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = role_name) THEN
+    EXECUTE format('CREATE ROLE %I LOGIN PASSWORD %L', role_name, role_password);
   ELSE
-    EXECUTE format(
-      'ALTER ROLE analytics_reader WITH PASSWORD %L',
-      current_setting('analytics.reader_password'));
+    EXECUTE format('ALTER ROLE %I WITH PASSWORD %L', role_name, role_password);
   END IF;
 END $$
 """
+
+
+async def _ensure_login_role(
+    connection: asyncpg.Connection, role: str, password: str
+) -> None:
+    """Create a login role or reset its password, within a transaction."""
+    # Pass values via session settings; role DDL cannot bind params.
+    await connection.execute(
+        "SELECT set_config('skies.role', $1, true), "
+        "set_config('skies.password', $2, true)",
+        role,
+        password,
+    )
+    await connection.execute(_ENSURE_LOGIN_ROLE)
 
 
 async def ensure_analytics_role(pool: asyncpg.Pool) -> None:
@@ -117,11 +131,7 @@ async def ensure_analytics_role(pool: asyncpg.Pool) -> None:
         return
     async with pool.acquire() as connection:
         async with connection.transaction():
-            # Pass password via a session setting; role DDL cannot bind params.
-            await connection.execute(
-                "SELECT set_config('analytics.reader_password', $1, true)", password
-            )
-            await connection.execute(_ENSURE_ANALYTICS_ROLE)
+            await _ensure_login_role(connection, "analytics_reader", password)
             # Membership lets us reassign schema ownership.
             await connection.execute("GRANT analytics_reader TO CURRENT_USER")
             await connection.execute(
@@ -143,22 +153,6 @@ async def ensure_analytics_role(pool: asyncpg.Pool) -> None:
             await connection.execute(
                 "ALTER SCHEMA analytics OWNER TO analytics_reader"
             )
-
-
-_ENSURE_DAGSTER_ROLE = """
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'dagster') THEN
-    EXECUTE format(
-      'CREATE ROLE dagster LOGIN PASSWORD %L',
-      current_setting('dagster.password'));
-  ELSE
-    EXECUTE format(
-      'ALTER ROLE dagster WITH PASSWORD %L',
-      current_setting('dagster.password'));
-  END IF;
-END $$
-"""
 
 
 # Moves Dagster's tables from public into its schema; a no-op once applied.
@@ -193,11 +187,7 @@ async def ensure_dagster_role(pool: asyncpg.Pool) -> None:
         return
     async with pool.acquire() as connection:
         async with connection.transaction():
-            # Pass password via a session setting; role DDL cannot bind params.
-            await connection.execute(
-                "SELECT set_config('dagster.password', $1, true)", password
-            )
-            await connection.execute(_ENSURE_DAGSTER_ROLE)
+            await _ensure_login_role(connection, "dagster", password)
             # Membership lets us reassign ownership to dagster.
             await connection.execute("GRANT dagster TO CURRENT_USER")
             await connection.execute("GRANT CONNECT ON DATABASE dying_skies TO dagster")
@@ -208,29 +198,14 @@ async def ensure_dagster_role(pool: asyncpg.Pool) -> None:
             await connection.execute(_MOVE_DAGSTER_OUT_OF_PUBLIC)
 
 
-_ENSURE_ADMIN_ROLE = """
+# Gives skies_admin write on the analytics and dagster schemas that exist.
+_ENSURE_ADMIN_REACH = """
 DO $$
 BEGIN
-  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'skies_admin') THEN
-    EXECUTE format(
-      'CREATE ROLE skies_admin LOGIN PASSWORD %L',
-      current_setting('admin.password'));
-  ELSE
-    EXECUTE format(
-      'ALTER ROLE skies_admin WITH PASSWORD %L',
-      current_setting('admin.password'));
-  END IF;
   -- Membership grants write on the analytics_reader-owned schema.
   IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'analytics_reader') THEN
     GRANT analytics_reader TO skies_admin;
   END IF;
-END $$
-"""
-
-
-_ENSURE_DAGSTER_WRITE = """
-DO $$
-BEGIN
   IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'dagster') THEN
     GRANT USAGE, CREATE ON SCHEMA dagster TO skies_admin;
     GRANT ALL ON ALL TABLES IN SCHEMA dagster TO skies_admin;
@@ -252,11 +227,7 @@ async def ensure_admin_role(pool: asyncpg.Pool) -> None:
         return
     async with pool.acquire() as connection:
         async with connection.transaction():
-            # Pass password via a session setting; role DDL cannot bind params.
-            await connection.execute(
-                "SELECT set_config('admin.password', $1, true)", password
-            )
-            await connection.execute(_ENSURE_ADMIN_ROLE)
+            await _ensure_login_role(connection, "skies_admin", password)
             await connection.execute(
                 "GRANT CONNECT ON DATABASE dying_skies TO skies_admin"
             )
@@ -278,4 +249,4 @@ async def ensure_admin_role(pool: asyncpg.Pool) -> None:
                 "ALTER DEFAULT PRIVILEGES IN SCHEMA public "
                 "GRANT ALL ON SEQUENCES TO skies_admin"
             )
-            await connection.execute(_ENSURE_DAGSTER_WRITE)
+            await connection.execute(_ENSURE_ADMIN_REACH)
