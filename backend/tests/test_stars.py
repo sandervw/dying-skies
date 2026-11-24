@@ -55,7 +55,7 @@ def _session_count() -> int:
 
 
 def test_rate_limited_batch_creates_no_session():
-    """A 429 on /stars/batch adds no session row."""
+    """A 429 on /stars/batch sets Retry-After and adds no session row."""
     limiter.reset()
     limiter.enabled = True
     try:
@@ -68,6 +68,7 @@ def test_rate_limited_batch_creates_no_session():
 
             limited = client.post("/stars/batch", json={"count": 1})
             assert limited.status_code == 429
+            assert int(limited.headers["Retry-After"]) > 0
             assert _session_count() == sessions_before
     finally:
         limiter.enabled = False

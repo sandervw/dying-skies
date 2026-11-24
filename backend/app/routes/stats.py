@@ -1,4 +1,4 @@
-"""Global star lifecycle stats route."""
+"""The Counter: Saved, Destroyed, and Died Sky totals."""
 from fastapi import APIRouter, Request
 
 router = APIRouter()
@@ -6,7 +6,7 @@ router = APIRouter()
 
 @router.get("/stats")
 async def get_stats(request: Request) -> dict:
-    """Return counts of saved, destroyed, and died stars."""
+    """Return counts of Saved, Destroyed, and Died Skies."""
     row = await request.state.pool.fetchrow(
         "SELECT "
         "(SELECT COALESCE(SUM(counter), 0)::bigint FROM sessions) AS issued, "

@@ -22,4 +22,5 @@ def _client_address(request: Request) -> str:
 # Disable in tests via RATE_LIMIT_ENABLED=false; on by default.
 _enabled = os.environ.get("RATE_LIMIT_ENABLED", "true").lower() == "true"
 
-limiter = Limiter(key_func=_client_address, enabled=_enabled)
+# headers_enabled gives a 429 its Retry-After; limited routes take `response`.
+limiter = Limiter(key_func=_client_address, enabled=_enabled, headers_enabled=True)

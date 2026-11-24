@@ -8,7 +8,7 @@ The ubiquitous language of Dying Skies, one line per term. Code, issues, and UI 
 - **Seed:** 32 bytes that fix a Sky's static art and its music readout.
 - **Token:** a Seed written as unpadded base64url, about 43 characters; the form used in addresses and on the wire.
 - **Root sky:** the fixed Sky at `/`, the origin of the universe.
-- **Star:** a falling object that carries the Seed of the Sky it opens.
+- **Star:** a falling object that carries the Seed of the Sky it opens. A Star is Issued; the Sky it opens is Saved, Destroyed, or Died. The `/stars/*` routes and the `saved_stars` table keep the Star name.
 - **Constellation:** the connected dots in a Sky's static art.
 - **Palette:** the colours a Sky gives its Stars.
 - **Sky profile:** the Seed-derived settings shared by every Star in a Sky.
@@ -21,7 +21,8 @@ The ubiquitous language of Dying Skies, one line per term. Code, issues, and UI 
 - **Tag:** the backend's proof that it issued a Seed; a Save needs it.
 - **Saved:** kept by a User; the Sky appears in their Gallery.
 - **Destroyed:** removed by its owner forever; a Destroyed Seed is never Saved again.
-- **Died:** Issued and neither Saved nor Destroyed. The API and the site say `died`; the analytics marts name the same number `dead`.
+- **Died:** Issued and neither Saved nor Destroyed.
+- **Issuance count:** the number of Stars a Session has been Issued, stored as `sessions.counter`.
 - **Counter:** the site-wide tally of Saved, Destroyed, and Died Skies.
 - **Gallery:** the page of a User's Saved Skies.
 

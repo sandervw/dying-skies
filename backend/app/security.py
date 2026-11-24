@@ -15,9 +15,9 @@ def load_secret() -> bytes:
     return bytes.fromhex(os.environ["SEED_HMAC_SECRET"])
 
 
-def generate_seed(session_id: str, counter: int, secret: bytes) -> bytes:
-    """Derive a 32-byte seed from session id and counter."""
-    message = session_id.encode() + counter.to_bytes(8, "big")
+def generate_seed(session_id: str, issuance_count: int, secret: bytes) -> bytes:
+    """Derive a 32-byte seed from session id and an Issuance count."""
+    message = session_id.encode() + issuance_count.to_bytes(8, "big")
     return hmac.new(secret, message, hashlib.sha256).digest()
 
 

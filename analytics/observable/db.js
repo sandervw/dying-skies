@@ -2,7 +2,8 @@
 import postgres from "pg";
 import dotenv from "dotenv";
 
-dotenv.config({ path: new URL("../.env", import.meta.url) });
+// quiet: a dotenv log line would land in the loaders' stdout.
+dotenv.config({ path: new URL("../.env", import.meta.url), quiet: true });
 
 /** Schema holding the analytics marts. */
 export const schema = process.env.ANALYTICS_DB_SCHEMA || "analytics";

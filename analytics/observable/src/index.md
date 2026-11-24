@@ -20,7 +20,7 @@ const trends = (await FileAttachment("./data/trends.json").json())
 <div class="grid grid-cols-4">
   <div class="card"><h2>Total Saved</h2><span class="big">${metrics.saved.toLocaleString("en-US")}</span></div>
   <div class="card"><h2>Total Destroyed</h2><span class="big">${metrics.destroyed.toLocaleString("en-US")}</span></div>
-  <div class="card"><h2>Total Dead</h2><span class="big">${metrics.dead.toLocaleString("en-US")}</span></div>
+  <div class="card"><h2>Total Dead</h2><span class="big">${metrics.died.toLocaleString("en-US")}</span></div>
   <div class="card"><h2>Total Users</h2><span class="big">${metrics.total_users.toLocaleString("en-US")}</span></div>
 </div>
 

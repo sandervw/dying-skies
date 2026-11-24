@@ -2,13 +2,13 @@ version: 2
 
 models:
   - name: mart_star_counters
-    description: Global star counter breakdown.
+    description: The Counter's Saved, Destroyed, and Died totals.
     columns:
       - name: saved
-        description: Stars Saved and not Destroyed.
+        description: Skies Saved and not Destroyed.
       - name: destroyed
-        description: Stars Destroyed.
-      - name: dead
+        description: Skies Destroyed.
+      - name: died
         description: Issued minus saved minus destroyed.
 
   - name: mart_users_total
@@ -25,6 +25,6 @@ models:
       - name: event_week
         description: Week the events occurred.
       - name: event_type
-        description: One of saved, destroyed, signup; Destroyed Stars keep their save.
+        description: One of saved, destroyed, signup; Destroyed Skies keep their save.
       - name: event_count
         description: Count of events in that bucket.

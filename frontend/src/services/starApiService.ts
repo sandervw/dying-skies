@@ -5,7 +5,7 @@ import type { Seed } from "./randomService";
 const base = import.meta.env.VITE_API_BASE_URL;
 
 /** the query key prefix for the signed-in user's Saved tokens. */
-const SAVED_STARS_QUERY_KEY = ["stars", "mine"] as const;
+const SAVED_SKIES_QUERY_KEY = ["stars", "mine"] as const;
 
 /** one backend-issued star: its seed and HMAC save tag. */
 interface IssuedStar {
@@ -47,8 +47,8 @@ const fetchStarBatch = async (count: number): Promise<readonly IssuedStar[]> => 
     .filter((star): star is IssuedStar => star !== null);
 };
 
-/** save a star by its seed and tag; rejects with ApiError. */
-const saveStar = async (seed: Seed, tag: string): Promise<void> => {
+/** save a Sky by its seed and tag; rejects with ApiError. */
+const saveSky = async (seed: Seed, tag: string): Promise<void> => {
   const response = await postBody("/stars/save", { seed: encodeSeed(seed), tag });
   if (!response.ok) {
     throw await failFrom(response);
@@ -56,7 +56,7 @@ const saveStar = async (seed: Seed, tag: string): Promise<void> => {
 };
 
 /** destroy a saved sky and forget its tag; rejects with ApiError. */
-const destroyStar = async (seed: Seed): Promise<void> => {
+const destroySky = async (seed: Seed): Promise<void> => {
   const response = await postBody("/stars/destroy", { seed: encodeSeed(seed) });
   if (!response.ok) {
     throw await failFrom(response);
@@ -65,7 +65,7 @@ const destroyStar = async (seed: Seed): Promise<void> => {
 };
 
 /** fetch the caller's saved sky tokens, newest first; rejects with ApiError. */
-const fetchMyStars = async (): Promise<readonly string[]> => {
+const fetchSavedTokens = async (): Promise<readonly string[]> => {
   const response = await fetch(`${base}/stars/mine`, { credentials: "include" });
   if (!response.ok) {
     throw await failFrom(response);
@@ -86,11 +86,11 @@ const parseSavedTokens = (body: unknown): readonly string[] => {
 };
 
 export {
-  SAVED_STARS_QUERY_KEY,
+  SAVED_SKIES_QUERY_KEY,
   fetchStarBatch,
-  saveStar,
-  destroyStar,
-  fetchMyStars,
+  saveSky,
+  destroySky,
+  fetchSavedTokens,
   rememberTag,
   tagForSeed,
 };

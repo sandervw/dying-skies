@@ -45,10 +45,10 @@ async def create_session(pool: asyncpg.Pool, response: Response) -> str:
     return session_id
 
 
-async def reserve_counter_range(
+async def reserve_issuance_range(
     pool: asyncpg.Pool, session_id: str, count: int
 ) -> range:
-    """Atomically reserve `count` counter values for a session."""
+    """Raise a session's Issuance count by `count`; return the counts used."""
     new_counter = await pool.fetchval(
         "UPDATE sessions SET counter = counter + $1 WHERE session_id = $2 "
         "RETURNING counter",

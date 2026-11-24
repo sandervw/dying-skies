@@ -4,14 +4,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { QueryClient } from "@tanstack/react-query";
 import type { AuthUser } from "../types/auth";
 import * as authService from "../services/authService";
-import { SAVED_STARS_QUERY_KEY } from "../services/starApiService";
+import { SAVED_SKIES_QUERY_KEY } from "../services/starApiService";
 
 const AUTH_QUERY_KEY = ["auth", "me"] as const;
 
 /** drop the signed-in user and every query cached for them. */
 const forgetUser = (queryClient: QueryClient): void => {
   queryClient.setQueryData(AUTH_QUERY_KEY, null);
-  queryClient.removeQueries({ queryKey: SAVED_STARS_QUERY_KEY });
+  queryClient.removeQueries({ queryKey: SAVED_SKIES_QUERY_KEY });
 };
 
 /** the current user, session load state, sign-in setter, and logout. */

@@ -1,4 +1,4 @@
--- Every Star ever Saved; destroyed_at is set once Destroyed.
+-- Every Sky ever Saved; destroyed_at is set once Destroyed.
 select
     seed as star_seed,
     owner_id as user_id,

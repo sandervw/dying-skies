@@ -20,7 +20,7 @@ const RULE_KEYS = [
   "color",
   "zodiac",
   "riddle",
-  "year",
+  "digit",
   "special",
 ] as const;
 
@@ -140,7 +140,7 @@ const RuleList = ({ rules, riddleText }: RuleListProps): ReactElement => (
     <RuleRow met={rules?.color} label="A creative color" />
     <RuleRow met={rules?.zodiac} label="Your zodiac sign" />
     <RuleRow met={rules?.riddle} label={`Answer: ${riddleText ?? "..."}`} />
-    <RuleRow met={rules?.year} label="Your favorite year" />
+    <RuleRow met={rules?.digit} label="Your favorite year" />
     <RuleRow met={rules?.special} label="A special character" />
   </ul>
 );

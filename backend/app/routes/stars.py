@@ -7,7 +7,7 @@ from app.errors import error_response
 from app.rate_limit import limiter
 from app.security import generate_seed, generate_tag, load_secret, verify_tag
 from app.login import get_authenticated_user_id
-from app.session import get_session_id, reserve_counter_range
+from app.session import get_session_id, reserve_issuance_range
 
 router = APIRouter()
 
@@ -31,28 +31,28 @@ class StarsBatchResponse(BaseModel):
     stars: list[StarTag]
 
 
-class StarSaveRequest(BaseModel):
-    """Request body for a star save."""
+class SkySaveRequest(BaseModel):
+    """Request body for saving a Sky."""
 
     seed: str
     tag: str
 
 
-class SavedStar(BaseModel):
-    """A single saved star: its seed and save timestamp."""
+class SavedSky(BaseModel):
+    """A single Saved Sky: its seed and save timestamp."""
 
     seed: str
     saved_at: str
 
 
-class SavedStarsResponse(BaseModel):
-    """Response body listing the caller's saved stars."""
+class SavedSkiesResponse(BaseModel):
+    """Response body listing the caller's Saved Skies."""
 
-    stars: list[SavedStar]
+    stars: list[SavedSky]
 
 
-class StarDestroyRequest(BaseModel):
-    """Request body for a permanent star destruction."""
+class SkyDestroyRequest(BaseModel):
+    """Request body for permanently destroying a Sky."""
 
     seed: str
 
@@ -68,10 +68,10 @@ async def post_stars_batch(
     # Called after the limit check, so a 429 never creates a session.
     session_id = await get_session_id(request, response)
     secret = load_secret()
-    counters = await reserve_counter_range(request.state.pool, session_id, body.count)
+    issuance_counts = await reserve_issuance_range(request.state.pool, session_id, body.count)
     stars = []
-    for counter in counters:
-        seed = generate_seed(session_id, counter, secret)
+    for issuance_count in issuance_counts:
+        seed = generate_seed(session_id, issuance_count, secret)
         tag = generate_tag(seed, secret)
         stars.append(StarTag(seed=encode_base64url(seed), tag=encode_base64url(tag)))
     return StarsBatchResponse(stars=stars)
@@ -80,11 +80,11 @@ async def post_stars_batch(
 @router.post("/stars/save")
 async def post_stars_save(
     request: Request,
-    body: StarSaveRequest,
+    body: SkySaveRequest,
     response: Response,
     user_id: str | None = Depends(get_authenticated_user_id),
 ) -> dict:
-    """Verify a star's tag and save its seed once for the caller."""
+    """Verify an issued Star's tag; save its Sky once for the caller."""
     if user_id is None:
         return error_response(response, 401, "not_authenticated")
 
@@ -121,11 +121,11 @@ async def post_stars_save(
 @router.post("/stars/destroy")
 async def post_stars_destroy(
     request: Request,
-    body: StarDestroyRequest,
+    body: SkyDestroyRequest,
     response: Response,
     user_id: str | None = Depends(get_authenticated_user_id),
 ) -> dict:
-    """Permanently destroy one of the caller's saved stars."""
+    """Permanently destroy one of the caller's Saved Skies."""
     if user_id is None:
         return error_response(response, 401, "not_authenticated")
 
@@ -166,7 +166,7 @@ async def get_stars_mine(
         user_id,
     )
     stars = [
-        SavedStar(seed=encode_base64url(row["seed"]), saved_at=row["saved_at"].isoformat())
+        SavedSky(seed=encode_base64url(row["seed"]), saved_at=row["saved_at"].isoformat())
         for row in rows
     ]
-    return SavedStarsResponse(stars=stars).model_dump()
+    return SavedSkiesResponse(stars=stars).model_dump()

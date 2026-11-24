@@ -19,7 +19,7 @@ _RIDDLES = _load("riddles.json")
 _RIDDLE_BY_ID = {riddle["id"]: riddle for riddle in _RIDDLES}
 
 # rule keys returned to the client, in display order.
-RULE_KEYS = ("color", "zodiac", "riddle", "year", "special")
+RULE_KEYS = ("color", "zodiac", "riddle", "digit", "special")
 
 _SPECIAL_PATTERN = re.compile(r"[^A-Za-z0-9]")
 _DIGIT_PATTERN = re.compile(r"\d")
@@ -49,7 +49,7 @@ def check_password(password: str, riddle_id: str) -> dict:
         "color": _contains_any(lowered, _COLORS),
         "zodiac": _contains_any(lowered, _ZODIAC),
         "riddle": _contains_any(lowered, riddle_answers),
-        "year": bool(_DIGIT_PATTERN.search(password)),
+        "digit": bool(_DIGIT_PATTERN.search(password)),
         "special": bool(_SPECIAL_PATTERN.search(password)),
     }
 

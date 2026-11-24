@@ -56,7 +56,9 @@ async def get_signup_riddle() -> dict:
 
 @router.post("/auth/password/check")
 @limiter.limit("60/minute")
-async def post_password_check(request: Request, body: PasswordCheckRequest) -> dict:
+async def post_password_check(
+    request: Request, response: Response, body: PasswordCheckRequest
+) -> dict:
     """Return per-rule booleans only; never the underlying lists."""
     return {"rules": check_password(body.password, body.riddle_id)}
 
