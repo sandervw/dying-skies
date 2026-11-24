@@ -68,10 +68,10 @@ async def post_stars_batch(
     # Called after the limit check, so a 429 never creates a session.
     session_id = await get_session_id(request, response)
     secret = load_secret()
-    issuances = await reserve_issuance_range(request.state.pool, session_id, body.count)
+    issuance_counts = await reserve_issuance_range(request.state.pool, session_id, body.count)
     stars = []
-    for issuance in issuances:
-        seed = generate_seed(session_id, issuance, secret)
+    for issuance_count in issuance_counts:
+        seed = generate_seed(session_id, issuance_count, secret)
         tag = generate_tag(seed, secret)
         stars.append(StarTag(seed=encode_base64url(seed), tag=encode_base64url(tag)))
     return StarsBatchResponse(stars=stars)

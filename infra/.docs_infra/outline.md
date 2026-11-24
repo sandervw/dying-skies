@@ -29,7 +29,7 @@ All run as `skies`, read `/etc/skies/.env`, restart on failure:
 - `dagster-webserver`: `dagster-webserver` on `127.0.0.1:3000` from `analytics/`.
 - `dagster-daemon`: `dagster-daemon run` from `analytics/`.
 
-Dagster uses Postgres-backed storage: `dagster/dagster.yaml` points storage at `DAGSTER_PG_URL` from `/etc/skies/.env`, which logs in as the `dagster` role, and both units set `DAGSTER_HOME=/files/skies/dagster`.
+Dagster uses Postgres-backed storage: `dagster/dagster.yaml` logs in as the `dagster` role with `DAGSTER_DB_PASSWORD` from `/etc/skies/.env`, and both units set `DAGSTER_HOME=/files/skies/dagster`.
 
 ## What it provides the other pieces
 - Backend: the runtime host, Postgres, the venv, `/etc/skies/.env`, and the `skies-api` service on port 8000. cloudflared fronts it publicly.

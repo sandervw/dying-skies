@@ -13,11 +13,12 @@ Current state and next work. Rewrite when stale; never log history.
 - **Hosting:** the frontend and the analytics site are Cloudflare Workers assets. The API, Postgres, and Dagster run on one OVH VPS, reached as `api.dyingskies.com` through a Cloudflare Tunnel.
 - **Checks:** `main` requires the `checks` job. The black-box suite, one Playwright test per use case, runs locally with `npm run test:e2e` at desktop and phone widths; CI does not run it.
 - **Schema changes** run as idempotent blocks in `backend/app/db.py` at API startup. A `CASCADE` drop removes analytics staging views; the next Dagster run rebuilds them.
+- **Postgres roles:** the backend creates every role, schema, and grant. Dagster logs in as `dagster` and keeps its tables in the `dagster` schema.
 
 ## Next
 
-1. #26: naming drift, Postgres ownership, and the `Retry-After` header.
-2. Merge the Dependabot PRs.
+1. #29: the page-load performance pass.
+2. React stays at 19.2 (#12, #20 open): 19.3 fails UC-05 and UC-07.
 
 ## CEO preferences
 

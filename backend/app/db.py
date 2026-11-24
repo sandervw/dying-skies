@@ -69,8 +69,7 @@ async def ensure_schema(pool: asyncpg.Pool) -> None:
         "password_hash TEXT NOT NULL, "
         "created_at TIMESTAMPTZ NOT NULL DEFAULT now())"
     )
-    # Sessions are never deleted; counter is the issuance count, and the
-    # counters sum to all-time Issued.
+    # Sessions are never deleted; their Issuance counts sum to all-time Issued.
     await pool.execute(
         "CREATE TABLE IF NOT EXISTS sessions ("
         "session_id TEXT PRIMARY KEY, "

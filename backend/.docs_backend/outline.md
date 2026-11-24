@@ -3,13 +3,13 @@
 FastAPI + Postgres API. Live on an OVH VPS (see `infra/`). Full endpoint spec: `api-contract.md`.
 
 ## Star lifecycle
-- Issuance: `POST /stars/batch` reserves the session's next issuance numbers, derives each seed as `HMAC(secret, session_id || issuance number)` and a tag as `HMAC(secret, seed)`, and returns base64url `{seed, tag}` pairs (`stars.py`, `security.py`, `session.py`).
+- Issuance: `POST /stars/batch` raises the session's Issuance count by the batch size, derives one seed per count it passed as `HMAC(secret, session_id || Issuance count)` and a tag as `HMAC(secret, seed)`, and returns base64url `{seed, tag}` pairs (`stars.py`, `security.py`, `session.py`).
 - Save: `POST /stars/save` recomputes the tag with a constant-time compare and inserts once per seed, owned by the caller. A conflicting seed answers `already_destroyed` or `already_saved`.
 - Destroy: `POST /stars/destroy` sets `destroyed_at` on one of the caller's saves that is not yet destroyed.
 - List: `GET /stars/mine` returns the caller's saved, not destroyed seeds, newest first.
 
 ## Seeds and tags
-- A seed is a 32-byte (256-bit) HMAC of the session id and a per-session issuance number. Issuance is deterministic.
+- A seed is a 32-byte (256-bit) HMAC of the session id and an Issuance count. Issuance is deterministic.
 - The tag is a second HMAC over the seed. The server accepts a save only if the tag verifies.
 - Both are encoded as unpadded base64url on the wire.
 

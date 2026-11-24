@@ -1,4 +1,9 @@
 storage:
   postgres:
-    postgres_url:
-      env: DAGSTER_PG_URL
+    postgres_db:
+      username: dagster
+      password:
+        env: DAGSTER_DB_PASSWORD
+      hostname: 127.0.0.1
+      db_name: dying_skies
+      port: 5432
